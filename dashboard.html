@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-content">
+            <h1>Approval System</h1>
+            <div class="user-info">
+                <span>Welcome, <strong id="userName"></strong> (<span id="userRole"></span>)</span>
+                <button class="logout-btn" onclick="logoutUser()">Logout</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="alert" class="alert"></div>
+        <div class="dashboard-container">
+            <div id="requestForm" style="display: none;">
+                <div class="request-form">
+                    <h3>Create New Request</h3>
+                    <form id="requestFormElement" onsubmit="createRequest(event)">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input type="text" id="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="description" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Amount (Rs.)</label>
+                            <input type="number" id="amount" step="0.01" required>
+                        </div>
+                        <button type="submit" class="btn">Submit Request</button>
+                    </form>
+                </div>
+            </div>
+            
+            <h3>Requests</h3>
+            <div id="requestsList"></div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { logoutUser } from './js/auth.js';
+        import { loadDashboard, createRequest } from './js/dashboard.js';
+        
+        window.logoutUser = logoutUser;
+        window.createRequest = createRequest;
+        
+        loadDashboard();
+    </script>
+</body>
+</html>
