@@ -3,32 +3,738 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Approval System - Login</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>IT Approval System | User Registration + Login + Workflow</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        /* Auth Container */
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: #1e293b;
+            border-radius: 2rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid #334155;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.8rem;
+            background: #0f172a;
+            border: none;
+            border-radius: 1rem;
+            color: #94a3b8;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 0.8rem;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .error-msg {
+            color: #f87171;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        /* Main App Container */
+        .app-container {
+            display: none;
+            padding: 2rem 1.5rem;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: #1e293b;
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border: 1px solid #334155;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .role-badge {
+            background: #3b82f6;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Admin Panel */
+        .admin-panel {
+            background: #1e293b;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 2px solid #f59e0b;
+        }
+
+        .users-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .users-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th, .users-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+            color: #e2e8f0;
+        }
+
+        .users-table th {
+            color: #94a3b8;
+        }
+
+        .delete-user {
+            background: #ef4444;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Workflow Cards */
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .workflow-card {
+            background: #1e293b;
+            border-radius: 1.5rem;
+            padding: 1.3rem;
+            border: 1px solid #334155;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            margin-bottom: 1rem;
+        }
+
+        .status-pending { background: #451a03; color: #fbbf24; }
+        .status-done { background: #14532d; color: #4ade80; }
+        .status-locked { background: #2d2a2a; color: #9ca3af; }
+
+        textarea {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            padding: 0.8rem;
+            color: white;
+            resize: vertical;
+            margin: 0.5rem 0;
+        }
+
+        button {
+            background: #3b82f6;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 1rem;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .request-card {
+            background: #1e293b;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #334155;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .detail-item {
+            background: #0f172a;
+            padding: 0.8rem;
+            border-radius: 1rem;
+        }
+
+        .events-log {
+            background: #0f172a;
+            border-radius: 1rem;
+            padding: 1rem;
+            max-height: 150px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #86efac;
+        }
+
+        @media (max-width: 768px) {
+            .app-container { padding: 1rem; }
+        }
+    </style>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <h2>📋 Approval System</h2>
-            <p style="text-align: center; color: #666; margin-bottom: 30px;">Request Approval Workflow System</p>
-            <div id="alert" class="alert"></div>
-            <form id="loginForm" onsubmit="loginUser(event)">
-                <div class="form-group">
-                    <label>📧 Email Address</label>
-                    <input type="email" id="email" placeholder="Enter your email" required>
+    <!-- Auth Container -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>📋 IT Workflow</h1>
+                <p style="color: #94a3b8; margin-top: 0.5rem;">Register & Login to Continue</p>
+            </div>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('register')">Register</button>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="user@example.com">
                 </div>
-                <div class="form-group">
-                    <label>🔒 Password</label>
-                    <input type="password" id="password" placeholder="Enter your password" required>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn">Login</button>
-            </form>
+                <button class="auth-btn" onclick="handleLogin()">Login</button>
+                <div id="loginError" class="error-msg"></div>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" style="display: none;">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regName" placeholder="John Doe">
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" placeholder="user@example.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="••••••••">
+                </div>
+                <div class="input-group">
+                    <label>Role (Select your position)</label>
+                    <select id="regRole">
+                        <option value="requester">Requester (Normal User)</option>
+                        <option value="sse">SSE IT</option>
+                        <option value="am">AM IT</option>
+                        <option value="area_manager">Area Manager</option>
+                        <option value="hod">HOD IT</option>
+                        <option value="admin">Admin (Full Access)</option>
+                    </select>
+                </div>
+                <button class="auth-btn" onclick="handleRegister()">Create Account</button>
+                <div id="regError" class="error-msg"></div>
+            </div>
         </div>
     </div>
-    
-    <script type="module">
-        import { loginUser } from './js/auth.js';
-        window.loginUser = loginUser;
+
+    <!-- Main App -->
+    <div class="app-container" id="appContainer">
+        <!-- Navbar -->
+        <div class="navbar">
+            <h2 style="color: white;">📋 IT Approval Workflow</h2>
+            <div class="user-badge">
+                <span id="userName" style="color: white;"></span>
+                <span class="role-badge" id="userRole"></span>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Admin Panel (only visible to admin) -->
+        <div class="admin-panel" id="adminPanel" style="display: none;">
+            <h3 style="color: #f59e0b; margin-bottom: 1rem;">👑 Admin Panel - Manage Users</h3>
+            <div class="users-table" id="usersTable"></div>
+        </div>
+
+        <!-- Create Request Portal -->
+        <div class="request-card" id="createRequestCard">
+            <h3 style="color: #60a5fa; margin-bottom: 1rem;">📧 Create New IT Request</h3>
+            <div class="input-group">
+                <label>Request Description</label>
+                <textarea id="requestDesc" rows="2" placeholder="Describe your IT request..."></textarea>
+            </div>
+            <div class="input-group">
+                <label>Attachment (Optional)</label>
+                <input type="file" id="fileInput">
+            </div>
+            <button onclick="createRequest()">🚀 Submit Request</button>
+        </div>
+
+        <!-- Active Request Display -->
+        <div class="request-card" id="requestCard" style="display: none;">
+            <h3>Active Request #<span id="reqId"></span> <span id="reqStage"></span></h3>
+            <div class="detail-grid" id="requestDetails"></div>
+        </div>
+
+        <!-- Workflow Cards -->
+        <div class="workflow-grid" id="workflowGrid" style="display: none;">
+            <!-- SSE -->
+            <div class="workflow-card">
+                <h3 style="color: #60a5fa;">🖥️ SSE IT</h3>
+                <div id="sseStatus" class="status status-pending">Pending</div>
+                <textarea id="sseRemark" rows="2" placeholder="Technical evaluation..."></textarea>
+                <button id="sseBtn" onclick="submitAction('sse')">✅ Submit SSE</button>
+            </div>
+            <!-- AM -->
+            <div class="workflow-card">
+                <h3 style="color: #a78bfa;">📌 AM IT</h3>
+                <div id="amStatus" class="status status-locked">Locked</div>
+                <textarea id="amRemark" rows="2" placeholder="AM remarks..." disabled></textarea>
+                <button id="amBtn" onclick="submitAction('am')" disabled>Submit AM</button>
+            </div>
+            <!-- Area Manager -->
+            <div class="workflow-card">
+                <h3 style="color: #34d399;">🌍 Area Manager</h3>
+                <div id="areaStatus" class="status status-locked">Locked</div>
+                <textarea id="areaRemark" rows="2" placeholder="Area remarks..." disabled></textarea>
+                <button id="areaBtn" onclick="submitAction('area')" disabled>Submit Area</button>
+            </div>
+            <!-- HOD -->
+            <div class="workflow-card">
+                <h3 style="color: #f87171;">🏛️ HOD IT</h3>
+                <div id="hodStatus" class="status status-locked">Locked</div>
+                <textarea id="hodRemark" rows="2" placeholder="Final approval..." disabled></textarea>
+                <button id="hodBtn" onclick="submitAction('hod')" disabled>Final Approve</button>
+            </div>
+        </div>
+
+        <!-- Events Log -->
+        <div class="events-log" id="eventsLog">
+            <div>🟢 System ready. Login to continue...</div>
+        </div>
+    </div>
+
+    <script>
+        // ============ FIREBASE CONFIG ============
+        // 🔥 REPLACE WITH YOUR FIREBASE CONFIG 🔥
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const auth = firebase.auth();
+        
+        let currentUserData = null;
+        let currentRequest = null;
+        let unsubscribeRequest = null;
+        
+        function addLog(msg) {
+            const logDiv = document.getElementById('eventsLog');
+            const div = document.createElement('div');
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logDiv.prepend(div);
+            if (logDiv.children.length > 20) logDiv.removeChild(logDiv.lastChild);
+        }
+        
+        function switchTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const tabs = document.querySelectorAll('.tab-btn');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                tabs[0].classList.add('active');
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                tabs[1].classList.add('active');
+            }
+        }
+        
+        // Handle Registration
+        async function handleRegister() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            const role = document.getElementById('regRole').value;
+            
+            if (!name || !email || !password) {
+                document.getElementById('regError').innerText = 'All fields required';
+                return;
+            }
+            
+            try {
+                const userCred = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCred.user;
+                
+                // Save user data to Firestore
+                await db.collection('users').doc(user.uid).set({
+                    name: name,
+                    email: email,
+                    role: role,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                addLog(`✅ Account created! Welcome ${name}`);
+                document.getElementById('regError').innerText = '';
+            } catch(e) {
+                document.getElementById('regError').innerText = e.message;
+            }
+        }
+        
+        // Handle Login
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                document.getElementById('loginError').innerText = '';
+            } catch(e) {
+                document.getElementById('loginError').innerText = e.message;
+            }
+        }
+        
+        // Handle Logout
+        async function handleLogout() {
+            await auth.signOut();
+            location.reload();
+        }
+        
+        // Auth State Listener
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // Fetch user data from Firestore
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    currentUserData = { uid: user.uid, ...userDoc.data() };
+                    document.getElementById('userName').innerText = currentUserData.name;
+                    document.getElementById('userRole').innerText = currentUserData.role.toUpperCase();
+                    
+                    // Show admin panel if role is admin
+                    if (currentUserData.role === 'admin') {
+                        document.getElementById('adminPanel').style.display = 'block';
+                        loadAllUsers();
+                    } else {
+                        document.getElementById('adminPanel').style.display = 'none';
+                    }
+                    
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    addLog(`👋 Welcome ${currentUserData.name} (${currentUserData.role})`);
+                    
+                    loadActiveRequest();
+                }
+            } else {
+                document.getElementById('authContainer').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+            }
+        });
+        
+        // Load all users (Admin only)
+        async function loadAllUsers() {
+            const snapshot = await db.collection('users').get();
+            let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr></thead><tbody>';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                html += `<tr>
+                    <td>${data.name}</td>
+                    <td>${data.email}</td>
+                    <td>${data.role}</td>
+                    <td><button class="delete-user" onclick="deleteUser('${doc.id}')">Delete</button></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            document.getElementById('usersTable').innerHTML = html;
+        }
+        
+        window.deleteUser = async (userId) => {
+            if (confirm('Delete this user?')) {
+                await db.collection('users').doc(userId).delete();
+                // Also delete auth user (requires admin SDK, so just remove from Firestore)
+                loadAllUsers();
+                addLog(`User deleted from Firestore`);
+            }
+        };
+        
+        // Create new request
+        window.createRequest = async () => {
+            const description = document.getElementById('requestDesc').value;
+            if (!description) { alert('Please enter description'); return; }
+            
+            let attachmentUrl = null;
+            const file = document.getElementById('fileInput').files[0];
+            if (file) {
+                const storageRef = storage.ref(`requests/${Date.now()}_${file.name}`);
+                await storageRef.put(file);
+                attachmentUrl = await storageRef.getDownloadURL();
+            }
+            
+            const requestData = {
+                requesterId: currentUserData.uid,
+                requesterName: currentUserData.name,
+                requesterEmail: currentUserData.email,
+                description: description,
+                attachmentUrl: attachmentUrl,
+                stage: 'SSE',
+                sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            const docRef = await db.collection('requests').add(requestData);
+            addLog(`✅ Request #${docRef.id.slice(0,6)} created!`);
+            document.getElementById('requestDesc').value = '';
+            document.getElementById('fileInput').value = '';
+            loadActiveRequest(docRef.id);
+        };
+        
+        // Load active request
+        async function loadActiveRequest(specificId = null) {
+            if (unsubscribeRequest) unsubscribeRequest();
+            
+            let query = db.collection('requests').orderBy('createdAt', 'desc').limit(1);
+            if (specificId) {
+                const doc = await db.collection('requests').doc(specificId).get();
+                if (doc.exists) {
+                    currentRequest = { id: doc.id, ...doc.data() };
+                    updateUI();
+                    subscribeToRequest(doc.id);
+                    return;
+                }
+            }
+            
+            const snapshot = await query.get();
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                currentRequest = { id: doc.id, ...doc.data() };
+                updateUI();
+                subscribeToRequest(doc.id);
+            }
+        }
+        
+        function subscribeToRequest(requestId) {
+            unsubscribeRequest = db.collection('requests').doc(requestId)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        currentRequest = { id: doc.id, ...doc.data() };
+                        updateUI();
+                        addLog(`🔄 Update: Stage → ${currentRequest.stage}`);
+                    }
+                });
+        }
+        
+        function canUserAct(action) {
+            const role = currentUserData.role;
+            const stage = currentRequest?.stage;
+            
+            if (role === 'admin') return true;
+            if (action === 'sse' && role === 'sse' && stage === 'SSE') return true;
+            if (action === 'am' && role === 'am' && stage === 'AM') return true;
+            if (action === 'area' && role === 'area_manager' && stage === 'AREA') return true;
+            if (action === 'hod' && role === 'hod' && stage === 'HOD') return true;
+            return false;
+        }
+        
+        window.submitAction = async (action) => {
+            if (!currentRequest) { alert('No active request'); return; }
+            if (!canUserAct(action)) { alert(`You don't have permission for ${action} at current stage`); return; }
+            
+            let remarkField = '';
+            if (action === 'sse') remarkField = 'sseRemark';
+            else if (action === 'am') remarkField = 'amRemark';
+            else if (action === 'area') remarkField = 'areaRemark';
+            else if (action === 'hod') remarkField = 'hodRemark';
+            
+            const remark = document.getElementById(`${action}Remark`).value;
+            if (!remark.trim()) { alert('Please enter remarks'); return; }
+            
+            const updates = {};
+            updates[remarkField] = remark.trim();
+            
+            if (action === 'sse') updates.stage = 'AM';
+            else if (action === 'am') updates.stage = 'AREA';
+            else if (action === 'area') updates.stage = 'HOD';
+            else if (action === 'hod') updates.stage = 'COMPLETED';
+            
+            await db.collection('requests').doc(currentRequest.id).update(updates);
+            addLog(`✅ ${action.toUpperCase()} submitted - Stage updated`);
+            document.getElementById(`${action}Remark`).value = '';
+        };
+        
+        function updateUI() {
+            if (!currentRequest) {
+                document.getElementById('requestCard').style.display = 'none';
+                document.getElementById('workflowGrid').style.display = 'none';
+                return;
+            }
+            
+            const req = currentRequest;
+            document.getElementById('requestCard').style.display = 'block';
+            document.getElementById('workflowGrid').style.display = 'grid';
+            document.getElementById('reqId').innerText = req.id.slice(0,8);
+            
+            document.getElementById('requestDetails').innerHTML = `
+                <div class="detail-item"><strong>Requester:</strong> ${req.requesterName} (${req.requesterEmail})</div>
+                <div class="detail-item"><strong>Description:</strong> ${req.description}</div>
+                <div class="detail-item"><strong>Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#60a5fa;">Download</a>` : '—'}</div>
+                <div class="detail-item"><strong>SSE:</strong> ${req.sseRemark || '—'}</div>
+                <div class="detail-item"><strong>AM:</strong> ${req.amRemark || '—'}</div>
+                <div class="detail-item"><strong>Area Mgr:</strong> ${req.areaRemark || '—'}</div>
+                <div class="detail-item"><strong>HOD:</strong> ${req.hodRemark || '—'}</div>
+            `;
+            
+            const sseDone = req.sseRemark && req.sseRemark.trim();
+            const amDone = req.amRemark && req.amRemark.trim();
+            const areaDone = req.areaRemark && req.areaRemark.trim();
+            const hodDone = req.stage === 'COMPLETED';
+            
+            // Update SSE
+            document.getElementById('sseStatus').className = `status ${sseDone ? 'status-done' : (req.stage === 'SSE' ? 'status-pending' : 'status-locked')}`;
+            document.getElementById('sseStatus').innerText = sseDone ? '✅ Done' : (req.stage === 'SSE' ? '⏳ Pending' : '🔒 Locked');
+            document.getElementById('sseRemark').disabled = sseDone || req.stage !== 'SSE' || !canUserAct('sse');
+            document.getElementById('sseBtn').disabled = req.stage !== 'SSE' || sseDone || !canUserAct('sse');
+            
+            // Update AM
+            document.getElementById('amStatus').className = `status ${amDone ? 'status-done' : (req.stage === 'AM' ? 'status-pending' : 'status-locked')}`;
+            document.getElementById('amStatus').innerText = amDone ? '✅ Done' : (req.stage === 'AM' ? '📢 Action' : '🔒 Locked');
+            document.getElementById('amRemark').disabled = req.stage !== 'AM' || amDone || !canUserAct('am');
+            document.getElementById('amBtn').disabled = req.stage !== 'AM' || amDone || !canUserAct('am');
+            
+            // Update Area
+            document.getElementById('areaStatus').className = `status ${areaDone ? 'status-done' : (req.stage === 'AREA' ? 'status-pending' : 'status-locked')}`;
+            document.getElementById('areaStatus').innerText = areaDone ? '✅ Done' : (req.stage === 'AREA' ? '✍️ Action' : '🔒 Locked');
+            document.getElementById('areaRemark').disabled = req.stage !== 'AREA' || areaDone || !canUserAct('area');
+            document.getElementById('areaBtn').disabled = req.stage !== 'AREA' || areaDone || !canUserAct('area');
+            
+            // Update HOD
+            document.getElementById('hodStatus').className = `status ${hodDone ? 'status-done' : (req.stage === 'HOD' ? 'status-pending' : 'status-locked')}`;
+            document.getElementById('hodStatus').innerText = hodDone ? '🏆 Approved' : (req.stage === 'HOD' ? '⏳ Final' : '🔒 Locked');
+            document.getElementById('hodRemark').disabled = req.stage !== 'HOD' || hodDone || !canUserAct('hod');
+            document.getElementById('hodBtn').disabled = req.stage !== 'HOD' || hodDone || !canUserAct('hod');
+        }
+        
+        window.switchTab = switchTab;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.handleLogout = handleLogout;
     </script>
 </body>
 </html>
