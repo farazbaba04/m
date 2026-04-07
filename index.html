@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Approval System | User Registration + Login + Workflow</title>
+    <title>IT Approval Workflow | Faraze System</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -88,7 +88,7 @@
             margin-bottom: 0.4rem;
         }
 
-        .input-group input, .input-group select {
+        .input-group input, .input-group select, .input-group textarea {
             width: 100%;
             padding: 0.8rem;
             background: #0f172a;
@@ -141,6 +141,7 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .role-badge {
@@ -284,6 +285,11 @@
             color: #86efac;
         }
 
+        .attachment-link {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
         @media (max-width: 768px) {
             .app-container { padding: 1rem; }
         }
@@ -424,17 +430,18 @@
     </div>
 
     <script>
-        // ============ FIREBASE CONFIG ============
-        // 🔥 REPLACE WITH YOUR FIREBASE CONFIG 🔥
+        // ============ YOUR FIREBASE CONFIG ============
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyBNFuH14JA0RCrkMhl-37ysgla46QpSJyM",
+            authDomain: "faraze-a0339.firebaseapp.com",
+            projectId: "faraze-a0339",
+            storageBucket: "faraze-a0339.firebasestorage.app",
+            messagingSenderId: "463612751566",
+            appId: "1:463612751566:web:0e6b1e8367321c4ffbaa9f",
+            measurementId: "G-4MNEQDLD3D"
         };
         
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const storage = firebase.storage();
@@ -485,7 +492,6 @@
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCred.user;
                 
-                // Save user data to Firestore
                 await db.collection('users').doc(user.uid).set({
                     name: name,
                     email: email,
@@ -522,19 +528,15 @@
         // Auth State Listener
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                // Fetch user data from Firestore
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 if (userDoc.exists) {
                     currentUserData = { uid: user.uid, ...userDoc.data() };
                     document.getElementById('userName').innerText = currentUserData.name;
                     document.getElementById('userRole').innerText = currentUserData.role.toUpperCase();
                     
-                    // Show admin panel if role is admin
                     if (currentUserData.role === 'admin') {
                         document.getElementById('adminPanel').style.display = 'block';
                         loadAllUsers();
-                    } else {
-                        document.getElementById('adminPanel').style.display = 'none';
                     }
                     
                     document.getElementById('authContainer').style.display = 'none';
@@ -569,9 +571,8 @@
         window.deleteUser = async (userId) => {
             if (confirm('Delete this user?')) {
                 await db.collection('users').doc(userId).delete();
-                // Also delete auth user (requires admin SDK, so just remove from Firestore)
                 loadAllUsers();
-                addLog(`User deleted from Firestore`);
+                addLog(`User deleted`);
             }
         };
         
@@ -610,7 +611,6 @@
         async function loadActiveRequest(specificId = null) {
             if (unsubscribeRequest) unsubscribeRequest();
             
-            let query = db.collection('requests').orderBy('createdAt', 'desc').limit(1);
             if (specificId) {
                 const doc = await db.collection('requests').doc(specificId).get();
                 if (doc.exists) {
@@ -621,7 +621,7 @@
                 }
             }
             
-            const snapshot = await query.get();
+            const snapshot = await db.collection('requests').orderBy('createdAt', 'desc').limit(1).get();
             if (!snapshot.empty) {
                 const doc = snapshot.docs[0];
                 currentRequest = { id: doc.id, ...doc.data() };
@@ -644,7 +644,6 @@
         function canUserAct(action) {
             const role = currentUserData.role;
             const stage = currentRequest?.stage;
-            
             if (role === 'admin') return true;
             if (action === 'sse' && role === 'sse' && stage === 'SSE') return true;
             if (action === 'am' && role === 'am' && stage === 'AM') return true;
@@ -657,22 +656,14 @@
             if (!currentRequest) { alert('No active request'); return; }
             if (!canUserAct(action)) { alert(`You don't have permission for ${action} at current stage`); return; }
             
-            let remarkField = '';
-            if (action === 'sse') remarkField = 'sseRemark';
-            else if (action === 'am') remarkField = 'amRemark';
-            else if (action === 'area') remarkField = 'areaRemark';
-            else if (action === 'hod') remarkField = 'hodRemark';
-            
             const remark = document.getElementById(`${action}Remark`).value;
             if (!remark.trim()) { alert('Please enter remarks'); return; }
             
             const updates = {};
-            updates[remarkField] = remark.trim();
-            
-            if (action === 'sse') updates.stage = 'AM';
-            else if (action === 'am') updates.stage = 'AREA';
-            else if (action === 'area') updates.stage = 'HOD';
-            else if (action === 'hod') updates.stage = 'COMPLETED';
+            if (action === 'sse') { updates.sseRemark = remark.trim(); updates.stage = 'AM'; }
+            else if (action === 'am') { updates.amRemark = remark.trim(); updates.stage = 'AREA'; }
+            else if (action === 'area') { updates.areaRemark = remark.trim(); updates.stage = 'HOD'; }
+            else if (action === 'hod') { updates.hodRemark = remark.trim(); updates.stage = 'COMPLETED'; }
             
             await db.collection('requests').doc(currentRequest.id).update(updates);
             addLog(`✅ ${action.toUpperCase()} submitted - Stage updated`);
@@ -694,7 +685,7 @@
             document.getElementById('requestDetails').innerHTML = `
                 <div class="detail-item"><strong>Requester:</strong> ${req.requesterName} (${req.requesterEmail})</div>
                 <div class="detail-item"><strong>Description:</strong> ${req.description}</div>
-                <div class="detail-item"><strong>Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#60a5fa;">Download</a>` : '—'}</div>
+                <div class="detail-item"><strong>Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" class="attachment-link">📎 Download</a>` : '—'}</div>
                 <div class="detail-item"><strong>SSE:</strong> ${req.sseRemark || '—'}</div>
                 <div class="detail-item"><strong>AM:</strong> ${req.amRemark || '—'}</div>
                 <div class="detail-item"><strong>Area Mgr:</strong> ${req.areaRemark || '—'}</div>
@@ -706,25 +697,21 @@
             const areaDone = req.areaRemark && req.areaRemark.trim();
             const hodDone = req.stage === 'COMPLETED';
             
-            // Update SSE
             document.getElementById('sseStatus').className = `status ${sseDone ? 'status-done' : (req.stage === 'SSE' ? 'status-pending' : 'status-locked')}`;
             document.getElementById('sseStatus').innerText = sseDone ? '✅ Done' : (req.stage === 'SSE' ? '⏳ Pending' : '🔒 Locked');
             document.getElementById('sseRemark').disabled = sseDone || req.stage !== 'SSE' || !canUserAct('sse');
             document.getElementById('sseBtn').disabled = req.stage !== 'SSE' || sseDone || !canUserAct('sse');
             
-            // Update AM
             document.getElementById('amStatus').className = `status ${amDone ? 'status-done' : (req.stage === 'AM' ? 'status-pending' : 'status-locked')}`;
             document.getElementById('amStatus').innerText = amDone ? '✅ Done' : (req.stage === 'AM' ? '📢 Action' : '🔒 Locked');
             document.getElementById('amRemark').disabled = req.stage !== 'AM' || amDone || !canUserAct('am');
             document.getElementById('amBtn').disabled = req.stage !== 'AM' || amDone || !canUserAct('am');
             
-            // Update Area
             document.getElementById('areaStatus').className = `status ${areaDone ? 'status-done' : (req.stage === 'AREA' ? 'status-pending' : 'status-locked')}`;
             document.getElementById('areaStatus').innerText = areaDone ? '✅ Done' : (req.stage === 'AREA' ? '✍️ Action' : '🔒 Locked');
             document.getElementById('areaRemark').disabled = req.stage !== 'AREA' || areaDone || !canUserAct('area');
             document.getElementById('areaBtn').disabled = req.stage !== 'AREA' || areaDone || !canUserAct('area');
             
-            // Update HOD
             document.getElementById('hodStatus').className = `status ${hodDone ? 'status-done' : (req.stage === 'HOD' ? 'status-pending' : 'status-locked')}`;
             document.getElementById('hodStatus').innerText = hodDone ? '🏆 Approved' : (req.stage === 'HOD' ? '⏳ Final' : '🔒 Locked');
             document.getElementById('hodRemark').disabled = req.stage !== 'HOD' || hodDone || !canUserAct('hod');
