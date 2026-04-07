@@ -10,245 +10,52 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-        body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            min-height: 100vh;
-        }
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-        .auth-card {
-            background: #1e293b;
-            border-radius: 2rem;
-            padding: 2rem;
-            width: 100%;
-            max-width: 450px;
-            border: 1px solid #334155;
-        }
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .auth-header h1 {
-            font-size: 2rem;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        .auth-tabs {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 0.8rem;
-            background: #0f172a;
-            border: none;
-            border-radius: 1rem;
-            color: #94a3b8;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .tab-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
-        .input-group {
-            margin-bottom: 1.2rem;
-        }
-        .input-group label {
-            display: block;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            margin-bottom: 0.4rem;
-        }
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 0.8rem;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 1rem;
-            color: white;
-            font-size: 1rem;
-        }
-        .auth-btn {
-            width: 100%;
-            padding: 0.8rem;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            border: none;
-            border-radius: 1rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-        .error-msg {
-            color: #f87171;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-            text-align: center;
-        }
-        .success-msg {
-            color: #4ade80;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-            text-align: center;
-        }
-        .app-container {
-            display: none;
-            padding: 2rem 1.5rem;
-        }
-        .navbar {
-            background: #1e293b;
-            border-radius: 1rem;
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            border: 1px solid #334155;
-        }
-        .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .role-badge {
-            background: #3b82f6;
-            padding: 0.3rem 0.8rem;
-            border-radius: 2rem;
-            font-size: 0.7rem;
-            font-weight: 600;
-        }
-        .logout-btn {
-            background: #ef4444;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            color: white;
-            cursor: pointer;
-        }
-        .admin-panel {
-            background: #1e293b;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 2px solid #f59e0b;
-        }
-        .users-table {
-            width: 100%;
-            overflow-x: auto;
-        }
-        .users-table table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .users-table th, .users-table td {
-            padding: 0.8rem;
-            text-align: left;
-            border-bottom: 1px solid #334155;
-            color: #e2e8f0;
-        }
-        .workflow-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .workflow-card {
-            background: #1e293b;
-            border-radius: 1.5rem;
-            padding: 1.3rem;
-            border: 1px solid #334155;
-        }
-        .status {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 2rem;
-            font-size: 0.7rem;
-            margin-bottom: 1rem;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; }
+        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .auth-card { background: #1e293b; border-radius: 2rem; padding: 2rem; width: 100%; max-width: 450px; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .auth-header { text-align: center; margin-bottom: 2rem; }
+        .auth-header h1 { font-size: 2rem; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .auth-header p { color: #94a3b8; margin-top: 0.5rem; }
+        .auth-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .tab-btn { flex: 1; padding: 0.8rem; background: #0f172a; border: none; border-radius: 1rem; color: #94a3b8; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .tab-btn.active { background: #3b82f6; color: white; }
+        .input-group { margin-bottom: 1.2rem; }
+        .input-group label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.4rem; }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 1rem; color: white; font-size: 1rem; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { outline: none; border-color: #3b82f6; }
+        .auth-btn { width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 1rem; color: white; font-weight: 600; cursor: pointer; margin-top: 1rem; transition: all 0.2s; }
+        .auth-btn:hover { transform: scale(0.98); }
+        .error-msg { color: #f87171; font-size: 0.8rem; margin-top: 0.5rem; text-align: center; }
+        .success-msg { color: #4ade80; font-size: 0.8rem; margin-top: 0.5rem; text-align: center; }
+        .app-container { display: none; padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+        .navbar { background: #1e293b; border-radius: 1rem; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border: 1px solid #334155; }
+        .user-badge { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .role-badge { background: #3b82f6; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; }
+        .logout-btn { background: #ef4444; border: none; padding: 0.5rem 1rem; border-radius: 2rem; color: white; cursor: pointer; }
+        .admin-panel { background: #1e293b; border-radius: 1.5rem; padding: 1.5rem; margin-bottom: 2rem; border: 2px solid #f59e0b; }
+        .admin-panel h3 { color: #f59e0b; margin-bottom: 1rem; }
+        .users-table { width: 100%; overflow-x: auto; }
+        .users-table table { width: 100%; border-collapse: collapse; }
+        .users-table th, .users-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #334155; color: #e2e8f0; }
+        .users-table th { color: #94a3b8; }
+        .workflow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .workflow-card { background: #1e293b; border-radius: 1.5rem; padding: 1.3rem; border: 1px solid #334155; transition: transform 0.2s; }
+        .workflow-card:hover { transform: translateY(-3px); }
+        .status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; margin-bottom: 1rem; }
         .status-pending { background: #451a03; color: #fbbf24; }
         .status-done { background: #14532d; color: #4ade80; }
         .status-locked { background: #2d2a2a; color: #9ca3af; }
-        textarea {
-            width: 100%;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 1rem;
-            padding: 0.8rem;
-            color: white;
-            resize: vertical;
-            margin: 0.5rem 0;
-        }
-        button {
-            background: #3b82f6;
-            border: none;
-            padding: 0.6rem;
-            border-radius: 1rem;
-            color: white;
-            cursor: pointer;
-            width: 100%;
-        }
-        button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .request-card {
-            background: #1e293b;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid #334155;
-        }
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .detail-item {
-            background: #0f172a;
-            padding: 0.8rem;
-            border-radius: 1rem;
-        }
-        .events-log {
-            background: #0f172a;
-            border-radius: 1rem;
-            padding: 1rem;
-            max-height: 150px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.75rem;
-            color: #86efac;
-        }
-        .debug-info {
-            background: #0f172a;
-            border-radius: 0.5rem;
-            padding: 0.5rem;
-            margin-top: 1rem;
-            font-size: 0.7rem;
-            color: #64748b;
-            text-align: center;
-        }
-        @media (max-width: 768px) {
-            .app-container { padding: 1rem; }
-        }
+        textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 1rem; padding: 0.8rem; color: white; resize: vertical; margin: 0.5rem 0; }
+        button { background: #3b82f6; border: none; padding: 0.6rem; border-radius: 1rem; color: white; cursor: pointer; width: 100%; font-weight: 600; transition: all 0.2s; }
+        button:hover:not(:disabled) { background: #2563eb; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .request-card { background: #1e293b; border-radius: 1.5rem; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #334155; }
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .detail-item { background: #0f172a; padding: 0.8rem; border-radius: 1rem; border-left: 3px solid #3b82f6; }
+        .events-log { background: #0f172a; border-radius: 1rem; padding: 1rem; max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 0.75rem; color: #86efac; }
+        .debug-info { background: #0f172a; border-radius: 0.5rem; padding: 0.5rem; margin-top: 1rem; font-size: 0.7rem; color: #64748b; text-align: center; }
+        @media (max-width: 768px) { .app-container { padding: 1rem; } }
     </style>
 </head>
 <body>
@@ -256,7 +63,7 @@
         <div class="auth-card">
             <div class="auth-header">
                 <h1>📋 IT Workflow</h1>
-                <p style="color: #94a3b8; margin-top: 0.5rem;">Register & Login to Continue</p>
+                <p>Register & Login to Continue</p>
             </div>
             <div class="auth-tabs">
                 <button class="tab-btn active" onclick="switchTab('login')">Login</button>
@@ -286,7 +93,7 @@
                     <input type="email" id="regEmail" placeholder="user@example.com">
                 </div>
                 <div class="input-group">
-                    <label>Password</label>
+                    <label>Password (min 6 characters)</label>
                     <input type="password" id="regPassword" placeholder="••••••••">
                 </div>
                 <div class="input-group">
@@ -306,7 +113,7 @@
             </div>
             
             <div class="debug-info" id="debugInfo">
-                🔍 Checking Firebase connection...
+                🔍 Connecting to Firebase...
             </div>
         </div>
     </div>
@@ -322,7 +129,7 @@
         </div>
 
         <div class="admin-panel" id="adminPanel" style="display: none;">
-            <h3 style="color: #f59e0b; margin-bottom: 1rem;">👑 Admin Panel - Manage Users</h3>
+            <h3>👑 Admin Panel - Manage Users</h3>
             <div class="users-table" id="usersTable"></div>
         </div>
 
@@ -377,7 +184,7 @@
     </div>
 
     <script>
-        // Firebase Config
+        // Firebase Config - YOUR CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBNFuH14JA0RCrkMhl-37ysgla46QpSJyM",
             authDomain: "faraze-a0339.firebaseapp.com",
@@ -389,16 +196,18 @@
         };
         
         // Initialize Firebase
-        let app, db, storage, auth;
+        let db, storage, auth;
         
         try {
-            app = firebase.initializeApp(firebaseConfig);
+            firebase.initializeApp(firebaseConfig);
             db = firebase.firestore();
             storage = firebase.storage();
             auth = firebase.auth();
             document.getElementById('debugInfo').innerHTML = '✅ Firebase Connected! Ready to register/login';
+            document.getElementById('debugInfo').style.color = '#4ade80';
         } catch(e) {
             document.getElementById('debugInfo').innerHTML = '❌ Firebase Error: ' + e.message;
+            document.getElementById('debugInfo').style.color = '#f87171';
             console.error(e);
         }
         
@@ -452,11 +261,9 @@
             }
             
             try {
-                // Create user in Firebase Auth
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCred.user;
                 
-                // Save user data to Firestore
                 await db.collection('users').doc(user.uid).set({
                     name: name,
                     email: email,
@@ -464,19 +271,22 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                document.getElementById('regSuccess').innerText = '✅ Account created successfully! You are now logged in.';
+                document.getElementById('regSuccess').innerText = '✅ Account created successfully! Redirecting...';
                 addLog(`✅ Account created! Welcome ${name}`);
                 
-                // Auto redirect after 1 second
                 setTimeout(() => {
                     location.reload();
-                }, 1000);
+                }, 1500);
                 
             } catch(e) {
                 console.error('Registration error:', e);
                 let errorMsg = e.message;
                 if (e.code === 'auth/email-already-in-use') {
                     errorMsg = 'Email already registered. Please login or use different email.';
+                } else if (e.code === 'auth/invalid-email') {
+                    errorMsg = 'Invalid email format.';
+                } else if (e.code === 'auth/weak-password') {
+                    errorMsg = 'Password too weak. Use at least 6 characters.';
                 }
                 document.getElementById('regError').innerText = errorMsg;
             }
@@ -496,7 +306,6 @@
             
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                document.getElementById('loginError').innerText = '';
                 addLog(`✅ Login successful!`);
             } catch(e) {
                 console.error('Login error:', e);
@@ -505,6 +314,8 @@
                     errorMsg = 'User not found. Please register first.';
                 } else if (e.code === 'auth/wrong-password') {
                     errorMsg = 'Wrong password. Please try again.';
+                } else if (e.code === 'auth/invalid-email') {
+                    errorMsg = 'Invalid email format.';
                 }
                 document.getElementById('loginError').innerText = errorMsg;
             }
@@ -537,7 +348,6 @@
                         
                         loadActiveRequest();
                     } else {
-                        // User exists in Auth but not in Firestore - create entry
                         await db.collection('users').doc(user.uid).set({
                             name: user.email.split('@')[0],
                             email: user.email,
@@ -548,7 +358,7 @@
                     }
                 } catch(e) {
                     console.error('Error loading user data:', e);
-                    addLog(`Error loading user data: ${e.message}`, true);
+                    addLog(`Error: ${e.message}`, true);
                 }
             } else {
                 document.getElementById('authContainer').style.display = 'flex';
@@ -588,6 +398,7 @@
                     const storageRef = storage.ref(`requests/${Date.now()}_${file.name}`);
                     await storageRef.put(file);
                     attachmentUrl = await storageRef.getDownloadURL();
+                    addLog(`📎 File uploaded: ${file.name}`);
                 } catch(e) {
                     console.error('Upload error:', e);
                 }
@@ -636,6 +447,9 @@
                     currentRequest = { id: doc.id, ...doc.data() };
                     updateUI();
                     subscribeToRequest(doc.id);
+                } else {
+                    document.getElementById('requestCard').style.display = 'none';
+                    document.getElementById('workflowGrid').style.display = 'none';
                 }
             } catch(e) {
                 console.error('Error loading request:', e);
