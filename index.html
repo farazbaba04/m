@@ -16,13 +16,10 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', system-ui, sans-serif;
         }
-
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             min-height: 100vh;
         }
-
-        /* Auth Container */
         .auth-container {
             min-height: 100vh;
             display: flex;
@@ -30,7 +27,6 @@
             justify-content: center;
             padding: 2rem;
         }
-
         .auth-card {
             background: #1e293b;
             border-radius: 2rem;
@@ -38,14 +34,11 @@
             width: 100%;
             max-width: 450px;
             border: 1px solid #334155;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
-
         .auth-header {
             text-align: center;
             margin-bottom: 2rem;
         }
-
         .auth-header h1 {
             font-size: 2rem;
             background: linear-gradient(135deg, #60a5fa, #a78bfa);
@@ -53,13 +46,11 @@
             background-clip: text;
             color: transparent;
         }
-
         .auth-tabs {
             display: flex;
             gap: 1rem;
             margin-bottom: 2rem;
         }
-
         .tab-btn {
             flex: 1;
             padding: 0.8rem;
@@ -69,26 +60,21 @@
             color: #94a3b8;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
         }
-
         .tab-btn.active {
             background: #3b82f6;
             color: white;
         }
-
         .input-group {
             margin-bottom: 1.2rem;
         }
-
         .input-group label {
             display: block;
             color: #94a3b8;
             font-size: 0.85rem;
             margin-bottom: 0.4rem;
         }
-
-        .input-group input, .input-group select, .input-group textarea {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 0.8rem;
             background: #0f172a;
@@ -97,7 +83,6 @@
             color: white;
             font-size: 1rem;
         }
-
         .auth-btn {
             width: 100%;
             padding: 0.8rem;
@@ -109,21 +94,22 @@
             cursor: pointer;
             margin-top: 1rem;
         }
-
         .error-msg {
             color: #f87171;
             font-size: 0.8rem;
             margin-top: 0.5rem;
             text-align: center;
         }
-
-        /* Main App Container */
+        .success-msg {
+            color: #4ade80;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
         .app-container {
             display: none;
             padding: 2rem 1.5rem;
         }
-
-        /* Navbar */
         .navbar {
             background: #1e293b;
             border-radius: 1rem;
@@ -136,14 +122,12 @@
             gap: 1rem;
             border: 1px solid #334155;
         }
-
         .user-badge {
             display: flex;
             align-items: center;
             gap: 1rem;
             flex-wrap: wrap;
         }
-
         .role-badge {
             background: #3b82f6;
             padding: 0.3rem 0.8rem;
@@ -151,7 +135,6 @@
             font-size: 0.7rem;
             font-weight: 600;
         }
-
         .logout-btn {
             background: #ef4444;
             border: none;
@@ -160,8 +143,6 @@
             color: white;
             cursor: pointer;
         }
-
-        /* Admin Panel */
         .admin-panel {
             background: #1e293b;
             border-radius: 1.5rem;
@@ -169,52 +150,32 @@
             margin-bottom: 2rem;
             border: 2px solid #f59e0b;
         }
-
         .users-table {
             width: 100%;
             overflow-x: auto;
         }
-
         .users-table table {
             width: 100%;
             border-collapse: collapse;
         }
-
         .users-table th, .users-table td {
             padding: 0.8rem;
             text-align: left;
             border-bottom: 1px solid #334155;
             color: #e2e8f0;
         }
-
-        .users-table th {
-            color: #94a3b8;
-        }
-
-        .delete-user {
-            background: #ef4444;
-            border: none;
-            padding: 0.3rem 0.8rem;
-            border-radius: 0.5rem;
-            color: white;
-            cursor: pointer;
-        }
-
-        /* Workflow Cards */
         .workflow-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
-
         .workflow-card {
             background: #1e293b;
             border-radius: 1.5rem;
             padding: 1.3rem;
             border: 1px solid #334155;
         }
-
         .status {
             display: inline-block;
             padding: 0.3rem 0.8rem;
@@ -222,11 +183,9 @@
             font-size: 0.7rem;
             margin-bottom: 1rem;
         }
-
         .status-pending { background: #451a03; color: #fbbf24; }
         .status-done { background: #14532d; color: #4ade80; }
         .status-locked { background: #2d2a2a; color: #9ca3af; }
-
         textarea {
             width: 100%;
             background: #0f172a;
@@ -237,7 +196,6 @@
             resize: vertical;
             margin: 0.5rem 0;
         }
-
         button {
             background: #3b82f6;
             border: none;
@@ -247,12 +205,10 @@
             cursor: pointer;
             width: 100%;
         }
-
         button:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
-
         .request-card {
             background: #1e293b;
             border-radius: 1.5rem;
@@ -260,20 +216,17 @@
             margin-bottom: 2rem;
             border: 1px solid #334155;
         }
-
         .detail-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin-top: 1rem;
         }
-
         .detail-item {
             background: #0f172a;
             padding: 0.8rem;
             border-radius: 1rem;
         }
-
         .events-log {
             background: #0f172a;
             border-radius: 1rem;
@@ -284,19 +237,21 @@
             font-size: 0.75rem;
             color: #86efac;
         }
-
-        .attachment-link {
-            color: #60a5fa;
-            text-decoration: none;
+        .debug-info {
+            background: #0f172a;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-top: 1rem;
+            font-size: 0.7rem;
+            color: #64748b;
+            text-align: center;
         }
-
         @media (max-width: 768px) {
             .app-container { padding: 1rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Auth Container -->
     <div class="auth-container" id="authContainer">
         <div class="auth-card">
             <div class="auth-header">
@@ -308,7 +263,6 @@
                 <button class="tab-btn" onclick="switchTab('register')">Register</button>
             </div>
             
-            <!-- Login Form -->
             <div id="loginForm">
                 <div class="input-group">
                     <label>Email</label>
@@ -322,7 +276,6 @@
                 <div id="loginError" class="error-msg"></div>
             </div>
             
-            <!-- Register Form -->
             <div id="registerForm" style="display: none;">
                 <div class="input-group">
                     <label>Full Name</label>
@@ -337,25 +290,28 @@
                     <input type="password" id="regPassword" placeholder="••••••••">
                 </div>
                 <div class="input-group">
-                    <label>Role (Select your position)</label>
+                    <label>Role</label>
                     <select id="regRole">
-                        <option value="requester">Requester (Normal User)</option>
+                        <option value="requester">Requester</option>
                         <option value="sse">SSE IT</option>
                         <option value="am">AM IT</option>
                         <option value="area_manager">Area Manager</option>
                         <option value="hod">HOD IT</option>
-                        <option value="admin">Admin (Full Access)</option>
+                        <option value="admin">Admin</option>
                     </select>
                 </div>
                 <button class="auth-btn" onclick="handleRegister()">Create Account</button>
                 <div id="regError" class="error-msg"></div>
+                <div id="regSuccess" class="success-msg"></div>
+            </div>
+            
+            <div class="debug-info" id="debugInfo">
+                🔍 Checking Firebase connection...
             </div>
         </div>
     </div>
 
-    <!-- Main App -->
     <div class="app-container" id="appContainer">
-        <!-- Navbar -->
         <div class="navbar">
             <h2 style="color: white;">📋 IT Approval Workflow</h2>
             <div class="user-badge">
@@ -365,14 +321,12 @@
             </div>
         </div>
 
-        <!-- Admin Panel (only visible to admin) -->
         <div class="admin-panel" id="adminPanel" style="display: none;">
             <h3 style="color: #f59e0b; margin-bottom: 1rem;">👑 Admin Panel - Manage Users</h3>
             <div class="users-table" id="usersTable"></div>
         </div>
 
-        <!-- Create Request Portal -->
-        <div class="request-card" id="createRequestCard">
+        <div class="request-card">
             <h3 style="color: #60a5fa; margin-bottom: 1rem;">📧 Create New IT Request</h3>
             <div class="input-group">
                 <label>Request Description</label>
@@ -385,52 +339,45 @@
             <button onclick="createRequest()">🚀 Submit Request</button>
         </div>
 
-        <!-- Active Request Display -->
         <div class="request-card" id="requestCard" style="display: none;">
-            <h3>Active Request #<span id="reqId"></span> <span id="reqStage"></span></h3>
+            <h3>Active Request #<span id="reqId"></span></h3>
             <div class="detail-grid" id="requestDetails"></div>
         </div>
 
-        <!-- Workflow Cards -->
         <div class="workflow-grid" id="workflowGrid" style="display: none;">
-            <!-- SSE -->
             <div class="workflow-card">
                 <h3 style="color: #60a5fa;">🖥️ SSE IT</h3>
                 <div id="sseStatus" class="status status-pending">Pending</div>
                 <textarea id="sseRemark" rows="2" placeholder="Technical evaluation..."></textarea>
-                <button id="sseBtn" onclick="submitAction('sse')">✅ Submit SSE</button>
+                <button onclick="submitAction('sse')">✅ Submit SSE</button>
             </div>
-            <!-- AM -->
             <div class="workflow-card">
                 <h3 style="color: #a78bfa;">📌 AM IT</h3>
                 <div id="amStatus" class="status status-locked">Locked</div>
                 <textarea id="amRemark" rows="2" placeholder="AM remarks..." disabled></textarea>
-                <button id="amBtn" onclick="submitAction('am')" disabled>Submit AM</button>
+                <button onclick="submitAction('am')" disabled>Submit AM</button>
             </div>
-            <!-- Area Manager -->
             <div class="workflow-card">
                 <h3 style="color: #34d399;">🌍 Area Manager</h3>
                 <div id="areaStatus" class="status status-locked">Locked</div>
                 <textarea id="areaRemark" rows="2" placeholder="Area remarks..." disabled></textarea>
-                <button id="areaBtn" onclick="submitAction('area')" disabled>Submit Area</button>
+                <button onclick="submitAction('area')" disabled>Submit Area</button>
             </div>
-            <!-- HOD -->
             <div class="workflow-card">
                 <h3 style="color: #f87171;">🏛️ HOD IT</h3>
                 <div id="hodStatus" class="status status-locked">Locked</div>
                 <textarea id="hodRemark" rows="2" placeholder="Final approval..." disabled></textarea>
-                <button id="hodBtn" onclick="submitAction('hod')" disabled>Final Approve</button>
+                <button onclick="submitAction('hod')" disabled>Final Approve</button>
             </div>
         </div>
 
-        <!-- Events Log -->
         <div class="events-log" id="eventsLog">
             <div>🟢 System ready. Login to continue...</div>
         </div>
     </div>
 
     <script>
-        // ============ YOUR FIREBASE CONFIG ============
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBNFuH14JA0RCrkMhl-37ysgla46QpSJyM",
             authDomain: "faraze-a0339.firebaseapp.com",
@@ -442,10 +389,18 @@
         };
         
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-        const auth = firebase.auth();
+        let app, db, storage, auth;
+        
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+            storage = firebase.storage();
+            auth = firebase.auth();
+            document.getElementById('debugInfo').innerHTML = '✅ Firebase Connected! Ready to register/login';
+        } catch(e) {
+            document.getElementById('debugInfo').innerHTML = '❌ Firebase Error: ' + e.message;
+            console.error(e);
+        }
         
         let currentUserData = null;
         let currentRequest = null;
@@ -483,15 +438,25 @@
             const password = document.getElementById('regPassword').value;
             const role = document.getElementById('regRole').value;
             
+            document.getElementById('regError').innerText = '';
+            document.getElementById('regSuccess').innerText = '';
+            
             if (!name || !email || !password) {
                 document.getElementById('regError').innerText = 'All fields required';
                 return;
             }
             
+            if (password.length < 6) {
+                document.getElementById('regError').innerText = 'Password must be at least 6 characters';
+                return;
+            }
+            
             try {
+                // Create user in Firebase Auth
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCred.user;
                 
+                // Save user data to Firestore
                 await db.collection('users').doc(user.uid).set({
                     name: name,
                     email: email,
@@ -499,10 +464,21 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
+                document.getElementById('regSuccess').innerText = '✅ Account created successfully! You are now logged in.';
                 addLog(`✅ Account created! Welcome ${name}`);
-                document.getElementById('regError').innerText = '';
+                
+                // Auto redirect after 1 second
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+                
             } catch(e) {
-                document.getElementById('regError').innerText = e.message;
+                console.error('Registration error:', e);
+                let errorMsg = e.message;
+                if (e.code === 'auth/email-already-in-use') {
+                    errorMsg = 'Email already registered. Please login or use different email.';
+                }
+                document.getElementById('regError').innerText = errorMsg;
             }
         }
         
@@ -511,11 +487,26 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             
+            document.getElementById('loginError').innerText = '';
+            
+            if (!email || !password) {
+                document.getElementById('loginError').innerText = 'Email and password required';
+                return;
+            }
+            
             try {
                 await auth.signInWithEmailAndPassword(email, password);
                 document.getElementById('loginError').innerText = '';
+                addLog(`✅ Login successful!`);
             } catch(e) {
-                document.getElementById('loginError').innerText = e.message;
+                console.error('Login error:', e);
+                let errorMsg = e.message;
+                if (e.code === 'auth/user-not-found') {
+                    errorMsg = 'User not found. Please register first.';
+                } else if (e.code === 'auth/wrong-password') {
+                    errorMsg = 'Wrong password. Please try again.';
+                }
+                document.getElementById('loginError').innerText = errorMsg;
             }
         }
         
@@ -528,22 +519,36 @@
         // Auth State Listener
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                const userDoc = await db.collection('users').doc(user.uid).get();
-                if (userDoc.exists) {
-                    currentUserData = { uid: user.uid, ...userDoc.data() };
-                    document.getElementById('userName').innerText = currentUserData.name;
-                    document.getElementById('userRole').innerText = currentUserData.role.toUpperCase();
-                    
-                    if (currentUserData.role === 'admin') {
-                        document.getElementById('adminPanel').style.display = 'block';
-                        loadAllUsers();
+                try {
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc.exists) {
+                        currentUserData = { uid: user.uid, ...userDoc.data() };
+                        document.getElementById('userName').innerText = currentUserData.name;
+                        document.getElementById('userRole').innerText = currentUserData.role.toUpperCase();
+                        
+                        if (currentUserData.role === 'admin') {
+                            document.getElementById('adminPanel').style.display = 'block';
+                            loadAllUsers();
+                        }
+                        
+                        document.getElementById('authContainer').style.display = 'none';
+                        document.getElementById('appContainer').style.display = 'block';
+                        addLog(`👋 Welcome ${currentUserData.name} (${currentUserData.role})`);
+                        
+                        loadActiveRequest();
+                    } else {
+                        // User exists in Auth but not in Firestore - create entry
+                        await db.collection('users').doc(user.uid).set({
+                            name: user.email.split('@')[0],
+                            email: user.email,
+                            role: 'requester',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        location.reload();
                     }
-                    
-                    document.getElementById('authContainer').style.display = 'none';
-                    document.getElementById('appContainer').style.display = 'block';
-                    addLog(`👋 Welcome ${currentUserData.name} (${currentUserData.role})`);
-                    
-                    loadActiveRequest();
+                } catch(e) {
+                    console.error('Error loading user data:', e);
+                    addLog(`Error loading user data: ${e.message}`, true);
                 }
             } else {
                 document.getElementById('authContainer').style.display = 'flex';
@@ -553,28 +558,23 @@
         
         // Load all users (Admin only)
         async function loadAllUsers() {
-            const snapshot = await db.collection('users').get();
-            let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr></thead><tbody>';
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                html += `<tr>
-                    <td>${data.name}</td>
-                    <td>${data.email}</td>
-                    <td>${data.role}</td>
-                    <td><button class="delete-user" onclick="deleteUser('${doc.id}')">Delete</button></td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            document.getElementById('usersTable').innerHTML = html;
-        }
-        
-        window.deleteUser = async (userId) => {
-            if (confirm('Delete this user?')) {
-                await db.collection('users').doc(userId).delete();
-                loadAllUsers();
-                addLog(`User deleted`);
+            try {
+                const snapshot = await db.collection('users').get();
+                let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th></thead><tbody>';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    html += `<tr>
+                        <td>${data.name || '—'}</td>
+                        <td>${data.email}</td>
+                        <td>${data.role}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('usersTable').innerHTML = html;
+            } catch(e) {
+                console.error('Error loading users:', e);
             }
-        };
+        }
         
         // Create new request
         window.createRequest = async () => {
@@ -584,9 +584,13 @@
             let attachmentUrl = null;
             const file = document.getElementById('fileInput').files[0];
             if (file) {
-                const storageRef = storage.ref(`requests/${Date.now()}_${file.name}`);
-                await storageRef.put(file);
-                attachmentUrl = await storageRef.getDownloadURL();
+                try {
+                    const storageRef = storage.ref(`requests/${Date.now()}_${file.name}`);
+                    await storageRef.put(file);
+                    attachmentUrl = await storageRef.getDownloadURL();
+                } catch(e) {
+                    console.error('Upload error:', e);
+                }
             }
             
             const requestData = {
@@ -600,33 +604,41 @@
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            const docRef = await db.collection('requests').add(requestData);
-            addLog(`✅ Request #${docRef.id.slice(0,6)} created!`);
-            document.getElementById('requestDesc').value = '';
-            document.getElementById('fileInput').value = '';
-            loadActiveRequest(docRef.id);
+            try {
+                const docRef = await db.collection('requests').add(requestData);
+                addLog(`✅ Request #${docRef.id.slice(0,6)} created!`);
+                document.getElementById('requestDesc').value = '';
+                document.getElementById('fileInput').value = '';
+                loadActiveRequest(docRef.id);
+            } catch(e) {
+                alert('Error creating request: ' + e.message);
+            }
         };
         
         // Load active request
         async function loadActiveRequest(specificId = null) {
             if (unsubscribeRequest) unsubscribeRequest();
             
-            if (specificId) {
-                const doc = await db.collection('requests').doc(specificId).get();
-                if (doc.exists) {
+            try {
+                if (specificId) {
+                    const doc = await db.collection('requests').doc(specificId).get();
+                    if (doc.exists) {
+                        currentRequest = { id: doc.id, ...doc.data() };
+                        updateUI();
+                        subscribeToRequest(doc.id);
+                        return;
+                    }
+                }
+                
+                const snapshot = await db.collection('requests').orderBy('createdAt', 'desc').limit(1).get();
+                if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
                     currentRequest = { id: doc.id, ...doc.data() };
                     updateUI();
                     subscribeToRequest(doc.id);
-                    return;
                 }
-            }
-            
-            const snapshot = await db.collection('requests').orderBy('createdAt', 'desc').limit(1).get();
-            if (!snapshot.empty) {
-                const doc = snapshot.docs[0];
-                currentRequest = { id: doc.id, ...doc.data() };
-                updateUI();
-                subscribeToRequest(doc.id);
+            } catch(e) {
+                console.error('Error loading request:', e);
             }
         }
         
@@ -665,9 +677,13 @@
             else if (action === 'area') { updates.areaRemark = remark.trim(); updates.stage = 'HOD'; }
             else if (action === 'hod') { updates.hodRemark = remark.trim(); updates.stage = 'COMPLETED'; }
             
-            await db.collection('requests').doc(currentRequest.id).update(updates);
-            addLog(`✅ ${action.toUpperCase()} submitted - Stage updated`);
-            document.getElementById(`${action}Remark`).value = '';
+            try {
+                await db.collection('requests').doc(currentRequest.id).update(updates);
+                addLog(`✅ ${action.toUpperCase()} submitted - Stage updated`);
+                document.getElementById(`${action}Remark`).value = '';
+            } catch(e) {
+                alert('Error: ' + e.message);
+            }
         };
         
         function updateUI() {
@@ -683,9 +699,8 @@
             document.getElementById('reqId').innerText = req.id.slice(0,8);
             
             document.getElementById('requestDetails').innerHTML = `
-                <div class="detail-item"><strong>Requester:</strong> ${req.requesterName} (${req.requesterEmail})</div>
+                <div class="detail-item"><strong>Requester:</strong> ${req.requesterName}</div>
                 <div class="detail-item"><strong>Description:</strong> ${req.description}</div>
-                <div class="detail-item"><strong>Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" class="attachment-link">📎 Download</a>` : '—'}</div>
                 <div class="detail-item"><strong>SSE:</strong> ${req.sseRemark || '—'}</div>
                 <div class="detail-item"><strong>AM:</strong> ${req.amRemark || '—'}</div>
                 <div class="detail-item"><strong>Area Mgr:</strong> ${req.areaRemark || '—'}</div>
@@ -703,17 +718,14 @@
             document.getElementById('sseBtn').disabled = req.stage !== 'SSE' || sseDone || !canUserAct('sse');
             
             document.getElementById('amStatus').className = `status ${amDone ? 'status-done' : (req.stage === 'AM' ? 'status-pending' : 'status-locked')}`;
-            document.getElementById('amStatus').innerText = amDone ? '✅ Done' : (req.stage === 'AM' ? '📢 Action' : '🔒 Locked');
             document.getElementById('amRemark').disabled = req.stage !== 'AM' || amDone || !canUserAct('am');
             document.getElementById('amBtn').disabled = req.stage !== 'AM' || amDone || !canUserAct('am');
             
             document.getElementById('areaStatus').className = `status ${areaDone ? 'status-done' : (req.stage === 'AREA' ? 'status-pending' : 'status-locked')}`;
-            document.getElementById('areaStatus').innerText = areaDone ? '✅ Done' : (req.stage === 'AREA' ? '✍️ Action' : '🔒 Locked');
             document.getElementById('areaRemark').disabled = req.stage !== 'AREA' || areaDone || !canUserAct('area');
             document.getElementById('areaBtn').disabled = req.stage !== 'AREA' || areaDone || !canUserAct('area');
             
             document.getElementById('hodStatus').className = `status ${hodDone ? 'status-done' : (req.stage === 'HOD' ? 'status-pending' : 'status-locked')}`;
-            document.getElementById('hodStatus').innerText = hodDone ? '🏆 Approved' : (req.stage === 'HOD' ? '⏳ Final' : '🔒 Locked');
             document.getElementById('hodRemark').disabled = req.stage !== 'HOD' || hodDone || !canUserAct('hod');
             document.getElementById('hodBtn').disabled = req.stage !== 'HOD' || hodDone || !canUserAct('hod');
         }
