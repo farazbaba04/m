@@ -3,85 +3,476 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Approval Workflow | Complete System</title>
+    <title>IT Request Management System | Enterprise Approval Workflow</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
         /* Auth Container */
-        .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-        .auth-card { background: #1e293b; border-radius: 2rem; padding: 2rem; width: 100%; max-width: 450px; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        .auth-header { text-align: center; margin-bottom: 2rem; }
-        .auth-header h1 { font-size: 2rem; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .auth-header p { color: #94a3b8; margin-top: 0.5rem; }
-        .auth-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; }
-        .tab-btn { flex: 1; padding: 0.8rem; background: #0f172a; border: none; border-radius: 1rem; color: #94a3b8; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .tab-btn.active { background: #3b82f6; color: white; }
-        .input-group { margin-bottom: 1.2rem; }
-        .input-group label { display: block; color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.4rem; }
-        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 0.8rem; background: #0f172a; border: 1px solid #334155; border-radius: 1rem; color: white; font-size: 1rem; }
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { outline: none; border-color: #3b82f6; }
-        .auth-btn { width: 100%; padding: 0.8rem; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 1rem; color: white; font-weight: 600; cursor: pointer; margin-top: 1rem; transition: all 0.2s; }
-        .auth-btn:hover { transform: scale(0.98); }
-        .error-msg { color: #f87171; font-size: 0.8rem; margin-top: 0.5rem; text-align: center; }
-        .success-msg { color: #4ade80; font-size: 0.8rem; margin-top: 0.5rem; text-align: center; }
-        
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .auth-card {
+            background: rgba(255,255,255,0.98);
+            border-radius: 2rem;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.3);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .auth-header p {
+            color: #64748b;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.8rem;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 1rem;
+            color: #64748b;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            color: #334155;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.4rem;
+        }
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 1rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .success-msg {
+            color: #10b981;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
         /* Main App */
-        .app-container { display: none; padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; }
-        .navbar { background: #1e293b; border-radius: 1rem; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border: 1px solid #334155; }
-        .user-badge { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .role-badge { background: #3b82f6; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; }
-        .logout-btn { background: #ef4444; border: none; padding: 0.5rem 1rem; border-radius: 2rem; color: white; cursor: pointer; }
-        
+        .app-container {
+            display: none;
+            padding: 1.5rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1rem 1.8rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .logo h2 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .role-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 0.3rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+            transform: scale(0.98);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-card .stat-label {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
+
         /* Admin Panel */
-        .admin-panel { background: #1e293b; border-radius: 1.5rem; padding: 1.5rem; margin-bottom: 2rem; border: 2px solid #f59e0b; }
-        .admin-panel h3 { color: #f59e0b; margin-bottom: 1rem; }
-        .users-table { width: 100%; overflow-x: auto; }
-        .users-table table { width: 100%; border-collapse: collapse; }
-        .users-table th, .users-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid #334155; color: #e2e8f0; }
-        .users-table th { color: #94a3b8; }
-        .delete-user-btn { background: #ef4444; border: none; padding: 0.3rem 0.8rem; border-radius: 0.5rem; color: white; cursor: pointer; }
-        
+        .admin-panel {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 2px solid #f59e0b;
+        }
+
+        .admin-panel h3 {
+            color: #f59e0b;
+            margin-bottom: 1rem;
+        }
+
+        .users-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .users-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th, .users-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .users-table th {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .delete-user-btn {
+            background: #ef4444;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* Flow Timeline */
+        .flow-timeline {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+            padding: 0.8rem;
+            border-radius: 1rem;
+            background: #f1f5f9;
+            position: relative;
+        }
+
+        .timeline-step .step-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .timeline-step .step-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .timeline-step.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .timeline-step.completed {
+            background: #10b981;
+            color: white;
+        }
+
+        .timeline-step.pending {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        .timeline-arrow {
+            font-size: 1.2rem;
+            color: #cbd5e1;
+        }
+
         /* Request Cards */
-        .request-card { background: #1e293b; border-radius: 1.5rem; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid #334155; }
-        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
-        .detail-item { background: #0f172a; padding: 0.8rem; border-radius: 1rem; border-left: 3px solid #3b82f6; }
-        .detail-item strong { color: #60a5fa; }
-        
+        .request-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .detail-item {
+            background: #f8fafc;
+            padding: 0.8rem;
+            border-radius: 1rem;
+        }
+
+        .detail-item strong {
+            color: #475569;
+        }
+
         /* Workflow Grid */
-        .workflow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .workflow-card { background: #1e293b; border-radius: 1.5rem; padding: 1.3rem; border: 1px solid #334155; transition: transform 0.2s; }
-        .workflow-card:hover { transform: translateY(-3px); }
-        .workflow-card h3 { margin-bottom: 0.5rem; }
-        .status { display: inline-block; padding: 0.3rem 0.8rem; border-radius: 2rem; font-size: 0.7rem; font-weight: 600; margin-bottom: 1rem; }
-        .status-pending { background: #451a03; color: #fbbf24; }
-        .status-done { background: #14532d; color: #4ade80; }
-        .status-locked { background: #2d2a2a; color: #9ca3af; }
-        .status-current { background: #3b82f6; color: white; }
-        textarea { width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 1rem; padding: 0.8rem; color: white; resize: vertical; margin: 0.5rem 0; }
-        .action-btn { background: #3b82f6; border: none; padding: 0.6rem; border-radius: 1rem; color: white; cursor: pointer; width: 100%; font-weight: 600; transition: all 0.2s; }
-        .action-btn:hover:not(:disabled) { background: #2563eb; }
-        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .workflow-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.3rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+
+        .workflow-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-header i {
+            font-size: 1.8rem;
+        }
+
+        .card-header h3 {
+            font-size: 1.1rem;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-done { background: #d1fae5; color: #059669; }
+        .status-locked { background: #f1f5f9; color: #94a3b8; }
+        .status-current { background: #ede9fe; color: #7c3aed; }
+
+        textarea {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 0.8rem;
+            resize: vertical;
+            margin: 0.5rem 0;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            padding: 0.7rem;
+            border-radius: 1rem;
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* Events Log */
-        .events-log { background: #0f172a; border-radius: 1rem; padding: 1rem; max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 0.75rem; color: #86efac; }
-        .events-log div { padding: 0.2rem 0; border-bottom: 1px solid #1e293b; }
-        
-        /* Flow Indicator */
-        .flow-indicator { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; padding: 1rem; background: #0f172a; border-radius: 1rem; }
-        .flow-step { flex: 1; text-align: center; padding: 0.5rem; border-radius: 0.5rem; font-size: 0.7rem; }
-        .flow-step.active { background: #3b82f6; color: white; }
-        .flow-step.completed { background: #14532d; color: #4ade80; }
-        .flow-step.pending { background: #2d2a2a; color: #64748b; }
-        
-        .debug-info { background: #0f172a; border-radius: 0.5rem; padding: 0.5rem; margin-top: 1rem; font-size: 0.7rem; color: #64748b; text-align: center; }
-        
-        @media (max-width: 768px) { .app-container { padding: 1rem; } .flow-indicator { flex-direction: column; } .flow-step { width: 100%; } }
+        .events-log {
+            background: #1e293b;
+            border-radius: 1rem;
+            padding: 1rem;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #86efac;
+        }
+
+        .events-log div {
+            padding: 0.3rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        @media (max-width: 768px) {
+            .app-container { padding: 1rem; }
+            .timeline-steps { flex-direction: column; }
+            .timeline-arrow { display: none; }
+            .timeline-step { width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -89,197 +480,188 @@
     <div class="auth-container" id="authContainer">
         <div class="auth-card">
             <div class="auth-header">
-                <h1>📋 IT Approval Workflow</h1>
-                <p>Complete Multi-Level Approval System</p>
+                <i class="fas fa-tasks" style="font-size: 3rem; color: #667eea;"></i>
+                <h1>IT Request System</h1>
+                <p>Enterprise Approval Workflow</p>
             </div>
             <div class="auth-tabs">
-                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
-                <button class="tab-btn" onclick="switchTab('register')">Register</button>
+                <button class="tab-btn active" onclick="switchTab('login')"><i class="fas fa-sign-in-alt"></i> Login</button>
+                <button class="tab-btn" onclick="switchTab('register')"><i class="fas fa-user-plus"></i> Register</button>
             </div>
             
             <div id="loginForm">
                 <div class="input-group">
-                    <label>📧 Email</label>
-                    <input type="email" id="loginEmail" placeholder="user@example.com">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="loginEmail" placeholder="user@company.com">
                 </div>
                 <div class="input-group">
-                    <label>🔒 Password</label>
+                    <label><i class="fas fa-lock"></i> Password</label>
                     <input type="password" id="loginPassword" placeholder="••••••••">
                 </div>
-                <button class="auth-btn" onclick="handleLogin()">🔐 Login</button>
+                <button class="auth-btn" onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
                 <div id="loginError" class="error-msg"></div>
             </div>
             
             <div id="registerForm" style="display: none;">
                 <div class="input-group">
-                    <label>👤 Full Name</label>
+                    <label><i class="fas fa-user"></i> Full Name</label>
                     <input type="text" id="regName" placeholder="John Doe">
                 </div>
                 <div class="input-group">
-                    <label>📧 Email</label>
-                    <input type="email" id="regEmail" placeholder="user@example.com">
+                    <label><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="regEmail" placeholder="user@company.com">
                 </div>
                 <div class="input-group">
-                    <label>🔒 Password (min 6 characters)</label>
+                    <label><i class="fas fa-lock"></i> Password (6+ chars)</label>
                     <input type="password" id="regPassword" placeholder="••••••••">
                 </div>
                 <div class="input-group">
-                    <label>🎭 Select Role</label>
+                    <label><i class="fas fa-user-tag"></i> Select Role</label>
                     <select id="regRole">
                         <option value="requester">📝 Requester (Create Requests)</option>
-                        <option value="sse">💻 SSE IT (First Approver)</option>
-                        <option value="am">📊 AM IT (Second Approver)</option>
-                        <option value="area_manager">🌍 Area Manager (Third Approver)</option>
-                        <option value="hod">🏛️ HOD IT (Final Approver)</option>
-                        <option value="admin">👑 Admin (Full Access)</option>
+                        <option value="sse">💻 SSE IT (First Approval)</option>
+                        <option value="am">📊 AM IT (Second Approval)</option>
+                        <option value="area_manager">🌍 Area Manager (Third Approval)</option>
+                        <option value="hod">🏛️ HOD IT (Final Approval)</option>
+                        <option value="admin">👑 Administrator</option>
                     </select>
                 </div>
-                <button class="auth-btn" onclick="handleRegister()">📝 Create Account</button>
+                <button class="auth-btn" onclick="handleRegister()"><i class="fas fa-user-plus"></i> Create Account</button>
                 <div id="regError" class="error-msg"></div>
                 <div id="regSuccess" class="success-msg"></div>
-            </div>
-            
-            <div class="debug-info" id="debugInfo">
-                🔍 Connecting to Firebase...
             </div>
         </div>
     </div>
 
-    <!-- Main App Container -->
+    <!-- Main App -->
     <div class="app-container" id="appContainer">
         <!-- Navbar -->
         <div class="navbar">
-            <h2 style="color: white;">📋 IT Approval Workflow</h2>
-            <div class="user-badge">
-                <span id="userName" style="color: white;"></span>
-                <span class="role-badge" id="userRole"></span>
-                <button class="logout-btn" onclick="handleLogout()">🚪 Logout</button>
+            <div class="logo">
+                <h2><i class="fas fa-tasks"></i> IT Request Portal</h2>
             </div>
+            <div class="user-badge">
+                <span><i class="fas fa-user-circle"></i> <span id="userName"></span></span>
+                <span class="role-badge" id="userRole"></span>
+                <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><i class="fas fa-clock" style="color: #f59e0b;"></i><div class="stat-value" id="pendingCount">0</div><div class="stat-label">Pending Approvals</div></div>
+            <div class="stat-card"><i class="fas fa-check-circle" style="color: #10b981;"></i><div class="stat-value" id="approvedCount">0</div><div class="stat-label">Approved Requests</div></div>
+            <div class="stat-card"><i class="fas fa-file-alt" style="color: #3b82f6;"></i><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total Requests</div></div>
         </div>
 
         <!-- Admin Panel -->
         <div class="admin-panel" id="adminPanel" style="display: none;">
-            <h3>👑 Admin Panel - Manage System Users</h3>
+            <h3><i class="fas fa-crown"></i> Admin Dashboard - User Management</h3>
             <div class="users-table" id="usersTable"></div>
         </div>
 
-        <!-- Flow Indicator -->
-        <div class="flow-indicator" id="flowIndicator">
-            <div class="flow-step" id="stepSSE">1️⃣ SSE IT</div>
-            <div>→</div>
-            <div class="flow-step" id="stepAM">2️⃣ AM IT</div>
-            <div>→</div>
-            <div class="flow-step" id="stepArea">3️⃣ Area Manager</div>
-            <div>→</div>
-            <div class="flow-step" id="stepHOD">4️⃣ HOD IT</div>
+        <!-- Flow Timeline -->
+        <div class="flow-timeline">
+            <div class="timeline-steps" id="timelineSteps">
+                <div class="timeline-step pending" id="step1"><div class="step-icon">📝</div><div class="step-name">Request Created</div></div>
+                <div class="timeline-arrow">→</div>
+                <div class="timeline-step pending" id="step2"><div class="step-icon">💻</div><div class="step-name">SSE IT</div></div>
+                <div class="timeline-arrow">→</div>
+                <div class="timeline-step pending" id="step3"><div class="step-icon">📊</div><div class="step-name">AM IT</div></div>
+                <div class="timeline-arrow">→</div>
+                <div class="timeline-step pending" id="step4"><div class="step-icon">🌍</div><div class="step-name">Area Manager</div></div>
+                <div class="timeline-arrow">→</div>
+                <div class="timeline-step pending" id="step5"><div class="step-icon">🏛️</div><div class="step-name">HOD IT</div></div>
+            </div>
         </div>
 
-        <!-- Create Request Section -->
+        <!-- Create Request -->
         <div class="request-card" id="createRequestCard">
-            <h3 style="color: #60a5fa; margin-bottom: 1rem;">📝 Create New IT Request</h3>
+            <div class="request-header">
+                <h3><i class="fas fa-plus-circle" style="color: #667eea;"></i> Create New Request</h3>
+            </div>
             <div class="input-group">
-                <label>📋 Request Description / Summary</label>
+                <label>Request Title / Description</label>
                 <textarea id="requestDesc" rows="3" placeholder="Describe your IT request in detail..."></textarea>
             </div>
             <div class="input-group">
-                <label>📎 Attachment (Optional - Screenshot, Document, etc.)</label>
+                <label>Attachment (Optional)</label>
                 <input type="file" id="fileInput">
             </div>
-            <button class="action-btn" onclick="createRequest()" style="background: linear-gradient(135deg, #10b981, #059669);">🚀 Submit Request for Approval</button>
+            <button class="action-btn" onclick="createRequest()" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="fas fa-paper-plane"></i> Submit Request</button>
         </div>
 
-        <!-- Active Request Display -->
+        <!-- Active Request -->
         <div class="request-card" id="requestCard" style="display: none;">
-            <h3>📄 Current Active Request #<span id="reqId"></span></h3>
+            <div class="request-header">
+                <h3><i class="fas fa-file-alt"></i> Current Request #<span id="reqId"></span></h3>
+                <span class="status status-pending" id="globalStage"></span>
+            </div>
             <div class="detail-grid" id="requestDetails"></div>
         </div>
 
-        <!-- Approval Workflow Cards -->
+        <!-- Approval Cards -->
         <div class="workflow-grid" id="workflowGrid" style="display: none;">
-            <!-- SSE IT Card -->
             <div class="workflow-card">
-                <h3 style="color: #60a5fa;">💻 SSE IT</h3>
+                <div class="card-header"><i class="fas fa-laptop-code" style="color: #667eea;"></i><h3>SSE IT</h3></div>
                 <div id="sseStatus" class="status status-pending">⏳ Pending</div>
-                <textarea id="sseRemark" rows="3" placeholder="Technical evaluation, feasibility check, cost estimate..."></textarea>
-                <button class="action-btn" id="sseBtn" onclick="submitAction('sse')">✅ Approve & Forward to AM</button>
+                <textarea id="sseRemark" rows="2" placeholder="Technical evaluation..."></textarea>
+                <button class="action-btn" id="sseBtn" onclick="submitAction('sse')"><i class="fas fa-check"></i> Approve → AM</button>
             </div>
-            
-            <!-- AM IT Card -->
             <div class="workflow-card">
-                <h3 style="color: #a78bfa;">📊 AM IT</h3>
+                <div class="card-header"><i class="fas fa-chart-line" style="color: #a78bfa;"></i><h3>AM IT</h3></div>
                 <div id="amStatus" class="status status-locked">🔒 Locked</div>
-                <textarea id="amRemark" rows="3" placeholder="Resource allocation, priority assessment..." disabled></textarea>
-                <button class="action-btn" id="amBtn" onclick="submitAction('am')" disabled>📌 Approve & Forward to Area Manager</button>
+                <textarea id="amRemark" rows="2" placeholder="Resource assessment..." disabled></textarea>
+                <button class="action-btn" id="amBtn" onclick="submitAction('am')" disabled><i class="fas fa-check"></i> Approve → Area Mgr</button>
             </div>
-            
-            <!-- Area Manager Card -->
             <div class="workflow-card">
-                <h3 style="color: #34d399;">🌍 Area Manager</h3>
+                <div class="card-header"><i class="fas fa-globe" style="color: #34d399;"></i><h3>Area Manager</h3></div>
                 <div id="areaStatus" class="status status-locked">🔒 Locked</div>
-                <textarea id="areaRemark" rows="3" placeholder="Business impact, regional requirements..." disabled></textarea>
-                <button class="action-btn" id="areaBtn" onclick="submitAction('area')" disabled>📌 Approve & Forward to HOD</button>
+                <textarea id="areaRemark" rows="2" placeholder="Business impact..." disabled></textarea>
+                <button class="action-btn" id="areaBtn" onclick="submitAction('area')" disabled><i class="fas fa-check"></i> Approve → HOD</button>
             </div>
-            
-            <!-- HOD IT Card -->
             <div class="workflow-card">
-                <h3 style="color: #f87171;">🏛️ HOD IT</h3>
+                <div class="card-header"><i class="fas fa-building" style="color: #f87171;"></i><h3>HOD IT</h3></div>
                 <div id="hodStatus" class="status status-locked">🔒 Locked</div>
-                <textarea id="hodRemark" rows="3" placeholder="Final decision, budget approval, sign-off..." disabled></textarea>
-                <button class="action-btn" id="hodBtn" onclick="submitAction('hod')" disabled>✔️ Final Approval & Close Request</button>
+                <textarea id="hodRemark" rows="2" placeholder="Final approval remarks..." disabled></textarea>
+                <button class="action-btn" id="hodBtn" onclick="submitAction('hod')" disabled><i class="fas fa-check-double"></i> Final Approve</button>
             </div>
         </div>
 
-        <!-- Live Events Log -->
+        <!-- Live Events -->
         <div class="events-log" id="eventsLog">
-            <div>🟢 System Ready - Login to continue</div>
+            <div><i class="fas fa-circle" style="font-size: 0.5rem; color: #10b981;"></i> System ready - Login to continue</div>
         </div>
     </div>
 
     <script>
-        // ============ FIREBASE CONFIGURATION ============
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBNFuH14JA0RCrkMhl-37ysgla46QpSJyM",
             authDomain: "faraze-a0339.firebaseapp.com",
             projectId: "faraze-a0339",
             storageBucket: "faraze-a0339.firebasestorage.app",
             messagingSenderId: "463612751566",
-            appId: "1:463612751566:web:0e6b1e8367321c4ffbaa9f",
-            measurementId: "G-4MNEQDLD3D"
+            appId: "1:463612751566:web:0e6b1e8367321c4ffbaa9f"
         };
         
         // Initialize Firebase
-        let db, storage, auth;
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const auth = firebase.auth();
         
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-            storage = firebase.storage();
-            auth = firebase.auth();
-            document.getElementById('debugInfo').innerHTML = '✅ Firebase Connected Successfully!';
-            document.getElementById('debugInfo').style.color = '#4ade80';
-        } catch(e) {
-            document.getElementById('debugInfo').innerHTML = '❌ Firebase Error: ' + e.message;
-            document.getElementById('debugInfo').style.color = '#f87171';
-        }
-        
-        // Global Variables
         let currentUserData = null;
         let currentRequest = null;
         let unsubscribeRequest = null;
+        let unsubscribeRequests = null;
         
-        // Helper Functions
-        function addLog(msg, type = 'info') {
+        function addLog(msg) {
             const logDiv = document.getElementById('eventsLog');
             const div = document.createElement('div');
-            const time = new Date().toLocaleTimeString();
-            let icon = '📌';
-            if (msg.includes('✅')) icon = '✅';
-            if (msg.includes('❌')) icon = '❌';
-            if (msg.includes('🔄')) icon = '🔄';
-            if (msg.includes('👋')) icon = '👋';
-            div.innerHTML = `${icon} [${time}] ${msg}`;
+            div.innerHTML = `<i class="fas fa-clock"></i> [${new Date().toLocaleTimeString()}] ${msg}`;
             logDiv.prepend(div);
-            if (logDiv.children.length > 25) logDiv.removeChild(logDiv.lastChild);
+            if (logDiv.children.length > 20) logDiv.removeChild(logDiv.lastChild);
         }
         
         function switchTab(tab) {
@@ -298,7 +680,6 @@
             }
         }
         
-        // ============ AUTHENTICATION ============
         async function handleRegister() {
             const name = document.getElementById('regName').value;
             const email = document.getElementById('regEmail').value;
@@ -309,28 +690,26 @@
             document.getElementById('regSuccess').innerText = '';
             
             if (!name || !email || !password) {
-                document.getElementById('regError').innerText = 'All fields are required';
+                document.getElementById('regError').innerText = 'All fields required';
                 return;
             }
             if (password.length < 6) {
-                document.getElementById('regError').innerText = 'Password must be at least 6 characters';
+                document.getElementById('regError').innerText = 'Password must be 6+ characters';
                 return;
             }
             
             try {
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCred.user;
-                await db.collection('users').doc(user.uid).set({
-                    name: name, email: email, role: role,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                await db.collection('users').doc(userCred.user.uid).set({
+                    name, email, role, createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 document.getElementById('regSuccess').innerText = '✅ Account created! Redirecting...';
-                addLog(`✅ New account created: ${name} (${role})`);
+                addLog(`New user registered: ${name} (${role})`);
                 setTimeout(() => location.reload(), 1500);
             } catch(e) {
-                let errorMsg = e.message;
-                if (e.code === 'auth/email-already-in-use') errorMsg = 'Email already registered. Please login.';
-                document.getElementById('regError').innerText = errorMsg;
+                let msg = e.message;
+                if (e.code === 'auth/email-already-in-use') msg = 'Email already registered. Please login.';
+                document.getElementById('regError').innerText = msg;
             }
         }
         
@@ -344,12 +723,12 @@
             }
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                addLog(`✅ Login successful!`);
+                addLog(`Login successful!`);
             } catch(e) {
-                let errorMsg = e.message;
-                if (e.code === 'auth/user-not-found') errorMsg = 'User not found. Please register first.';
-                if (e.code === 'auth/wrong-password') errorMsg = 'Wrong password.';
-                document.getElementById('loginError').innerText = errorMsg;
+                let msg = e.message;
+                if (e.code === 'auth/user-not-found') msg = 'User not found. Please register.';
+                if (e.code === 'auth/wrong-password') msg = 'Wrong password.';
+                document.getElementById('loginError').innerText = msg;
             }
         }
         
@@ -358,28 +737,26 @@
             location.reload();
         }
         
-        // ============ AUTH STATE LISTENER ============
+        // Auth State
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                try {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (userDoc.exists) {
-                        currentUserData = { uid: user.uid, ...userDoc.data() };
-                        document.getElementById('userName').innerText = currentUserData.name;
-                        document.getElementById('userRole').innerText = currentUserData.role.toUpperCase();
-                        
-                        if (currentUserData.role === 'admin') {
-                            document.getElementById('adminPanel').style.display = 'block';
-                            loadAllUsers();
-                        }
-                        
-                        document.getElementById('authContainer').style.display = 'none';
-                        document.getElementById('appContainer').style.display = 'block';
-                        addLog(`👋 Welcome ${currentUserData.name}! Role: ${currentUserData.role}`);
-                        loadActiveRequest();
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    currentUserData = { uid: user.uid, ...userDoc.data() };
+                    document.getElementById('userName').innerHTML = `<i class="fas fa-user"></i> ${currentUserData.name}`;
+                    document.getElementById('userRole').innerHTML = `<i class="fas fa-tag"></i> ${currentUserData.role.toUpperCase()}`;
+                    
+                    if (currentUserData.role === 'admin') {
+                        document.getElementById('adminPanel').style.display = 'block';
+                        loadAllUsers();
                     }
-                } catch(e) {
-                    addLog(`Error: ${e.message}`);
+                    
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    addLog(`Welcome ${currentUserData.name}! Role: ${currentUserData.role}`);
+                    
+                    loadActiveRequest();
+                    loadStats();
                 }
             } else {
                 document.getElementById('authContainer').style.display = 'flex';
@@ -387,13 +764,12 @@
             }
         });
         
-        // ============ ADMIN FUNCTIONS ============
         async function loadAllUsers() {
             const snapshot = await db.collection('users').get();
             let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr></thead><tbody>';
             snapshot.forEach(doc => {
                 const data = doc.data();
-                html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')">Delete</button></td></tr>`;
+                html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Delete</button></td></tr>`;
             });
             html += '</tbody></table>';
             document.getElementById('usersTable').innerHTML = html;
@@ -407,7 +783,19 @@
             }
         };
         
-        // ============ REQUEST FUNCTIONS ============
+        async function loadStats() {
+            const snapshot = await db.collection('requests').get();
+            let pending = 0, approved = 0;
+            snapshot.forEach(doc => {
+                const req = doc.data();
+                if (req.stage === 'COMPLETED') approved++;
+                else pending++;
+            });
+            document.getElementById('pendingCount').innerText = pending;
+            document.getElementById('approvedCount').innerText = approved;
+            document.getElementById('totalCount').innerText = snapshot.size;
+        }
+        
         window.createRequest = async () => {
             const description = document.getElementById('requestDesc').value;
             if (!description) { alert('Please enter request description'); return; }
@@ -415,12 +803,10 @@
             let attachmentUrl = null;
             const file = document.getElementById('fileInput').files[0];
             if (file) {
-                try {
-                    const storageRef = storage.ref(`attachments/${Date.now()}_${file.name}`);
-                    await storageRef.put(file);
-                    attachmentUrl = await storageRef.getDownloadURL();
-                    addLog(`📎 Attachment uploaded: ${file.name}`);
-                } catch(e) { addLog(`Upload failed: ${e.message}`); }
+                const storageRef = storage.ref(`attachments/${Date.now()}_${file.name}`);
+                await storageRef.put(file);
+                attachmentUrl = await storageRef.getDownloadURL();
+                addLog(`📎 Attachment uploaded: ${file.name}`);
             }
             
             const requestData = {
@@ -429,20 +815,17 @@
                 requesterEmail: currentUserData.email,
                 description: description,
                 attachmentUrl: attachmentUrl,
-                attachmentName: file?.name || null,
                 stage: 'SSE',
                 sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
-                sseDone: false, amDone: false, areaDone: false, hodDone: false,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            try {
-                const docRef = await db.collection('requests').add(requestData);
-                addLog(`✅ Request #${docRef.id.slice(0,6)} created! Waiting for SSE approval`);
-                document.getElementById('requestDesc').value = '';
-                document.getElementById('fileInput').value = '';
-                loadActiveRequest(docRef.id);
-            } catch(e) { alert('Error: ' + e.message); }
+            const docRef = await db.collection('requests').add(requestData);
+            addLog(`✅ Request #${docRef.id.slice(0,6)} created! Sent to SSE IT for approval`);
+            document.getElementById('requestDesc').value = '';
+            document.getElementById('fileInput').value = '';
+            loadActiveRequest(docRef.id);
+            loadStats();
         };
         
         async function loadActiveRequest(specificId = null) {
@@ -473,7 +856,8 @@
                     if (doc.exists) {
                         currentRequest = { id: doc.id, ...doc.data() };
                         updateUI();
-                        addLog(`🔄 Request updated - Current Stage: ${currentRequest.stage}`);
+                        addLog(`🔄 Request updated - Current: ${currentRequest.stage}`);
+                        loadStats();
                     }
                 });
         }
@@ -490,44 +874,39 @@
         }
         
         window.submitAction = async (action) => {
-            if (!currentRequest) { alert('No active request found'); return; }
-            if (!canUserAct(action)) { alert(`❌ You don't have permission for ${action.toUpperCase()} at current stage`); return; }
+            if (!currentRequest) { alert('No active request'); return; }
+            if (!canUserAct(action)) { alert(`You don't have permission for this action`); return; }
             
             const remark = document.getElementById(`${action}Remark`).value;
-            if (!remark.trim()) { alert('Please enter your remarks before approving'); return; }
+            if (!remark.trim()) { alert('Please enter remarks before approving'); return; }
             
             const updates = {};
-            if (action === 'sse') { updates.sseRemark = remark.trim(); updates.stage = 'AM'; }
-            else if (action === 'am') { updates.amRemark = remark.trim(); updates.stage = 'AREA'; }
-            else if (action === 'area') { updates.areaRemark = remark.trim(); updates.stage = 'HOD'; }
-            else if (action === 'hod') { updates.hodRemark = remark.trim(); updates.stage = 'COMPLETED'; }
+            if (action === 'sse') { updates.sseRemark = remark.trim(); updates.stage = 'AM'; addLog(`✅ SSE IT Approved! Forwarded to AM IT`); }
+            else if (action === 'am') { updates.amRemark = remark.trim(); updates.stage = 'AREA'; addLog(`✅ AM IT Approved! Forwarded to Area Manager`); }
+            else if (action === 'area') { updates.areaRemark = remark.trim(); updates.stage = 'HOD'; addLog(`✅ Area Manager Approved! Forwarded to HOD IT`); }
+            else if (action === 'hod') { updates.hodRemark = remark.trim(); updates.stage = 'COMPLETED'; addLog(`🎉 HOD IT Approved! Request FULLY COMPLETED!`); }
             
-            try {
-                await db.collection('requests').doc(currentRequest.id).update(updates);
-                addLog(`✅ ${action.toUpperCase()} approved! Request moved to ${updates.stage || 'COMPLETED'}`);
-                document.getElementById(`${action}Remark`).value = '';
-                if (action === 'hod') {
-                    addLog(`🎉 REQUEST FULLY APPROVED! Workflow completed.`);
-                }
-            } catch(e) { alert('Error: ' + e.message); }
+            await db.collection('requests').doc(currentRequest.id).update(updates);
+            document.getElementById(`${action}Remark`).value = '';
         };
         
-        function updateFlowIndicator(stage) {
-            const steps = ['SSE', 'AM', 'AREA', 'HOD', 'COMPLETED'];
-            const stepIds = { SSE: 'stepSSE', AM: 'stepAM', AREA: 'stepArea', HOD: 'stepHOD' };
+        function updateTimeline(stage) {
+            const steps = ['request', 'SSE', 'AM', 'AREA', 'HOD'];
+            const stepIds = { request: 'step1', SSE: 'step2', AM: 'step3', AREA: 'step4', HOD: 'step5' };
+            const stages = ['request', 'SSE', 'AM', 'AREA', 'HOD', 'COMPLETED'];
+            const currentIndex = stages.indexOf(stage);
             
-            for (let s of steps) {
-                if (stepIds[s]) {
-                    const el = document.getElementById(stepIds[s]);
-                    if (el) {
-                        if (stage === s) el.className = 'flow-step active';
-                        else if (steps.indexOf(stage) > steps.indexOf(s)) el.className = 'flow-step completed';
-                        else el.className = 'flow-step pending';
-                    }
+            for (let i = 0; i < steps.length; i++) {
+                const stepId = stepIds[steps[i]];
+                const el = document.getElementById(stepId);
+                if (el) {
+                    if (i < currentIndex) el.className = 'timeline-step completed';
+                    else if (i === currentIndex && stage !== 'COMPLETED') el.className = 'timeline-step active';
+                    else el.className = 'timeline-step pending';
                 }
             }
             if (stage === 'COMPLETED') {
-                document.getElementById('stepHOD').className = 'flow-step completed';
+                document.getElementById('step5').className = 'timeline-step completed';
             }
         }
         
@@ -541,20 +920,20 @@
             const req = currentRequest;
             document.getElementById('requestCard').style.display = 'block';
             document.getElementById('workflowGrid').style.display = 'grid';
-            document.getElementById('reqId').innerText = req.id.slice(0,8);
+            document.getElementById('reqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
+            document.getElementById('globalStage').innerHTML = req.stage === 'COMPLETED' ? '✅ FULLY APPROVED' : `📌 ${req.stage}`;
+            document.getElementById('globalStage').className = `status ${req.stage === 'COMPLETED' ? 'status-done' : 'status-pending'}`;
             
-            // Update flow indicator
-            updateFlowIndicator(req.stage);
+            updateTimeline(req.stage);
             
-            // Update request details
             document.getElementById('requestDetails').innerHTML = `
-                <div class="detail-item"><strong>👤 Requester:</strong> ${req.requesterName} (${req.requesterEmail})</div>
-                <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
-                <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#60a5fa;">📄 ${req.attachmentName || 'Download'}</a>` : '—'}</div>
-                <div class="detail-item"><strong>💻 SSE Remark:</strong> ${req.sseRemark || '⏳ Pending'}</div>
-                <div class="detail-item"><strong>📊 AM Remark:</strong> ${req.amRemark || '⏳ Pending'}</div>
-                <div class="detail-item"><strong>🌍 Area Manager:</strong> ${req.areaRemark || '⏳ Pending'}</div>
-                <div class="detail-item"><strong>🏛️ HOD Final:</strong> ${req.hodRemark || '⏳ Pending'}</div>
+                <div class="detail-item"><strong><i class="fas fa-user"></i> Requester:</strong> ${req.requesterName}</div>
+                <div class="detail-item"><strong><i class="fas fa-file-alt"></i> Description:</strong> ${req.description}</div>
+                <div class="detail-item"><strong><i class="fas fa-paperclip"></i> Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#667eea;">Download</a>` : '—'}</div>
+                <div class="detail-item"><strong><i class="fas fa-comment"></i> SSE Remark:</strong> ${req.sseRemark || '—'}</div>
+                <div class="detail-item"><strong><i class="fas fa-comment"></i> AM Remark:</strong> ${req.amRemark || '—'}</div>
+                <div class="detail-item"><strong><i class="fas fa-comment"></i> Area Manager:</strong> ${req.areaRemark || '—'}</div>
+                <div class="detail-item"><strong><i class="fas fa-comment"></i> HOD Remark:</strong> ${req.hodRemark || '—'}</div>
             `;
             
             const sseDone = req.sseRemark && req.sseRemark.trim();
@@ -562,39 +941,38 @@
             const areaDone = req.areaRemark && req.areaRemark.trim();
             const isCompleted = req.stage === 'COMPLETED';
             
-            // SSE Card
+            // SSE
             const sseActive = req.stage === 'SSE';
-            document.getElementById('sseStatus').className = `status ${sseDone ? 'status-done' : (sseActive ? 'status-pending' : 'status-locked')}`;
-            document.getElementById('sseStatus').innerText = sseDone ? '✅ Approved' : (sseActive ? '⏳ Awaiting Your Action' : '🔒 Locked');
+            document.getElementById('sseStatus').className = `status ${sseDone ? 'status-done' : (sseActive ? 'status-current' : 'status-locked')}`;
+            document.getElementById('sseStatus').innerHTML = sseDone ? '<i class="fas fa-check-circle"></i> Approved' : (sseActive ? '<i class="fas fa-hourglass-half"></i> Awaiting Your Action' : '<i class="fas fa-lock"></i> Locked');
             document.getElementById('sseRemark').disabled = sseDone || !sseActive || !canUserAct('sse');
             document.getElementById('sseBtn').disabled = !sseActive || sseDone || !canUserAct('sse');
             
-            // AM Card
+            // AM
             const amActive = req.stage === 'AM';
-            document.getElementById('amStatus').className = `status ${amDone ? 'status-done' : (amActive ? 'status-pending' : 'status-locked')}`;
-            document.getElementById('amStatus').innerText = amDone ? '✅ Approved' : (amActive ? '⏳ Awaiting Your Action' : '🔒 Locked');
+            document.getElementById('amStatus').className = `status ${amDone ? 'status-done' : (amActive ? 'status-current' : 'status-locked')}`;
+            document.getElementById('amStatus').innerHTML = amDone ? '<i class="fas fa-check-circle"></i> Approved' : (amActive ? '<i class="fas fa-hourglass-half"></i> Awaiting Your Action' : '<i class="fas fa-lock"></i> Locked');
             document.getElementById('amRemark').disabled = !amActive || amDone || !canUserAct('am');
             document.getElementById('amBtn').disabled = !amActive || amDone || !canUserAct('am');
             if (amDone) document.getElementById('amRemark').value = req.amRemark;
             
-            // Area Card
+            // Area
             const areaActive = req.stage === 'AREA';
-            document.getElementById('areaStatus').className = `status ${areaDone ? 'status-done' : (areaActive ? 'status-pending' : 'status-locked')}`;
-            document.getElementById('areaStatus').innerText = areaDone ? '✅ Approved' : (areaActive ? '⏳ Awaiting Your Action' : '🔒 Locked');
+            document.getElementById('areaStatus').className = `status ${areaDone ? 'status-done' : (areaActive ? 'status-current' : 'status-locked')}`;
+            document.getElementById('areaStatus').innerHTML = areaDone ? '<i class="fas fa-check-circle"></i> Approved' : (areaActive ? '<i class="fas fa-hourglass-half"></i> Awaiting Your Action' : '<i class="fas fa-lock"></i> Locked');
             document.getElementById('areaRemark').disabled = !areaActive || areaDone || !canUserAct('area');
             document.getElementById('areaBtn').disabled = !areaActive || areaDone || !canUserAct('area');
             if (areaDone) document.getElementById('areaRemark').value = req.areaRemark;
             
-            // HOD Card
+            // HOD
             const hodActive = req.stage === 'HOD';
-            document.getElementById('hodStatus').className = `status ${isCompleted ? 'status-done' : (hodActive ? 'status-pending' : 'status-locked')}`;
-            document.getElementById('hodStatus').innerText = isCompleted ? '🏆 Fully Approved' : (hodActive ? '⏳ Awaiting Final Decision' : '🔒 Locked');
+            document.getElementById('hodStatus').className = `status ${isCompleted ? 'status-done' : (hodActive ? 'status-current' : 'status-locked')}`;
+            document.getElementById('hodStatus').innerHTML = isCompleted ? '<i class="fas fa-trophy"></i> Fully Approved' : (hodActive ? '<i class="fas fa-hourglass-half"></i> Awaiting Your Decision' : '<i class="fas fa-lock"></i> Locked');
             document.getElementById('hodRemark').disabled = !hodActive || isCompleted || !canUserAct('hod');
             document.getElementById('hodBtn').disabled = !hodActive || isCompleted || !canUserAct('hod');
             if (isCompleted) document.getElementById('hodRemark').value = req.hodRemark;
         }
         
-        // Expose functions globally
         window.switchTab = switchTab;
         window.handleLogin = handleLogin;
         window.handleRegister = handleRegister;
