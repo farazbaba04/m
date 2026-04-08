@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IT Request Management System | Enterprise Workflow</title>
+    <title>M&P Express Logistics | IT Approval Workflow</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -11,7 +11,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -19,11 +18,11 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
         }
 
         body {
-            background: linear-gradient(145deg, #eef2ff 0%, #e0e7ff 100%);
+            background: #0a0a0a;
             min-height: 100vh;
         }
 
@@ -33,16 +32,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
             padding: 1.5rem;
         }
 
         .auth-card {
-            background: rgba(255,255,255,0.98);
-            border-radius: 2rem;
+            background: #111111;
+            border-radius: 1.5rem;
             padding: 2.5rem;
             width: 100%;
             max-width: 440px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            border: 1px solid #f97316;
+            box-shadow: 0 25px 50px -12px rgba(249,115,22,0.2);
         }
 
         .auth-header {
@@ -51,11 +52,14 @@
         }
 
         .auth-header h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            font-size: 1.6rem;
+            color: #f97316;
+        }
+
+        .auth-header p {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
         }
 
         .input-group {
@@ -64,7 +68,7 @@
 
         .input-group label {
             display: block;
-            color: #334155;
+            color: #e5e7eb;
             font-size: 0.8rem;
             font-weight: 500;
             margin-bottom: 0.4rem;
@@ -73,26 +77,33 @@
         .input-group input {
             width: 100%;
             padding: 0.8rem 1rem;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
-            font-size: 0.95rem;
+            background: #1f1f1f;
+            border: 1px solid #374151;
+            border-radius: 0.8rem;
+            font-size: 0.9rem;
+            color: white;
         }
 
         .input-group input:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #f97316;
         }
 
         .auth-btn {
             width: 100%;
             padding: 0.8rem;
-            background: linear-gradient(95deg, #2563eb, #1d4ed8);
+            background: #f97316;
             border: none;
-            border-radius: 1rem;
+            border-radius: 0.8rem;
             color: white;
             font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .auth-btn:hover {
+            background: #ea580c;
+            transform: translateY(-1px);
         }
 
         .error-msg {
@@ -112,8 +123,8 @@
 
         /* Navbar */
         .navbar {
-            background: white;
-            border-radius: 1.5rem;
+            background: #111111;
+            border-radius: 1rem;
             padding: 0.9rem 2rem;
             margin-bottom: 1.8rem;
             display: flex;
@@ -121,30 +132,32 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #f97316;
         }
 
         .logo h2 {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            background: linear-gradient(125deg, #1e293b, #2563eb);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            color: #f97316;
+        }
+
+        .logo p {
+            font-size: 0.7rem;
+            color: #9ca3af;
         }
 
         .user-badge {
             display: flex;
             align-items: center;
             gap: 1rem;
-            background: #f8fafc;
+            background: #1f1f1f;
             padding: 0.3rem 1rem 0.3rem 1.2rem;
-            border-radius: 3rem;
+            border-radius: 2rem;
         }
 
         .role-badge {
-            background: #eef2ff;
-            color: #1e3a8a;
+            background: #f97316;
+            color: #0a0a0a;
             padding: 0.2rem 1rem;
             border-radius: 2rem;
             font-size: 0.7rem;
@@ -152,7 +165,7 @@
         }
 
         .logout-btn {
-            background: #ef4444;
+            background: #dc2626;
             border: none;
             padding: 0.4rem 1.2rem;
             border-radius: 2rem;
@@ -170,27 +183,30 @@
         }
 
         .stat-card {
-            background: white;
-            border-radius: 1.2rem;
+            background: #111111;
+            border-radius: 1rem;
             padding: 1rem;
             text-align: center;
+            border: 1px solid #f97316;
         }
 
-        .stat-card i { font-size: 1.8rem; margin-bottom: 0.3rem; color: #3b82f6; }
-        .stat-value { font-size: 1.7rem; font-weight: 700; color: #0f172a; }
-        .stat-label { font-size: 0.7rem; color: #475569; }
+        .stat-card i { font-size: 1.8rem; margin-bottom: 0.3rem; color: #f97316; }
+        .stat-value { font-size: 1.7rem; font-weight: 700; color: white; }
+        .stat-label { font-size: 0.7rem; color: #9ca3af; }
 
         /* Admin Panel */
         .admin-panel {
-            background: white;
-            border-radius: 1.5rem;
+            background: #111111;
+            border-radius: 1rem;
             padding: 1.3rem;
             margin-bottom: 1.8rem;
             border-left: 4px solid #f97316;
         }
 
+        .admin-panel h3 { color: #f97316; margin-bottom: 1rem; }
+
         .add-user-form {
-            background: #f8fafc;
+            background: #1a1a1a;
             padding: 1rem;
             border-radius: 1rem;
             margin-bottom: 1.5rem;
@@ -208,16 +224,16 @@
 
         .add-user-form .input-group input,
         .add-user-form .input-group select {
-            padding: 0.5rem 0.8rem;
-            font-size: 0.85rem;
+            background: #0a0a0a;
+            color: white;
         }
 
         .add-user-btn {
-            background: #10b981;
+            background: #f97316;
             border: none;
             padding: 0.5rem 1.2rem;
             border-radius: 0.8rem;
-            color: white;
+            color: #0a0a0a;
             font-weight: 600;
             cursor: pointer;
         }
@@ -230,20 +246,20 @@
             color: white;
             font-weight: 600;
             cursor: pointer;
-            margin-left: auto;
         }
 
         .users-table { overflow-x: auto; margin-top: 1rem; }
         .users-table table { width: 100%; border-collapse: collapse; }
-        .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #eef2ff; font-size: 0.85rem; }
-        .delete-user-btn { background: #ef4444; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
+        .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #374151; font-size: 0.85rem; color: #e5e7eb; }
+        .delete-user-btn { background: #dc2626; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
 
         /* Timeline */
         .flow-timeline {
-            background: white;
-            border-radius: 1.5rem;
+            background: #111111;
+            border-radius: 1rem;
             padding: 1rem;
             margin-bottom: 1.5rem;
+            border: 1px solid #f97316;
         }
         .timeline-steps {
             display: flex;
@@ -255,25 +271,30 @@
             flex: 1;
             text-align: center;
             padding: 0.7rem 0.2rem;
-            border-radius: 1rem;
-            background: #f1f5f9;
+            border-radius: 0.8rem;
+            background: #1f1f1f;
         }
         .timeline-step .step-icon { font-size: 1.3rem; margin-bottom: 0.2rem; }
-        .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; }
-        .timeline-step.active { background: #3b82f6; color: white; }
-        .timeline-step.completed { background: #10b981; color: white; }
-        .timeline-step.pending { background: #f1f5f9; color: #64748b; }
+        .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; color: #9ca3af; }
+        .timeline-step.active { background: #f97316; }
+        .timeline-step.active .step-name { color: #0a0a0a; }
+        .timeline-step.completed { background: #10b981; }
+        .timeline-step.completed .step-name { color: white; }
+        .timeline-step.pending .step-name { color: #6b7280; }
+        .timeline-arrow { color: #f97316; font-size: 1rem; }
 
         /* Request Sections */
         .section-title {
-            background: white;
+            background: #111111;
             border-radius: 1rem;
             padding: 0.8rem 1.2rem;
             margin-bottom: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid #f97316;
         }
+        .section-title h3 { color: #f97316; font-size: 1rem; }
 
         .requests-container {
             display: flex;
@@ -283,15 +304,14 @@
         }
 
         .request-item {
-            background: white;
+            background: #111111;
             border-radius: 1rem;
             padding: 1rem;
-            border-left: 4px solid;
+            border-left: 4px solid #f97316;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .request-item:hover { transform: translateX(5px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .request-item.pending { border-left-color: #f59e0b; }
+        .request-item:hover { transform: translateX(5px); background: #1a1a1a; }
         .request-item.completed { border-left-color: #10b981; }
         .request-header-row {
             display: flex;
@@ -300,11 +320,11 @@
             flex-wrap: wrap;
             margin-bottom: 0.5rem;
         }
-        .request-id { font-weight: 700; color: #1e293b; }
+        .request-id { font-weight: 700; color: #f97316; }
         .request-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 2rem; }
-        .status-badge-pending { background: #ffedd5; color: #b45309; }
-        .status-badge-completed { background: #d1fae5; color: #065f46; }
-        .request-desc { font-size: 0.85rem; color: #475569; margin-top: 0.3rem; }
+        .status-badge-pending { background: #f97316; color: #0a0a0a; }
+        .status-badge-completed { background: #10b981; color: white; }
+        .request-desc { font-size: 0.85rem; color: #9ca3af; margin-top: 0.3rem; }
 
         .detail-grid {
             display: grid;
@@ -313,11 +333,13 @@
             margin: 1rem 0;
         }
         .detail-item {
-            background: #f9fafb;
+            background: #1a1a1a;
             padding: 0.6rem 0.9rem;
-            border-radius: 1rem;
+            border-radius: 0.8rem;
             font-size: 0.85rem;
+            color: #e5e7eb;
         }
+        .detail-item strong { color: #f97316; }
 
         .workflow-grid {
             display: grid;
@@ -326,46 +348,69 @@
             margin: 1rem 0;
         }
         .workflow-card {
-            background: white;
-            border-radius: 1.3rem;
+            background: #1a1a1a;
+            border-radius: 1rem;
             padding: 1rem;
+            border: 1px solid #374151;
         }
+        .card-header h3 { color: #f97316; font-size: 1rem; }
         textarea {
             width: 100%;
-            background: #fafcff;
-            border: 1px solid #e2e8f0;
-            border-radius: 1rem;
+            background: #0a0a0a;
+            border: 1px solid #374151;
+            border-radius: 0.8rem;
             padding: 0.6rem;
             font-size: 0.8rem;
+            color: white;
             resize: vertical;
             margin: 0.5rem 0;
         }
         .action-btn {
-            background: #1e40af;
+            background: #f97316;
             border: none;
             padding: 0.6rem;
-            border-radius: 1rem;
-            color: white;
-            font-weight: 500;
+            border-radius: 0.8rem;
+            color: #0a0a0a;
+            font-weight: 600;
             cursor: pointer;
             width: 100%;
         }
         .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .events-log {
-            background: #0f172a;
-            border-radius: 1rem;
+            background: #0a0a0a;
+            border-radius: 0.8rem;
             padding: 0.8rem;
             max-height: 140px;
             overflow-y: auto;
             font-family: monospace;
             font-size: 0.7rem;
-            color: #86efac;
+            color: #f97316;
+            border: 1px solid #374151;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            padding: 1rem;
+            background: #111111;
+            border-radius: 1rem;
+            border: 1px solid #f97316;
+        }
+        .footer p {
+            color: #9ca3af;
+            font-size: 0.75rem;
+        }
+        .footer span {
+            color: #f97316;
+            font-weight: 600;
         }
 
         @media (max-width: 700px) {
             .app-container { padding: 1rem; }
             .timeline-steps { flex-direction: column; }
+            .timeline-arrow { display: none; }
         }
     </style>
 </head>
@@ -375,20 +420,20 @@
 <div class="auth-container" id="authContainer">
     <div class="auth-card">
         <div class="auth-header">
-            <i class="fas fa-network-wired" style="font-size: 2.8rem; color: #2563eb;"></i>
-            <h1>IT Request Portal</h1>
-            <p>SSE → AM → Area Mgr → HOD IT</p>
+            <i class="fas fa-truck-fast" style="font-size: 2.5rem; color: #f97316;"></i>
+            <h1>M&P Express Logistics</h1>
+            <p>IT Approval Workflow System</p>
         </div>
         <div id="loginForm">
             <div class="input-group">
                 <label><i class="fas fa-envelope"></i> Email</label>
-                <input type="email" id="loginEmail" placeholder="user@company.com">
+                <input type="email" id="loginEmail" placeholder="sse@mpexpress.com">
             </div>
             <div class="input-group">
                 <label><i class="fas fa-lock"></i> Password</label>
                 <input type="password" id="loginPassword" placeholder="••••••••">
             </div>
-            <button class="auth-btn" onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login</button>
+            <button class="auth-btn" onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login to Portal</button>
             <div id="loginError" class="error-msg"></div>
         </div>
     </div>
@@ -397,9 +442,12 @@
 <!-- Main App -->
 <div class="app-container" id="appContainer">
     <div class="navbar">
-        <div class="logo"><h2><i class="fas fa-microchip"></i> IT Workflow Engine</h2></div>
+        <div class="logo">
+            <h2><i class="fas fa-truck"></i> M&P Express Logistics</h2>
+            <p>IT Request Management System</p>
+        </div>
         <div class="user-badge">
-            <span><i class="fas fa-user-circle"></i> <span id="userName"></span></span>
+            <span><i class="fas fa-user-circle"></i> <span id="userName" style="color:white;"></span></span>
             <span class="role-badge" id="userRole"></span>
             <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
@@ -413,14 +461,13 @@
 
     <!-- Admin Panel -->
     <div class="admin-panel" id="adminPanel" style="display: none;">
-        <h3><i class="fas fa-shield-alt"></i> Admin Dashboard</h3>
+        <h3><i class="fas fa-shield-alt"></i> Admin Dashboard - User Management</h3>
         <div class="add-user-form">
             <div class="input-group"><label>Full Name</label><input type="text" id="newUserName" placeholder="Name"></div>
-            <div class="input-group"><label>Email</label><input type="email" id="newUserEmail" placeholder="email@company.com"></div>
+            <div class="input-group"><label>Email</label><input type="email" id="newUserEmail" placeholder="email@mpexpress.com"></div>
             <div class="input-group"><label>Password</label><input type="text" id="newUserPassword" placeholder="temp123"></div>
             <div class="input-group"><label>Role</label>
                 <select id="newUserRole">
-                    <option value="requester">Requester</option>
                     <option value="sse">SSE IT</option>
                     <option value="am">AM IT</option>
                     <option value="area_manager">Area Manager</option>
@@ -428,8 +475,8 @@
                     <option value="admin">Admin</option>
                 </select>
             </div>
-            <button class="add-user-btn" onclick="addNewUser()"><i class="fas fa-user-plus"></i> Add</button>
-            <button class="export-btn" onclick="exportAllToPDF()"><i class="fas fa-file-pdf"></i> Export All to PDF</button>
+            <button class="add-user-btn" onclick="addNewUser()"><i class="fas fa-user-plus"></i> Add User</button>
+            <button class="export-btn" onclick="exportAllToPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
         </div>
         <div class="users-table" id="usersTable"></div>
     </div>
@@ -437,43 +484,48 @@
     <!-- Timeline -->
     <div class="flow-timeline">
         <div class="timeline-steps" id="timelineSteps">
-            <div class="timeline-step pending" id="stepReq"><div class="step-icon">📋</div><div class="step-name">Request</div></div>
-            <div class="timeline-arrow">→</div>
             <div class="timeline-step pending" id="stepSSE"><div class="step-icon">💻</div><div class="step-name">SSE IT</div></div>
             <div class="timeline-arrow">→</div>
             <div class="timeline-step pending" id="stepAM"><div class="step-icon">📊</div><div class="step-name">AM IT</div></div>
             <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepArea"><div class="step-icon">🌾</div><div class="step-name">Area Mgr</div></div>
+            <div class="timeline-step pending" id="stepArea"><div class="step-icon">🌍</div><div class="step-name">Area Manager</div></div>
             <div class="timeline-arrow">→</div>
             <div class="timeline-step pending" id="stepHOD"><div class="step-icon">🏛️</div><div class="step-name">HOD IT</div></div>
         </div>
     </div>
 
-    <!-- Create Request -->
+    <!-- Create Request - Only SSE & Admin -->
     <div class="section-title" id="createRequestCard">
-        <h3><i class="fas fa-plus-circle" style="color: #2563eb;"></i> Raise New Request</h3>
+        <h3><i class="fas fa-plus-circle"></i> Create New IT Request (SSE Only)</h3>
     </div>
-    <div class="request-card" style="background: white; border-radius: 1.5rem; padding: 1.4rem; margin-bottom: 2rem;">
-        <div class="input-group"><label>Description</label><textarea id="requestDesc" rows="2" placeholder="Describe your IT request..."></textarea></div>
-        <div class="input-group"><label>Attachment (optional)</label><input type="file" id="fileInput"></div>
-        <button class="action-btn" onclick="createRequest()" style="background: linear-gradient(95deg,#0f3b8c,#2563eb);"><i class="fas fa-paper-plane"></i> Submit Request</button>
+    <div class="request-card" style="background: #111111; border-radius: 1rem; padding: 1.4rem; margin-bottom: 2rem; border: 1px solid #f97316;">
+        <div class="input-group"><label><i class="fas fa-user"></i> User Email *</label><input type="email" id="requestUserEmail" placeholder="employee@mpexpress.com"></div>
+        <div class="input-group"><label><i class="fas fa-heading"></i> Request Title *</label><input type="text" id="requestTitle" placeholder="e.g., Laptop Issue, Software Access, Network Problem"></div>
+        <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
+        <div class="input-group"><label><i class="fas fa-paperclip"></i> Attachment (optional)</label><input type="file" id="fileInput"></div>
+        <button class="action-btn" onclick="createRequest()" style="background: #f97316; color:#0a0a0a;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
     </div>
 
     <!-- All Requests List -->
     <div class="section-title">
-        <h3><i class="fas fa-list"></i> All Requests / Complaints</h3>
+        <h3><i class="fas fa-list"></i> All IT Requests / Complaints</h3>
         <button class="export-btn" onclick="exportAllToPDF()" style="background: #dc2626;"><i class="fas fa-file-pdf"></i> Export PDF</button>
     </div>
     <div class="requests-container" id="allRequestsList"></div>
 
     <!-- Selected Request Details -->
-    <div class="request-card" id="selectedRequestCard" style="display: none; margin-top: 1rem;">
-        <div class="request-header"><h3><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3></div>
+    <div class="request-card" id="selectedRequestCard" style="display: none; margin-top: 1rem; background: #111111; border-radius: 1rem; padding: 1.4rem; border: 1px solid #f97316;">
+        <div class="request-header"><h3 style="color:#f97316;"><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3></div>
         <div class="detail-grid" id="selectedReqDetails"></div>
         <div class="workflow-grid" id="workflowGrid"></div>
     </div>
 
-    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready</div></div>
+    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal</div></div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p>M&P Express Logistics - IT Request Management Portal | Developed by <span>FARAZ SHEIKH</span></p>
+    </div>
 </div>
 
 <script>
@@ -542,7 +594,7 @@
 
     async function loadAllUsers() {
         const snapshot = await db.collection('users').get();
-        let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
+        let html = '<tr><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
         snapshot.forEach(doc => {
             const data = doc.data();
             html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
@@ -581,20 +633,22 @@
             const statusClass = isCompleted ? 'status-badge-completed' : 'status-badge-pending';
             const statusText = isCompleted ? '✅ Completed' : `🔄 ${req.stage}`;
             html += `
-                <div class="request-item ${isCompleted ? 'completed' : 'pending'}" onclick="selectRequest('${req.id}')">
+                <div class="request-item ${isCompleted ? 'completed' : ''}" onclick="selectRequest('${req.id}')">
                     <div class="request-header-row">
                         <span class="request-id"><i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}</span>
                         <span class="request-status ${statusClass}">${statusText}</span>
                     </div>
                     <div class="request-header-row">
-                        <span style="font-size:0.8rem;"><i class="fas fa-user"></i> ${req.requesterName} | <i class="fas fa-envelope"></i> ${req.requesterEmail}</span>
-                        <span style="font-size:0.7rem; color:#64748b;">${req.createdAt ? new Date(req.createdAt.toDate()).toLocaleDateString() : 'Recent'}</span>
+                        <span style="font-size:0.8rem; color:#9ca3af;"><i class="fas fa-user"></i> ${req.userEmail || req.requesterEmail} | <i class="fas fa-calendar"></i> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</span>
                     </div>
-                    <div class="request-desc"><i class="fas fa-file-alt"></i> ${req.description.substring(0,100)}${req.description.length > 100 ? '...' : ''}</div>
+                    <div class="request-header-row">
+                        <span style="font-size:0.85rem; color:#f97316;"><i class="fas fa-tag"></i> ${req.title || 'IT Request'}</span>
+                    </div>
+                    <div class="request-desc"><i class="fas fa-file-alt"></i> ${req.description?.substring(0,100) || ''}${req.description?.length > 100 ? '...' : ''}</div>
                 </div>
             `;
         });
-        if(allRequests.length === 0) html = '<div style="background:white; border-radius:1rem; padding:2rem; text-align:center; color:#64748b;">No requests found. Create your first request!</div>';
+        if(allRequests.length === 0) html = '<div style="background:#111111; border-radius:1rem; padding:2rem; text-align:center; color:#9ca3af;">No requests found. SSE can create new requests.</div>';
         container.innerHTML = html;
     }
 
@@ -606,6 +660,21 @@
         }
     };
 
+    function updateTimeline(stage) {
+        const order = ['SSE', 'AM', 'AREA', 'HOD'];
+        const stepMap = { SSE:'stepSSE', AM:'stepAM', AREA:'stepArea', HOD:'stepHOD' };
+        let stageIdx = order.indexOf(stage);
+        if(stage === 'COMPLETED') stageIdx = order.length;
+        for(let i=0; i<order.length; i++) {
+            const el = document.getElementById(stepMap[order[i]]);
+            if(el) {
+                if(i < stageIdx) el.className = 'timeline-step completed';
+                else if(i === stageIdx && stage !== 'COMPLETED') el.className = 'timeline-step active';
+                else el.className = 'timeline-step pending';
+            }
+        }
+    }
+
     function displaySelectedRequest() {
         if(!selectedRequest) return;
         const req = selectedRequest;
@@ -613,23 +682,23 @@
         document.getElementById('selectedReqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
         
         document.getElementById('selectedReqDetails').innerHTML = `
-            <div class="detail-item"><strong>👤 Requester:</strong> ${req.requesterName}</div>
-            <div class="detail-item"><strong>📧 Email:</strong> ${req.requesterEmail}</div>
-            <div class="detail-item"><strong>📝 Description:</strong> ${req.description}</div>
-            <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank">Download</a>` : '—'}</div>
-            <div class="detail-item"><strong>💬 SSE:</strong> ${req.sseRemark || '—'}</div>
-            <div class="detail-item"><strong>📊 AM:</strong> ${req.amRemark || '—'}</div>
-            <div class="detail-item"><strong>🌍 Area Mgr:</strong> ${req.areaRemark || '—'}</div>
-            <div class="detail-item"><strong>🏛️ HOD:</strong> ${req.hodRemark || '—'}</div>
+            <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail || req.requesterEmail}</div>
+            <div class="detail-item"><strong>📝 Title:</strong> ${req.title || 'IT Request'}</div>
+            <div class="detail-item"><strong>📅 Date & Time:</strong> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</div>
+            <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
+            <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#f97316;">Download</a>` : '—'}</div>
+            <div class="detail-item"><strong>💬 SSE Remark:</strong> ${req.sseRemark || '—'}</div>
+            <div class="detail-item"><strong>📊 AM Remark:</strong> ${req.amRemark || '—'}</div>
+            <div class="detail-item"><strong>🌍 Area Mgr Remark:</strong> ${req.areaRemark || '—'}</div>
+            <div class="detail-item"><strong>🏛️ HOD Remark:</strong> ${req.hodRemark || '—'}</div>
         `;
         
         updateTimeline(req.stage);
         
-        // Workflow cards for selected request
         const stagesMeta = [
             {key:'sse', label:'SSE IT', icon:'💻', stageFlag:'SSE', remarkField:'sseRemark', next:'→ AM IT'},
-            {key:'am', label:'AM IT', icon:'📈', stageFlag:'AM', remarkField:'amRemark', next:'→ Area Mgr'},
-            {key:'area', label:'Area Manager', icon:'🌾', stageFlag:'AREA', remarkField:'areaRemark', next:'→ HOD IT'},
+            {key:'am', label:'AM IT', icon:'📊', stageFlag:'AM', remarkField:'amRemark', next:'→ Area Manager'},
+            {key:'area', label:'Area Manager', icon:'🌍', stageFlag:'AREA', remarkField:'areaRemark', next:'→ HOD IT'},
             {key:'hod', label:'HOD IT', icon:'🏛️', stageFlag:'HOD', remarkField:'hodRemark', next:'Final Approve'}
         ];
         
@@ -646,11 +715,11 @@
             const existingRemark = isCompleted ? (req[m.remarkField] || '') : '';
             cardsHtml += `
                 <div class="workflow-card">
-                    <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3>${m.label}</h3></div>
-                    <div class="status ${isCompleted ? 'status-done' : (isActive ? 'status-current' : 'status-locked')}">
-                        ${isCompleted ? '✔ Approved' : (isActive ? '⏳ Pending' : '🔒 Locked')}
+                    <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3 style="color:#f97316;">${m.label}</h3></div>
+                    <div class="status" style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${isCompleted ? 'background:#10b981; color:white;' : (isActive ? 'background:#f97316; color:#0a0a0a;' : 'background:#374151; color:#9ca3af;')}">
+                        ${isCompleted ? '✔ Approved' : (isActive ? '⏳ Pending Your Action' : '🔒 Locked')}
                     </div>
-                    <textarea id="remark_${m.key}" rows="2" placeholder="Remarks..." ${disabled ? 'disabled' : ''}>${existingRemark}</textarea>
+                    <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${disabled ? 'disabled' : ''}>${existingRemark}</textarea>
                     <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${disabled ? 'disabled' : ''}>
                         <i class="fas fa-check-circle"></i> ${m.next}
                     </button>
@@ -668,10 +737,10 @@
         if(!remark) { alert('Please enter remarks'); return; }
         
         let updates = {};
-        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`SSE approved for ${selectedRequest.id.slice(0,6)}`); }
-        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`AM approved`); }
-        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`Area Manager approved`); }
-        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`✅ HOD approved - Request completed!`); }
+        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved - Forwarded to AM IT`); }
+        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`✅ AM approved - Forwarded to Area Manager`); }
+        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`✅ Area Manager approved - Forwarded to HOD IT`); }
+        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by HOD - Request Completed!`); }
         
         await db.collection('requests').doc(selectedRequest.id).update(updates);
         await loadAllRequests();
@@ -679,25 +748,20 @@
         loadStats();
     };
 
-    function updateTimeline(stage) {
-        const order = ['request', 'SSE', 'AM', 'AREA', 'HOD'];
-        const stepMap = { request:'stepReq', SSE:'stepSSE', AM:'stepAM', AREA:'stepArea', HOD:'stepHOD' };
-        let stageIdx = order.indexOf(stage);
-        if(stage === 'COMPLETED') stageIdx = order.length;
-        for(let i=0; i<order.length; i++) {
-            const el = document.getElementById(stepMap[order[i]]);
-            if(el) {
-                if(i < stageIdx) el.className = 'timeline-step completed';
-                else if(i === stageIdx && stage !== 'COMPLETED') el.className = 'timeline-step active';
-                else el.className = 'timeline-step pending';
-            }
-        }
-    }
-
     window.createRequest = async () => {
         if(!currentUser) return;
+        if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
+            alert('Only SSE IT can create requests!');
+            return;
+        }
+        
+        const userEmail = document.getElementById('requestUserEmail').value.trim();
+        const title = document.getElementById('requestTitle').value.trim();
         const description = document.getElementById('requestDesc').value.trim();
-        if(!description) { alert('Enter description'); return; }
+        
+        if(!userEmail) { alert('User Email is required!'); return; }
+        if(!title) { alert('Request Title is required!'); return; }
+        if(!description) { alert('Description is required!'); return; }
         
         let attachmentUrl = null;
         const file = document.getElementById('fileInput').files[0];
@@ -707,69 +771,87 @@
             attachmentUrl = await storageRef.getDownloadURL();
         }
         
+        const now = new Date();
+        const requestDate = now.toLocaleString();
+        
         await db.collection('requests').add({
-            requesterId: currentUser.uid, requesterName: currentUser.name, requesterEmail: currentUser.email,
-            description, attachmentUrl, stage: 'SSE',
+            requesterId: currentUser.uid,
+            requesterName: currentUser.name,
+            requesterEmail: currentUser.email,
+            userEmail: userEmail,
+            title: title,
+            description: description,
+            attachmentUrl: attachmentUrl,
+            requestDate: requestDate,
+            stage: 'SSE',
             sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        addLog(`✅ New request created`);
+        
+        addLog(`✅ New request created by ${currentUser.name} for ${userEmail}`);
+        document.getElementById('requestUserEmail').value = '';
+        document.getElementById('requestTitle').value = '';
         document.getElementById('requestDesc').value = '';
         document.getElementById('fileInput').value = '';
         await loadAllRequests();
         loadStats();
     };
 
-    // PDF Export
     window.exportAllToPDF = async () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
         
         let y = 20;
         doc.setFontSize(18);
-        doc.setTextColor(37, 99, 235);
-        doc.text('IT Request Management Report', 20, y);
-        y += 10;
+        doc.setTextColor(249, 115, 22);
+        doc.text('M&P Express Logistics - IT Request Report', 20, y);
+        y += 8;
         doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
+        doc.setTextColor(156, 163, 175);
         doc.text(`Generated: ${new Date().toLocaleString()}`, 20, y);
         y += 10;
         
         for(let i=0; i<allRequests.length; i++) {
             const req = allRequests[i];
-            if(y > 270) {
+            if(y > 260) {
                 doc.addPage();
                 y = 20;
             }
-            doc.setFontSize(11);
-            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(10);
+            doc.setTextColor(249, 115, 22);
             doc.setFont(undefined, 'bold');
             doc.text(`Request #${req.id.slice(0,8)}`, 20, y);
             y += 6;
             doc.setFont(undefined, 'normal');
+            doc.setTextColor(255, 255, 255);
             doc.setFontSize(9);
-            doc.text(`Requester: ${req.requesterName} (${req.requesterEmail})`, 20, y);
+            doc.text(`User Email: ${req.userEmail || req.requesterEmail}`, 20, y);
             y += 5;
-            doc.text(`Description: ${req.description.substring(0,80)}`, 20, y);
+            doc.text(`Title: ${req.title || 'IT Request'}`, 20, y);
+            y += 5;
+            doc.text(`Date: ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}`, 20, y);
+            y += 5;
+            doc.text(`Description: ${req.description?.substring(0,80) || ''}`, 20, y);
             y += 5;
             doc.text(`Status: ${req.stage === 'COMPLETED' ? 'COMPLETED' : req.stage}`, 20, y);
             y += 5;
-            doc.text(`SSE Remark: ${req.sseRemark || '—'}`, 20, y);
-            y += 5;
-            doc.text(`AM Remark: ${req.amRemark || '—'}`, 20, y);
-            y += 5;
-            doc.text(`Area Mgr Remark: ${req.areaRemark || '—'}`, 20, y);
-            y += 5;
-            doc.text(`HOD Remark: ${req.hodRemark || '—'}`, 20, y);
+            doc.text(`SSE: ${req.sseRemark || '—'}`, 20, y);
+            y += 4;
+            doc.text(`AM: ${req.amRemark || '—'}`, 20, y);
+            y += 4;
+            doc.text(`Area Mgr: ${req.areaRemark || '—'}`, 20, y);
+            y += 4;
+            doc.text(`HOD: ${req.hodRemark || '—'}`, 20, y);
             y += 8;
+            doc.setDrawColor(249, 115, 22);
             doc.line(20, y-2, 190, y-2);
         }
         
-        doc.save(`IT_Requests_${new Date().toISOString().slice(0,19)}.pdf`);
+        doc.save(`M&P_IT_Requests_${new Date().toISOString().slice(0,19)}.pdf`);
         addLog(`📄 PDF exported with ${allRequests.length} requests`);
     };
 
-    // Auth
+    // Auth State
     auth.onAuthStateChanged(async (user) => {
         if(user) {
             const userDoc = await db.collection('users').doc(user.uid).get();
@@ -784,13 +866,16 @@
                 document.getElementById('adminPanel').style.display = 'block';
                 loadAllUsers();
             }
-            if(currentUser.role !== 'requester' && currentUser.role !== 'admin') {
+            
+            // Only SSE and Admin can create requests
+            if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
                 document.getElementById('createRequestCard').style.display = 'none';
+                document.querySelector('.request-card[style*="background: #111111; border-radius: 1rem; padding: 1.4rem; margin-bottom: 2rem; border: 1px solid #f97316;"]').style.display = 'none';
             }
             
             await loadAllRequests();
             loadStats();
-            addLog(`Welcome ${currentUser.name}`);
+            addLog(`Welcome ${currentUser.name} (${currentUser.role}) - M&P Express Logistics`);
         } else {
             document.getElementById('authContainer').style.display = 'flex';
             document.getElementById('appContainer').style.display = 'none';
