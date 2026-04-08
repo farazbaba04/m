@@ -26,7 +26,6 @@
             min-height: 100vh;
         }
 
-        /* Auth Container */
         .auth-container {
             min-height: 100vh;
             display: flex;
@@ -81,7 +80,6 @@
             border: 1px solid #e5e7eb;
             border-radius: 0.8rem;
             font-size: 0.9rem;
-            transition: all 0.2s;
         }
 
         .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
@@ -99,12 +97,10 @@
             color: white;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         .auth-btn:hover {
             background: #ea580c;
-            transform: translateY(-1px);
         }
 
         .error-msg {
@@ -114,7 +110,6 @@
             text-align: center;
         }
 
-        /* Main App */
         .app-container {
             display: none;
             max-width: 1400px;
@@ -122,7 +117,6 @@
             padding: 1.5rem;
         }
 
-        /* Navbar */
         .navbar {
             background: white;
             border-radius: 1rem;
@@ -176,7 +170,6 @@
             cursor: pointer;
         }
 
-        /* Stats */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -197,7 +190,6 @@
         .stat-value { font-size: 1.7rem; font-weight: 700; color: #1f2937; }
         .stat-label { font-size: 0.7rem; color: #6b7280; }
 
-        /* Admin Panel */
         .admin-panel {
             background: white;
             border-radius: 1rem;
@@ -251,7 +243,6 @@
         .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem; }
         .delete-user-btn { background: #ef4444; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
 
-        /* Timeline */
         .flow-timeline {
             background: white;
             border-radius: 1rem;
@@ -259,12 +250,14 @@
             margin-bottom: 1.5rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+
         .timeline-steps {
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 0.5rem;
         }
+
         .timeline-step {
             flex: 1;
             text-align: center;
@@ -272,6 +265,7 @@
             border-radius: 0.8rem;
             background: #f3f4f6;
         }
+
         .timeline-step .step-icon { font-size: 1.3rem; margin-bottom: 0.2rem; }
         .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; }
         .timeline-step.active { background: #f97316; color: white; }
@@ -279,7 +273,6 @@
         .timeline-step.pending { background: #f3f4f6; color: #9ca3af; }
         .timeline-arrow { color: #f97316; font-size: 1rem; }
 
-        /* Request Form */
         .request-form-card {
             background: white;
             border-radius: 1rem;
@@ -288,6 +281,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             border: 1px solid #e5e7eb;
         }
+
         .form-title {
             color: #f97316;
             margin-bottom: 1rem;
@@ -296,6 +290,7 @@
             display: inline-block;
             padding-bottom: 0.3rem;
         }
+
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -303,7 +298,6 @@
             margin-bottom: 1rem;
         }
 
-        /* Requests List */
         .section-title {
             background: white;
             border-radius: 1rem;
@@ -314,6 +308,7 @@
             align-items: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+
         .section-title h3 { color: #f97316; font-size: 1rem; }
 
         .requests-container {
@@ -332,8 +327,10 @@
             transition: all 0.2s;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+
         .request-item:hover { transform: translateX(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .request-item.completed { border-left-color: #10b981; }
+
         .request-header-row {
             display: flex;
             justify-content: space-between;
@@ -341,6 +338,7 @@
             flex-wrap: wrap;
             margin-bottom: 0.5rem;
         }
+
         .request-id { font-weight: 700; color: #f97316; }
         .request-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 2rem; }
         .status-badge-pending { background: #fed7aa; color: #9a3412; }
@@ -356,12 +354,14 @@
             gap: 0.8rem;
             margin: 1rem 0;
         }
+
         .detail-item {
             background: #f9fafb;
             padding: 0.6rem 0.9rem;
             border-radius: 0.8rem;
             font-size: 0.85rem;
         }
+
         .detail-item strong { color: #f97316; }
 
         .workflow-grid {
@@ -370,13 +370,22 @@
             gap: 1.2rem;
             margin: 1rem 0;
         }
+
         .workflow-card {
             background: #f9fafb;
             border-radius: 1rem;
             padding: 1rem;
             border: 1px solid #e5e7eb;
+            transition: all 0.2s;
         }
+
+        .workflow-card.disabled-card {
+            opacity: 0.6;
+            background: #f3f4f6;
+        }
+
         .card-header h3 { color: #f97316; font-size: 1rem; }
+
         textarea {
             width: 100%;
             background: white;
@@ -387,6 +396,13 @@
             resize: vertical;
             margin: 0.5rem 0;
         }
+
+        textarea:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
         .action-btn {
             background: #f97316;
             border: none;
@@ -397,7 +413,12 @@
             cursor: pointer;
             width: 100%;
         }
-        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
 
         .events-log {
             background: #1f2937;
@@ -418,13 +439,25 @@
             border-radius: 1rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+
         .footer p {
             color: #6b7280;
             font-size: 0.75rem;
         }
+
         .footer span {
             color: #f97316;
             font-weight: 600;
+        }
+
+        .role-access-info {
+            background: #fef3c7;
+            border-left: 4px solid #f97316;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            color: #92400e;
         }
 
         @media (max-width: 700px) {
@@ -436,7 +469,6 @@
 </head>
 <body>
 
-<!-- Login Container -->
 <div class="auth-container" id="authContainer">
     <div class="auth-card">
         <div class="auth-header">
@@ -459,7 +491,6 @@
     </div>
 </div>
 
-<!-- Main App -->
 <div class="app-container" id="appContainer">
     <div class="navbar">
         <div class="logo">
@@ -479,7 +510,6 @@
         <div class="stat-card"><i class="fas fa-receipt"></i><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total Requests</div></div>
     </div>
 
-    <!-- Admin Panel -->
     <div class="admin-panel" id="adminPanel" style="display: none;">
         <h3><i class="fas fa-shield-alt"></i> Admin Dashboard - User Management</h3>
         <div class="add-user-form">
@@ -501,7 +531,6 @@
         <div class="users-table" id="usersTable"></div>
     </div>
 
-    <!-- Timeline -->
     <div class="flow-timeline">
         <div class="timeline-steps" id="timelineSteps">
             <div class="timeline-step pending" id="stepSSE"><div class="step-icon">💻</div><div class="step-name">SSE IT</div></div>
@@ -514,7 +543,6 @@
         </div>
     </div>
 
-    <!-- Create Request Form - Only SSE & Admin -->
     <div class="request-form-card" id="createRequestCard">
         <h3 class="form-title"><i class="fas fa-plus-circle"></i> Create New IT Request (SSE Only)</h3>
         <div class="form-row">
@@ -536,23 +564,21 @@
         <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
     </div>
 
-    <!-- All Requests List -->
     <div class="section-title">
         <h3><i class="fas fa-list"></i> All IT Requests / Complaints</h3>
         <button class="export-btn" onclick="exportAllToPDF()" style="background: #f97316;"><i class="fas fa-file-pdf"></i> Export PDF</button>
     </div>
     <div class="requests-container" id="allRequestsList"></div>
 
-    <!-- Selected Request Details -->
     <div class="request-form-card" id="selectedRequestCard" style="display: none;">
         <h3 class="form-title"><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3>
+        <div class="role-access-info" id="accessInfoMsg"></div>
         <div class="detail-grid" id="selectedReqDetails"></div>
         <div class="workflow-grid" id="workflowGrid"></div>
     </div>
 
     <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal</div></div>
     
-    <!-- Footer -->
     <div class="footer">
         <p>M&P Express Logistics - IT Request Management Portal | Developed by <span>FARAZ SHEIKH</span></p>
     </div>
@@ -714,11 +740,52 @@
         }
     }
 
+    // Get role display name
+    function getRoleDisplayName(role) {
+        const roles = {
+            'sse': 'SSE IT',
+            'am': 'AM IT',
+            'area_manager': 'Area Manager',
+            'hod': 'HOD IT',
+            'admin': 'Administrator'
+        };
+        return roles[role] || role;
+    }
+
+    // Check if current user can edit this specific level
+    function canUserApprove(level, requestStage, isRemarkCompleted) {
+        if(!currentUser) return false;
+        
+        // Admin can approve anything
+        if(currentUser.role === 'admin') return true;
+        
+        // If remark already added, cannot edit again
+        if(isRemarkCompleted) return false;
+        
+        // Check role and stage match
+        if(level === 'sse' && currentUser.role === 'sse' && requestStage === 'SSE') return true;
+        if(level === 'am' && currentUser.role === 'am' && requestStage === 'AM') return true;
+        if(level === 'area' && currentUser.role === 'area_manager' && requestStage === 'AREA') return true;
+        if(level === 'hod' && currentUser.role === 'hod' && requestStage === 'HOD') return true;
+        
+        return false;
+    }
+
     function displaySelectedRequest() {
         if(!selectedRequest) return;
         const req = selectedRequest;
         document.getElementById('selectedRequestCard').style.display = 'block';
         document.getElementById('selectedReqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
+        
+        // Show access info message
+        const accessMsg = document.getElementById('accessInfoMsg');
+        if(currentUser?.role !== 'admin') {
+            accessMsg.innerHTML = `<i class="fas fa-info-circle"></i> You are logged in as <strong>${getRoleDisplayName(currentUser?.role)}</strong>. You can only approve requests at the <strong>${getRoleDisplayName(currentUser?.role)}</strong> stage when the request reaches you.`;
+            accessMsg.style.display = 'block';
+        } else {
+            accessMsg.innerHTML = `<i class="fas fa-crown"></i> You are logged in as <strong>Administrator</strong>. You can approve any stage and edit any remark.`;
+            accessMsg.style.display = 'block';
+        }
         
         document.getElementById('selectedReqDetails').innerHTML = `
             <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail}</div>
@@ -737,31 +804,67 @@
         updateTimeline(req.stage);
         
         const stagesMeta = [
-            {key:'sse', label:'SSE IT', icon:'💻', stageFlag:'SSE', remarkField:'sseRemark', next:'→ AM IT'},
-            {key:'am', label:'AM IT', icon:'📊', stageFlag:'AM', remarkField:'amRemark', next:'→ Area Manager'},
-            {key:'area', label:'Area Manager', icon:'🌍', stageFlag:'AREA', remarkField:'areaRemark', next:'→ HOD IT'},
-            {key:'hod', label:'HOD IT', icon:'🏛️', stageFlag:'HOD', remarkField:'hodRemark', next:'Final Approve'}
+            {key:'sse', label:'SSE IT', icon:'💻', stageFlag:'SSE', remarkField:'sseRemark', next:'→ AM IT', roleRequired:'sse'},
+            {key:'am', label:'AM IT', icon:'📊', stageFlag:'AM', remarkField:'amRemark', next:'→ Area Manager', roleRequired:'am'},
+            {key:'area', label:'Area Manager', icon:'🌍', stageFlag:'AREA', remarkField:'areaRemark', next:'→ HOD IT', roleRequired:'area_manager'},
+            {key:'hod', label:'HOD IT', icon:'🏛️', stageFlag:'HOD', remarkField:'hodRemark', next:'Final Approve', roleRequired:'hod'}
         ];
         
         let cardsHtml = '';
         for(let m of stagesMeta) {
             const isCompleted = !!req[m.remarkField];
             const isActive = (req.stage === m.stageFlag) && !isCompleted && req.stage !== 'COMPLETED';
-            const canAct = (currentUser?.role === 'admin') || 
-                (m.key === 'sse' && currentUser?.role === 'sse' && req.stage === 'SSE') ||
-                (m.key === 'am' && currentUser?.role === 'am' && req.stage === 'AM') ||
-                (m.key === 'area' && currentUser?.role === 'area_manager' && req.stage === 'AREA') ||
-                (m.key === 'hod' && currentUser?.role === 'hod' && req.stage === 'HOD');
-            const disabled = (!isActive && !isCompleted) || req.stage === 'COMPLETED' || (isActive && !canAct);
+            
+            // Check if current user can approve this level
+            const canApprove = canUserApprove(m.key, req.stage, isCompleted);
+            
+            // Determine if this card should be enabled
+            // Card is enabled ONLY if: request is at this stage AND not completed AND user has correct role
+            const shouldEnable = isActive && canApprove && req.stage !== 'COMPLETED';
+            
+            // Get existing remark
             const existingRemark = isCompleted ? (req[m.remarkField] || '') : '';
+            
+            let statusText = '';
+            let statusClass = '';
+            
+            if(isCompleted) {
+                statusText = '✓ Approved';
+                statusClass = 'background:#d1fae5; color:#065f46;';
+            } else if(isActive) {
+                if(canApprove) {
+                    statusText = '⏳ Pending Your Action - You can approve';
+                    statusClass = 'background:#fed7aa; color:#9a3412;';
+                } else {
+                    statusText = '🔒 Waiting for ' + m.label;
+                    statusClass = 'background:#f3f4f6; color:#9ca3af;';
+                }
+            } else {
+                // Check if stage is already passed or not yet reached
+                const stageOrder = ['SSE', 'AM', 'AREA', 'HOD'];
+                const currentStageIndex = stageOrder.indexOf(req.stage);
+                const thisStageIndex = stageOrder.indexOf(m.stageFlag);
+                
+                if(thisStageIndex < currentStageIndex) {
+                    statusText = '✓ Already Completed';
+                    statusClass = 'background:#d1fae5; color:#065f46;';
+                } else {
+                    statusText = '🔒 Locked - Not yet reached';
+                    statusClass = 'background:#f3f4f6; color:#9ca3af;';
+                }
+            }
+            
+            // Card style - add disabled class if not enabled
+            const cardDisabledClass = (!shouldEnable && !isCompleted) ? 'disabled-card' : '';
+            
             cardsHtml += `
-                <div class="workflow-card">
+                <div class="workflow-card ${cardDisabledClass}">
                     <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3>${m.label}</h3></div>
-                    <div class="status" style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${isCompleted ? 'background:#d1fae5; color:#065f46;' : (isActive ? 'background:#fed7aa; color:#9a3412;' : 'background:#f3f4f6; color:#9ca3af;')}">
-                        ${isCompleted ? '✔ Approved' : (isActive ? '⏳ Pending Your Action' : '🔒 Locked')}
+                    <div class="status" style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${statusClass}">
+                        ${statusText}
                     </div>
-                    <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${disabled ? 'disabled' : ''}>${existingRemark}</textarea>
-                    <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${disabled ? 'disabled' : ''}>
+                    <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${!shouldEnable ? 'disabled' : ''}>${existingRemark}</textarea>
+                    <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${!shouldEnable ? 'disabled' : ''}>
                         <i class="fas fa-check-circle"></i> ${m.next}
                     </button>
                 </div>
@@ -771,22 +874,44 @@
     }
 
     window.submitApprovalForSelected = async (level) => {
-        if(!selectedRequest) return;
+        if(!selectedRequest) {
+            alert('No request selected');
+            return;
+        }
+        
+        const req = selectedRequest;
         const remarkElem = document.getElementById(`remark_${level}`);
         if(!remarkElem) return;
         const remark = remarkElem.value.trim();
-        if(!remark) { alert('Please enter remarks'); return; }
+        if(!remark) { alert('Please enter remarks before approving'); return; }
+        
+        // Double-check permission before submitting
+        let isAuthorized = false;
+        if(currentUser?.role === 'admin') {
+            isAuthorized = true;
+        } else {
+            if(level === 'sse' && currentUser?.role === 'sse' && req.stage === 'SSE' && !req.sseRemark) isAuthorized = true;
+            else if(level === 'am' && currentUser?.role === 'am' && req.stage === 'AM' && !req.amRemark) isAuthorized = true;
+            else if(level === 'area' && currentUser?.role === 'area_manager' && req.stage === 'AREA' && !req.areaRemark) isAuthorized = true;
+            else if(level === 'hod' && currentUser?.role === 'hod' && req.stage === 'HOD' && !req.hodRemark) isAuthorized = true;
+        }
+        
+        if(!isAuthorized) {
+            alert(`❌ You are not authorized to approve this stage! Only ${level.toUpperCase()} can approve when request is at ${level.toUpperCase()} stage.`);
+            return;
+        }
         
         let updates = {};
-        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved - Forwarded to AM IT`); }
-        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`✅ AM approved - Forwarded to Area Manager`); }
-        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`✅ Area Manager approved - Forwarded to HOD IT`); }
-        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by HOD - Request Completed!`); }
+        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved by ${currentUser.name} - Forwarded to AM IT`); }
+        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`✅ AM approved by ${currentUser.name} - Forwarded to Area Manager`); }
+        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`✅ Area Manager approved by ${currentUser.name} - Forwarded to HOD IT`); }
+        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by ${currentUser.name} - Request Completed!`); }
         
         await db.collection('requests').doc(selectedRequest.id).update(updates);
         await loadAllRequests();
         await selectRequest(selectedRequest.id);
         loadStats();
+        alert(`✓ ${level.toUpperCase()} approval submitted successfully!`);
     };
 
     window.createRequest = async () => {
@@ -911,7 +1036,6 @@
         addLog(`📄 PDF exported with ${allRequests.length} requests`);
     };
 
-    // Auth State
     auth.onAuthStateChanged(async (user) => {
         if(user) {
             const userDoc = await db.collection('users').doc(user.uid).get();
@@ -934,7 +1058,8 @@
             
             await loadAllRequests();
             loadStats();
-            addLog(`Welcome ${currentUser.name} (${currentUser.role}) - M&P Express Logistics`);
+            addLog(`Welcome ${currentUser.name} (${getRoleDisplayName(currentUser.role)})`);
+            addLog(`🔒 You can only approve requests at the ${getRoleDisplayName(currentUser.role)} stage`);
         } else {
             document.getElementById('authContainer').style.display = 'flex';
             document.getElementById('appContainer').style.display = 'none';
