@@ -18,11 +18,11 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', Roboto, 'Poppins', sans-serif;
         }
 
         body {
-            background: #0a0a0a;
+            background: #f5f7fb;
             min-height: 100vh;
         }
 
@@ -32,18 +32,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            background: linear-gradient(135deg, #fff5eb 0%, #ffe4cc 100%);
             padding: 1.5rem;
         }
 
         .auth-card {
-            background: #111111;
+            background: white;
             border-radius: 1.5rem;
             padding: 2.5rem;
             width: 100%;
             max-width: 440px;
-            border: 1px solid #f97316;
-            box-shadow: 0 25px 50px -12px rgba(249,115,22,0.2);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-top: 4px solid #f97316;
         }
 
         .auth-header {
@@ -57,7 +57,7 @@
         }
 
         .auth-header p {
-            color: #9ca3af;
+            color: #6b7280;
             font-size: 0.8rem;
             margin-top: 0.5rem;
         }
@@ -68,25 +68,26 @@
 
         .input-group label {
             display: block;
-            color: #e5e7eb;
+            color: #374151;
             font-size: 0.8rem;
-            font-weight: 500;
+            font-weight: 600;
             margin-bottom: 0.4rem;
         }
 
-        .input-group input {
+        .input-group input, .input-group select, .input-group textarea {
             width: 100%;
             padding: 0.8rem 1rem;
-            background: #1f1f1f;
-            border: 1px solid #374151;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
             border-radius: 0.8rem;
             font-size: 0.9rem;
-            color: white;
+            transition: all 0.2s;
         }
 
-        .input-group input:focus {
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
             outline: none;
             border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
         }
 
         .auth-btn {
@@ -123,7 +124,7 @@
 
         /* Navbar */
         .navbar {
-            background: #111111;
+            background: white;
             border-radius: 1rem;
             padding: 0.9rem 2rem;
             margin-bottom: 1.8rem;
@@ -132,7 +133,8 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 1rem;
-            border: 1px solid #f97316;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-bottom: 2px solid #f97316;
         }
 
         .logo h2 {
@@ -143,21 +145,21 @@
 
         .logo p {
             font-size: 0.7rem;
-            color: #9ca3af;
+            color: #6b7280;
         }
 
         .user-badge {
             display: flex;
             align-items: center;
             gap: 1rem;
-            background: #1f1f1f;
+            background: #f3f4f6;
             padding: 0.3rem 1rem 0.3rem 1.2rem;
             border-radius: 2rem;
         }
 
         .role-badge {
             background: #f97316;
-            color: #0a0a0a;
+            color: white;
             padding: 0.2rem 1rem;
             border-radius: 2rem;
             font-size: 0.7rem;
@@ -165,7 +167,7 @@
         }
 
         .logout-btn {
-            background: #dc2626;
+            background: #ef4444;
             border: none;
             padding: 0.4rem 1.2rem;
             border-radius: 2rem;
@@ -183,30 +185,32 @@
         }
 
         .stat-card {
-            background: #111111;
+            background: white;
             border-radius: 1rem;
             padding: 1rem;
             text-align: center;
-            border: 1px solid #f97316;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
         }
 
         .stat-card i { font-size: 1.8rem; margin-bottom: 0.3rem; color: #f97316; }
-        .stat-value { font-size: 1.7rem; font-weight: 700; color: white; }
-        .stat-label { font-size: 0.7rem; color: #9ca3af; }
+        .stat-value { font-size: 1.7rem; font-weight: 700; color: #1f2937; }
+        .stat-label { font-size: 0.7rem; color: #6b7280; }
 
         /* Admin Panel */
         .admin-panel {
-            background: #111111;
+            background: white;
             border-radius: 1rem;
             padding: 1.3rem;
             margin-bottom: 1.8rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             border-left: 4px solid #f97316;
         }
 
         .admin-panel h3 { color: #f97316; margin-bottom: 1rem; }
 
         .add-user-form {
-            background: #1a1a1a;
+            background: #f9fafb;
             padding: 1rem;
             border-radius: 1rem;
             margin-bottom: 1.5rem;
@@ -222,24 +226,18 @@
             min-width: 140px;
         }
 
-        .add-user-form .input-group input,
-        .add-user-form .input-group select {
-            background: #0a0a0a;
-            color: white;
-        }
-
         .add-user-btn {
             background: #f97316;
             border: none;
             padding: 0.5rem 1.2rem;
             border-radius: 0.8rem;
-            color: #0a0a0a;
+            color: white;
             font-weight: 600;
             cursor: pointer;
         }
 
         .export-btn {
-            background: #dc2626;
+            background: #10b981;
             border: none;
             padding: 0.5rem 1.2rem;
             border-radius: 0.8rem;
@@ -250,16 +248,16 @@
 
         .users-table { overflow-x: auto; margin-top: 1rem; }
         .users-table table { width: 100%; border-collapse: collapse; }
-        .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #374151; font-size: 0.85rem; color: #e5e7eb; }
-        .delete-user-btn { background: #dc2626; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
+        .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem; }
+        .delete-user-btn { background: #ef4444; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
 
         /* Timeline */
         .flow-timeline {
-            background: #111111;
+            background: white;
             border-radius: 1rem;
             padding: 1rem;
             margin-bottom: 1.5rem;
-            border: 1px solid #f97316;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .timeline-steps {
             display: flex;
@@ -272,27 +270,49 @@
             text-align: center;
             padding: 0.7rem 0.2rem;
             border-radius: 0.8rem;
-            background: #1f1f1f;
+            background: #f3f4f6;
         }
         .timeline-step .step-icon { font-size: 1.3rem; margin-bottom: 0.2rem; }
-        .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; color: #9ca3af; }
-        .timeline-step.active { background: #f97316; }
-        .timeline-step.active .step-name { color: #0a0a0a; }
-        .timeline-step.completed { background: #10b981; }
-        .timeline-step.completed .step-name { color: white; }
-        .timeline-step.pending .step-name { color: #6b7280; }
+        .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; }
+        .timeline-step.active { background: #f97316; color: white; }
+        .timeline-step.completed { background: #10b981; color: white; }
+        .timeline-step.pending { background: #f3f4f6; color: #9ca3af; }
         .timeline-arrow { color: #f97316; font-size: 1rem; }
 
-        /* Request Sections */
+        /* Request Form */
+        .request-form-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+        .form-title {
+            color: #f97316;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #f97316;
+            display: inline-block;
+            padding-bottom: 0.3rem;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Requests List */
         .section-title {
-            background: #111111;
+            background: white;
             border-radius: 1rem;
             padding: 0.8rem 1.2rem;
             margin-bottom: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #f97316;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .section-title h3 { color: #f97316; font-size: 1rem; }
 
@@ -304,14 +324,15 @@
         }
 
         .request-item {
-            background: #111111;
+            background: white;
             border-radius: 1rem;
             padding: 1rem;
             border-left: 4px solid #f97316;
             cursor: pointer;
             transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
-        .request-item:hover { transform: translateX(5px); background: #1a1a1a; }
+        .request-item:hover { transform: translateX(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .request-item.completed { border-left-color: #10b981; }
         .request-header-row {
             display: flex;
@@ -322,9 +343,12 @@
         }
         .request-id { font-weight: 700; color: #f97316; }
         .request-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 2rem; }
-        .status-badge-pending { background: #f97316; color: #0a0a0a; }
-        .status-badge-completed { background: #10b981; color: white; }
-        .request-desc { font-size: 0.85rem; color: #9ca3af; margin-top: 0.3rem; }
+        .status-badge-pending { background: #fed7aa; color: #9a3412; }
+        .status-badge-completed { background: #d1fae5; color: #065f46; }
+        .priority-high { background: #fee2e2; color: #dc2626; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
+        .priority-medium { background: #fed7aa; color: #ea580c; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
+        .priority-low { background: #d1fae5; color: #059669; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
+        .request-desc { font-size: 0.85rem; color: #4b5563; margin-top: 0.3rem; }
 
         .detail-grid {
             display: grid;
@@ -333,11 +357,10 @@
             margin: 1rem 0;
         }
         .detail-item {
-            background: #1a1a1a;
+            background: #f9fafb;
             padding: 0.6rem 0.9rem;
             border-radius: 0.8rem;
             font-size: 0.85rem;
-            color: #e5e7eb;
         }
         .detail-item strong { color: #f97316; }
 
@@ -348,20 +371,19 @@
             margin: 1rem 0;
         }
         .workflow-card {
-            background: #1a1a1a;
+            background: #f9fafb;
             border-radius: 1rem;
             padding: 1rem;
-            border: 1px solid #374151;
+            border: 1px solid #e5e7eb;
         }
         .card-header h3 { color: #f97316; font-size: 1rem; }
         textarea {
             width: 100%;
-            background: #0a0a0a;
-            border: 1px solid #374151;
+            background: white;
+            border: 1px solid #e5e7eb;
             border-radius: 0.8rem;
             padding: 0.6rem;
             font-size: 0.8rem;
-            color: white;
             resize: vertical;
             margin: 0.5rem 0;
         }
@@ -370,7 +392,7 @@
             border: none;
             padding: 0.6rem;
             border-radius: 0.8rem;
-            color: #0a0a0a;
+            color: white;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
@@ -378,28 +400,26 @@
         .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .events-log {
-            background: #0a0a0a;
+            background: #1f2937;
             border-radius: 0.8rem;
             padding: 0.8rem;
             max-height: 140px;
             overflow-y: auto;
             font-family: monospace;
             font-size: 0.7rem;
-            color: #f97316;
-            border: 1px solid #374151;
+            color: #fcd34d;
         }
 
-        /* Footer */
         .footer {
             margin-top: 2rem;
             text-align: center;
             padding: 1rem;
-            background: #111111;
+            background: white;
             border-radius: 1rem;
-            border: 1px solid #f97316;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .footer p {
-            color: #9ca3af;
+            color: #6b7280;
             font-size: 0.75rem;
         }
         .footer span {
@@ -447,7 +467,7 @@
             <p>IT Request Management System</p>
         </div>
         <div class="user-badge">
-            <span><i class="fas fa-user-circle"></i> <span id="userName" style="color:white;"></span></span>
+            <span><i class="fas fa-user-circle"></i> <span id="userName"></span></span>
             <span class="role-badge" id="userRole"></span>
             <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
@@ -494,28 +514,38 @@
         </div>
     </div>
 
-    <!-- Create Request - Only SSE & Admin -->
-    <div class="section-title" id="createRequestCard">
-        <h3><i class="fas fa-plus-circle"></i> Create New IT Request (SSE Only)</h3>
-    </div>
-    <div class="request-card" style="background: #111111; border-radius: 1rem; padding: 1.4rem; margin-bottom: 2rem; border: 1px solid #f97316;">
-        <div class="input-group"><label><i class="fas fa-user"></i> User Email *</label><input type="email" id="requestUserEmail" placeholder="employee@mpexpress.com"></div>
-        <div class="input-group"><label><i class="fas fa-heading"></i> Request Title *</label><input type="text" id="requestTitle" placeholder="e.g., Laptop Issue, Software Access, Network Problem"></div>
-        <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
+    <!-- Create Request Form - Only SSE & Admin -->
+    <div class="request-form-card" id="createRequestCard">
+        <h3 class="form-title"><i class="fas fa-plus-circle"></i> Create New IT Request (SSE Only)</h3>
+        <div class="form-row">
+            <div class="input-group"><label><i class="fas fa-envelope"></i> User Email *</label><input type="email" id="requestUserEmail" placeholder="employee@mpexpress.com"></div>
+            <div class="input-group"><label><i class="fas fa-heading"></i> Request Title *</label><input type="text" id="requestTitle" placeholder="e.g., Laptop Issue, Software Access"></div>
+        </div>
+        <div class="form-row">
+            <div class="input-group"><label><i class="fas fa-building"></i> Department</label><input type="text" id="requestDepartment" placeholder="e.g., Operations, HR, Finance"></div>
+            <div class="input-group"><label><i class="fas fa-flag"></i> Priority</label>
+                <select id="requestPriority">
+                    <option value="High">🔴 High</option>
+                    <option value="Medium">🟠 Medium</option>
+                    <option value="Low">🟢 Low</option>
+                </select>
+            </div>
+        </div>
+        <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue *</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
         <div class="input-group"><label><i class="fas fa-paperclip"></i> Attachment (optional)</label><input type="file" id="fileInput"></div>
-        <button class="action-btn" onclick="createRequest()" style="background: #f97316; color:#0a0a0a;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
+        <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
     </div>
 
     <!-- All Requests List -->
     <div class="section-title">
         <h3><i class="fas fa-list"></i> All IT Requests / Complaints</h3>
-        <button class="export-btn" onclick="exportAllToPDF()" style="background: #dc2626;"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        <button class="export-btn" onclick="exportAllToPDF()" style="background: #f97316;"><i class="fas fa-file-pdf"></i> Export PDF</button>
     </div>
     <div class="requests-container" id="allRequestsList"></div>
 
     <!-- Selected Request Details -->
-    <div class="request-card" id="selectedRequestCard" style="display: none; margin-top: 1rem; background: #111111; border-radius: 1rem; padding: 1.4rem; border: 1px solid #f97316;">
-        <div class="request-header"><h3 style="color:#f97316;"><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3></div>
+    <div class="request-form-card" id="selectedRequestCard" style="display: none;">
+        <h3 class="form-title"><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3>
         <div class="detail-grid" id="selectedReqDetails"></div>
         <div class="workflow-grid" id="workflowGrid"></div>
     </div>
@@ -594,7 +624,7 @@
 
     async function loadAllUsers() {
         const snapshot = await db.collection('users').get();
-        let html = '<tr><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
+        let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
         snapshot.forEach(doc => {
             const data = doc.data();
             html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
@@ -624,6 +654,12 @@
         displayAllRequests();
     }
 
+    function getPriorityClass(priority) {
+        if(priority === 'High') return 'priority-high';
+        if(priority === 'Medium') return 'priority-medium';
+        return 'priority-low';
+    }
+
     function displayAllRequests() {
         const container = document.getElementById('allRequestsList');
         if(!container) return;
@@ -632,14 +668,17 @@
             const isCompleted = req.stage === 'COMPLETED';
             const statusClass = isCompleted ? 'status-badge-completed' : 'status-badge-pending';
             const statusText = isCompleted ? '✅ Completed' : `🔄 ${req.stage}`;
+            const priorityClass = getPriorityClass(req.priority);
             html += `
                 <div class="request-item ${isCompleted ? 'completed' : ''}" onclick="selectRequest('${req.id}')">
                     <div class="request-header-row">
                         <span class="request-id"><i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}</span>
                         <span class="request-status ${statusClass}">${statusText}</span>
+                        <span class="${priorityClass}"><i class="fas fa-flag"></i> ${req.priority || 'Medium'}</span>
                     </div>
                     <div class="request-header-row">
-                        <span style="font-size:0.8rem; color:#9ca3af;"><i class="fas fa-user"></i> ${req.userEmail || req.requesterEmail} | <i class="fas fa-calendar"></i> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</span>
+                        <span style="font-size:0.8rem; color:#6b7280;"><i class="fas fa-user"></i> ${req.userEmail} | <i class="fas fa-building"></i> ${req.department || 'N/A'}</span>
+                        <span style="font-size:0.7rem; color:#6b7280;"><i class="fas fa-calendar"></i> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</span>
                     </div>
                     <div class="request-header-row">
                         <span style="font-size:0.85rem; color:#f97316;"><i class="fas fa-tag"></i> ${req.title || 'IT Request'}</span>
@@ -648,7 +687,7 @@
                 </div>
             `;
         });
-        if(allRequests.length === 0) html = '<div style="background:#111111; border-radius:1rem; padding:2rem; text-align:center; color:#9ca3af;">No requests found. SSE can create new requests.</div>';
+        if(allRequests.length === 0) html = '<div style="background:white; border-radius:1rem; padding:2rem; text-align:center; color:#6b7280;">No requests found. SSE can create new requests.</div>';
         container.innerHTML = html;
     }
 
@@ -682,8 +721,10 @@
         document.getElementById('selectedReqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
         
         document.getElementById('selectedReqDetails').innerHTML = `
-            <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail || req.requesterEmail}</div>
-            <div class="detail-item"><strong>📝 Title:</strong> ${req.title || 'IT Request'}</div>
+            <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail}</div>
+            <div class="detail-item"><strong>📝 Title:</strong> ${req.title}</div>
+            <div class="detail-item"><strong>🏢 Department:</strong> ${req.department || 'N/A'}</div>
+            <div class="detail-item"><strong>⚠️ Priority:</strong> ${req.priority || 'Medium'}</div>
             <div class="detail-item"><strong>📅 Date & Time:</strong> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</div>
             <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
             <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#f97316;">Download</a>` : '—'}</div>
@@ -715,8 +756,8 @@
             const existingRemark = isCompleted ? (req[m.remarkField] || '') : '';
             cardsHtml += `
                 <div class="workflow-card">
-                    <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3 style="color:#f97316;">${m.label}</h3></div>
-                    <div class="status" style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${isCompleted ? 'background:#10b981; color:white;' : (isActive ? 'background:#f97316; color:#0a0a0a;' : 'background:#374151; color:#9ca3af;')}">
+                    <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3>${m.label}</h3></div>
+                    <div class="status" style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${isCompleted ? 'background:#d1fae5; color:#065f46;' : (isActive ? 'background:#fed7aa; color:#9a3412;' : 'background:#f3f4f6; color:#9ca3af;')}">
                         ${isCompleted ? '✔ Approved' : (isActive ? '⏳ Pending Your Action' : '🔒 Locked')}
                     </div>
                     <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${disabled ? 'disabled' : ''}>${existingRemark}</textarea>
@@ -749,7 +790,10 @@
     };
 
     window.createRequest = async () => {
-        if(!currentUser) return;
+        if(!currentUser) {
+            alert('Please login');
+            return;
+        }
         if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
             alert('Only SSE IT can create requests!');
             return;
@@ -757,6 +801,8 @@
         
         const userEmail = document.getElementById('requestUserEmail').value.trim();
         const title = document.getElementById('requestTitle').value.trim();
+        const department = document.getElementById('requestDepartment').value.trim();
+        const priority = document.getElementById('requestPriority').value;
         const description = document.getElementById('requestDesc').value.trim();
         
         if(!userEmail) { alert('User Email is required!'); return; }
@@ -766,35 +812,47 @@
         let attachmentUrl = null;
         const file = document.getElementById('fileInput').files[0];
         if(file) {
-            const storageRef = storage.ref(`attachments/${Date.now()}_${file.name}`);
-            await storageRef.put(file);
-            attachmentUrl = await storageRef.getDownloadURL();
+            try {
+                const storageRef = storage.ref(`attachments/${Date.now()}_${file.name}`);
+                await storageRef.put(file);
+                attachmentUrl = await storageRef.getDownloadURL();
+                addLog(`📎 Attachment uploaded: ${file.name}`);
+            } catch(e) { console.error('Upload error:', e); }
         }
         
         const now = new Date();
         const requestDate = now.toLocaleString();
         
-        await db.collection('requests').add({
-            requesterId: currentUser.uid,
-            requesterName: currentUser.name,
-            requesterEmail: currentUser.email,
-            userEmail: userEmail,
-            title: title,
-            description: description,
-            attachmentUrl: attachmentUrl,
-            requestDate: requestDate,
-            stage: 'SSE',
-            sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        addLog(`✅ New request created by ${currentUser.name} for ${userEmail}`);
-        document.getElementById('requestUserEmail').value = '';
-        document.getElementById('requestTitle').value = '';
-        document.getElementById('requestDesc').value = '';
-        document.getElementById('fileInput').value = '';
-        await loadAllRequests();
-        loadStats();
+        try {
+            await db.collection('requests').add({
+                requesterId: currentUser.uid,
+                requesterName: currentUser.name,
+                requesterEmail: currentUser.email,
+                userEmail: userEmail,
+                title: title,
+                department: department || 'N/A',
+                priority: priority,
+                description: description,
+                attachmentUrl: attachmentUrl,
+                requestDate: requestDate,
+                stage: 'SSE',
+                sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            addLog(`✅ New request created by ${currentUser.name} for ${userEmail}`);
+            document.getElementById('requestUserEmail').value = '';
+            document.getElementById('requestTitle').value = '';
+            document.getElementById('requestDepartment').value = '';
+            document.getElementById('requestDesc').value = '';
+            document.getElementById('fileInput').value = '';
+            await loadAllRequests();
+            loadStats();
+            alert('Request submitted successfully!');
+        } catch(e) {
+            console.error('Error:', e);
+            alert('Error submitting request: ' + e.message);
+        }
     };
 
     window.exportAllToPDF = async () => {
@@ -807,7 +865,7 @@
         doc.text('M&P Express Logistics - IT Request Report', 20, y);
         y += 8;
         doc.setFontSize(10);
-        doc.setTextColor(156, 163, 175);
+        doc.setTextColor(107, 114, 128);
         doc.text(`Generated: ${new Date().toLocaleString()}`, 20, y);
         y += 10;
         
@@ -823,11 +881,13 @@
             doc.text(`Request #${req.id.slice(0,8)}`, 20, y);
             y += 6;
             doc.setFont(undefined, 'normal');
-            doc.setTextColor(255, 255, 255);
+            doc.setTextColor(55, 65, 81);
             doc.setFontSize(9);
-            doc.text(`User Email: ${req.userEmail || req.requesterEmail}`, 20, y);
+            doc.text(`User Email: ${req.userEmail}`, 20, y);
             y += 5;
             doc.text(`Title: ${req.title || 'IT Request'}`, 20, y);
+            y += 5;
+            doc.text(`Department: ${req.department || 'N/A'} | Priority: ${req.priority || 'Medium'}`, 20, y);
             y += 5;
             doc.text(`Date: ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}`, 20, y);
             y += 5;
@@ -870,7 +930,6 @@
             // Only SSE and Admin can create requests
             if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
                 document.getElementById('createRequestCard').style.display = 'none';
-                document.querySelector('.request-card[style*="background: #111111; border-radius: 1rem; padding: 1.4rem; margin-bottom: 2rem; border: 1px solid #f97316;"]').style.display = 'none';
             }
             
             await loadAllRequests();
