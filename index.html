@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>M&P Express Logistics | IT Approval Workflow</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -80,6 +80,7 @@
             border: 1px solid #e5e7eb;
             border-radius: 0.8rem;
             font-size: 0.9rem;
+            transition: all 0.2s;
         }
 
         .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
@@ -97,10 +98,12 @@
             color: white;
             font-weight: 600;
             cursor: pointer;
+            transition: 0.2s;
         }
 
         .auth-btn:hover {
             background: #ea580c;
+            transform: translateY(-1px);
         }
 
         .error-msg {
@@ -168,6 +171,11 @@
             color: white;
             font-weight: 500;
             cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
         }
 
         .stats-grid {
@@ -184,8 +192,9 @@
             text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             border: 1px solid #e5e7eb;
+            transition: 0.2s;
         }
-
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05);}
         .stat-card i { font-size: 1.8rem; margin-bottom: 0.3rem; color: #f97316; }
         .stat-value { font-size: 1.7rem; font-weight: 700; color: #1f2937; }
         .stat-label { font-size: 0.7rem; color: #6b7280; }
@@ -218,7 +227,7 @@
             min-width: 140px;
         }
 
-        .add-user-btn {
+        .add-user-btn, .export-btn {
             background: #f97316;
             border: none;
             padding: 0.5rem 1.2rem;
@@ -226,17 +235,11 @@
             color: white;
             font-weight: 600;
             cursor: pointer;
+            transition: 0.2s;
         }
-
-        .export-btn {
-            background: #10b981;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
+        .export-btn { background: #10b981; }
+        .add-user-btn:hover { background: #ea580c; }
+        .export-btn:hover { background: #059669; }
 
         .users-table { overflow-x: auto; margin-top: 1rem; }
         .users-table table { width: 100%; border-collapse: collapse; }
@@ -256,6 +259,7 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 0.5rem;
+            align-items: center;
         }
 
         .timeline-step {
@@ -271,7 +275,7 @@
         .timeline-step.active { background: #f97316; color: white; }
         .timeline-step.completed { background: #10b981; color: white; }
         .timeline-step.pending { background: #f3f4f6; color: #9ca3af; }
-        .timeline-arrow { color: #f97316; font-size: 1rem; }
+        .timeline-arrow { color: #f97316; font-size: 1.2rem; font-weight: bold; }
 
         .request-form-card {
             background: white;
@@ -328,7 +332,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
-        .request-item:hover { transform: translateX(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .request-item:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .request-item.completed { border-left-color: #10b981; }
 
         .request-header-row {
@@ -360,6 +364,7 @@
             padding: 0.6rem 0.9rem;
             border-radius: 0.8rem;
             font-size: 0.85rem;
+            word-break: break-word;
         }
 
         .detail-item strong { color: #f97316; }
@@ -412,8 +417,9 @@
             font-weight: 600;
             cursor: pointer;
             width: 100%;
+            transition: 0.2s;
         }
-
+        .action-btn:hover:not(:disabled) { background: #ea580c; transform: translateY(-1px);}
         .action-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -464,6 +470,12 @@
             .app-container { padding: 1rem; }
             .timeline-steps { flex-direction: column; }
             .timeline-arrow { display: none; }
+        }
+
+        .file-info {
+            font-size: 0.7rem;
+            color: #f97316;
+            margin-top: 0.3rem;
         }
     </style>
 </head>
@@ -560,8 +572,9 @@
             </div>
         </div>
         <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue *</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
-        <div class="input-group"><label><i class="fas fa-paperclip"></i> Attachment (optional)</label><input type="file" id="fileInput"></div>
-        <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
+        <div class="input-group"><label><i class="fas fa-paperclip"></i> Attachment (Image, PDF, DOC - Max 5MB)</label><input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"></div>
+        <div id="fileUploadStatus" class="file-info"></div>
+        <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem; margin-top: 0.5rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
     </div>
 
     <div class="section-title">
@@ -577,7 +590,7 @@
         <div class="workflow-grid" id="workflowGrid"></div>
     </div>
 
-    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal</div></div>
+    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal | Attachment upload fixed</div></div>
     
     <div class="footer">
         <p>M&P Express Logistics - IT Request Management Portal | Developed by <span>FARAZ SHEIKH</span></p>
@@ -613,7 +626,7 @@
     async function handleLogin() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
-        if(!email || !password) return;
+        if(!email || !password) { document.getElementById('loginError').innerText = 'Enter email & password'; return; }
         try {
             await auth.signInWithEmailAndPassword(email, password);
         } catch(e) {
@@ -650,7 +663,7 @@
 
     async function loadAllUsers() {
         const snapshot = await db.collection('users').get();
-        let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
+        let html = '</table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
         snapshot.forEach(doc => {
             const data = doc.data();
             html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
@@ -740,34 +753,19 @@
         }
     }
 
-    // Get role display name
     function getRoleDisplayName(role) {
-        const roles = {
-            'sse': 'SSE IT',
-            'am': 'AM IT',
-            'area_manager': 'Area Manager',
-            'hod': 'HOD IT',
-            'admin': 'Administrator'
-        };
+        const roles = { 'sse': 'SSE IT', 'am': 'AM IT', 'area_manager': 'Area Manager', 'hod': 'HOD IT', 'admin': 'Administrator' };
         return roles[role] || role;
     }
 
-    // Check if current user can edit this specific level
     function canUserApprove(level, requestStage, isRemarkCompleted) {
         if(!currentUser) return false;
-        
-        // Admin can approve anything
         if(currentUser.role === 'admin') return true;
-        
-        // If remark already added, cannot edit again
         if(isRemarkCompleted) return false;
-        
-        // Check role and stage match
         if(level === 'sse' && currentUser.role === 'sse' && requestStage === 'SSE') return true;
         if(level === 'am' && currentUser.role === 'am' && requestStage === 'AM') return true;
         if(level === 'area' && currentUser.role === 'area_manager' && requestStage === 'AREA') return true;
         if(level === 'hod' && currentUser.role === 'hod' && requestStage === 'HOD') return true;
-        
         return false;
     }
 
@@ -777,14 +775,12 @@
         document.getElementById('selectedRequestCard').style.display = 'block';
         document.getElementById('selectedReqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
         
-        // Show access info message
         const accessMsg = document.getElementById('accessInfoMsg');
         if(currentUser?.role !== 'admin') {
-            accessMsg.innerHTML = `<i class="fas fa-info-circle"></i> You are logged in as <strong>${getRoleDisplayName(currentUser?.role)}</strong>. You can only approve requests at the <strong>${getRoleDisplayName(currentUser?.role)}</strong> stage when the request reaches you.`;
+            accessMsg.innerHTML = `<i class="fas fa-info-circle"></i> You are logged in as <strong>${getRoleDisplayName(currentUser?.role)}</strong>. You can only approve requests at the <strong>${getRoleDisplayName(currentUser?.role)}</strong> stage.`;
             accessMsg.style.display = 'block';
         } else {
-            accessMsg.innerHTML = `<i class="fas fa-crown"></i> You are logged in as <strong>Administrator</strong>. You can approve any stage and edit any remark.`;
-            accessMsg.style.display = 'block';
+            accessMsg.innerHTML = `<i class="fas fa-crown"></i> Administrator: You can approve any stage.`;
         }
         
         document.getElementById('selectedReqDetails').innerHTML = `
@@ -794,13 +790,12 @@
             <div class="detail-item"><strong>⚠️ Priority:</strong> ${req.priority || 'Medium'}</div>
             <div class="detail-item"><strong>📅 Date & Time:</strong> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</div>
             <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
-            <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#f97316;">Download</a>` : '—'}</div>
+            <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#f97316; text-decoration:underline;">📂 Download File</a>` : '—'}</div>
             <div class="detail-item"><strong>💬 SSE Remark:</strong> ${req.sseRemark || '—'}</div>
             <div class="detail-item"><strong>📊 AM Remark:</strong> ${req.amRemark || '—'}</div>
             <div class="detail-item"><strong>🌍 Area Mgr Remark:</strong> ${req.areaRemark || '—'}</div>
             <div class="detail-item"><strong>🏛️ HOD Remark:</strong> ${req.hodRemark || '—'}</div>
         `;
-        
         updateTimeline(req.stage);
         
         const stagesMeta = [
@@ -814,59 +809,28 @@
         for(let m of stagesMeta) {
             const isCompleted = !!req[m.remarkField];
             const isActive = (req.stage === m.stageFlag) && !isCompleted && req.stage !== 'COMPLETED';
-            
-            // Check if current user can approve this level
             const canApprove = canUserApprove(m.key, req.stage, isCompleted);
-            
-            // Determine if this card should be enabled
-            // Card is enabled ONLY if: request is at this stage AND not completed AND user has correct role
             const shouldEnable = isActive && canApprove && req.stage !== 'COMPLETED';
-            
-            // Get existing remark
             const existingRemark = isCompleted ? (req[m.remarkField] || '') : '';
             
-            let statusText = '';
-            let statusClass = '';
-            
-            if(isCompleted) {
-                statusText = '✓ Approved';
-                statusClass = 'background:#d1fae5; color:#065f46;';
-            } else if(isActive) {
-                if(canApprove) {
-                    statusText = '⏳ Pending Your Action - You can approve';
-                    statusClass = 'background:#fed7aa; color:#9a3412;';
-                } else {
-                    statusText = '🔒 Waiting for ' + m.label;
-                    statusClass = 'background:#f3f4f6; color:#9ca3af;';
-                }
-            } else {
-                // Check if stage is already passed or not yet reached
+            let statusText = '', statusClass = '';
+            if(isCompleted) { statusText = '✓ Approved'; statusClass = 'background:#d1fae5; color:#065f46;'; }
+            else if(isActive && canApprove) { statusText = '⏳ Pending Your Action'; statusClass = 'background:#fed7aa; color:#9a3412;'; }
+            else if(isActive && !canApprove) { statusText = '🔒 Waiting for ' + m.label; statusClass = 'background:#f3f4f6; color:#9ca3af;'; }
+            else {
                 const stageOrder = ['SSE', 'AM', 'AREA', 'HOD'];
                 const currentStageIndex = stageOrder.indexOf(req.stage);
                 const thisStageIndex = stageOrder.indexOf(m.stageFlag);
-                
-                if(thisStageIndex < currentStageIndex) {
-                    statusText = '✓ Already Completed';
-                    statusClass = 'background:#d1fae5; color:#065f46;';
-                } else {
-                    statusText = '🔒 Locked - Not yet reached';
-                    statusClass = 'background:#f3f4f6; color:#9ca3af;';
-                }
+                if(thisStageIndex < currentStageIndex) { statusText = '✓ Already Completed'; statusClass = 'background:#d1fae5; color:#065f46;'; }
+                else { statusText = '🔒 Locked'; statusClass = 'background:#f3f4f6; color:#9ca3af;'; }
             }
-            
-            // Card style - add disabled class if not enabled
             const cardDisabledClass = (!shouldEnable && !isCompleted) ? 'disabled-card' : '';
-            
             cardsHtml += `
                 <div class="workflow-card ${cardDisabledClass}">
                     <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3>${m.label}</h3></div>
-                    <div class="status" style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${statusClass}">
-                        ${statusText}
-                    </div>
+                    <div style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${statusClass}">${statusText}</div>
                     <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${!shouldEnable ? 'disabled' : ''}>${existingRemark}</textarea>
-                    <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${!shouldEnable ? 'disabled' : ''}>
-                        <i class="fas fa-check-circle"></i> ${m.next}
-                    </button>
+                    <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${!shouldEnable ? 'disabled' : ''}><i class="fas fa-check-circle"></i> ${m.next}</button>
                 </div>
             `;
         }
@@ -874,164 +838,105 @@
     }
 
     window.submitApprovalForSelected = async (level) => {
-        if(!selectedRequest) {
-            alert('No request selected');
-            return;
-        }
-        
+        if(!selectedRequest) { alert('No request selected'); return; }
         const req = selectedRequest;
         const remarkElem = document.getElementById(`remark_${level}`);
         if(!remarkElem) return;
         const remark = remarkElem.value.trim();
         if(!remark) { alert('Please enter remarks before approving'); return; }
         
-        // Double-check permission before submitting
         let isAuthorized = false;
-        if(currentUser?.role === 'admin') {
-            isAuthorized = true;
-        } else {
+        if(currentUser?.role === 'admin') isAuthorized = true;
+        else {
             if(level === 'sse' && currentUser?.role === 'sse' && req.stage === 'SSE' && !req.sseRemark) isAuthorized = true;
             else if(level === 'am' && currentUser?.role === 'am' && req.stage === 'AM' && !req.amRemark) isAuthorized = true;
             else if(level === 'area' && currentUser?.role === 'area_manager' && req.stage === 'AREA' && !req.areaRemark) isAuthorized = true;
             else if(level === 'hod' && currentUser?.role === 'hod' && req.stage === 'HOD' && !req.hodRemark) isAuthorized = true;
         }
-        
-        if(!isAuthorized) {
-            alert(`❌ You are not authorized to approve this stage! Only ${level.toUpperCase()} can approve when request is at ${level.toUpperCase()} stage.`);
-            return;
-        }
+        if(!isAuthorized) { alert(`❌ Not authorized! Only ${level.toUpperCase()} can approve.`); return; }
         
         let updates = {};
-        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved by ${currentUser.name} - Forwarded to AM IT`); }
-        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`✅ AM approved by ${currentUser.name} - Forwarded to Area Manager`); }
-        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`✅ Area Manager approved by ${currentUser.name} - Forwarded to HOD IT`); }
-        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by ${currentUser.name} - Request Completed!`); }
+        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved by ${currentUser.name} → AM IT`); }
+        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`✅ AM approved by ${currentUser.name} → Area Manager`); }
+        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`✅ Area Manager approved → HOD IT`); }
+        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by ${currentUser.name} → Completed!`); }
         
         await db.collection('requests').doc(selectedRequest.id).update(updates);
         await loadAllRequests();
         await selectRequest(selectedRequest.id);
         loadStats();
-        alert(`✓ ${level.toUpperCase()} approval submitted successfully!`);
+        alert(`✓ ${level.toUpperCase()} approval submitted!`);
     };
 
     window.createRequest = async () => {
-        if(!currentUser) {
-            alert('Please login');
-            return;
-        }
-        if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
-            alert('Only SSE IT can create requests!');
-            return;
-        }
+        if(!currentUser) { alert('Please login'); return; }
+        if(currentUser.role !== 'sse' && currentUser.role !== 'admin') { alert('Only SSE IT or Admin can create requests!'); return; }
         
         const userEmail = document.getElementById('requestUserEmail').value.trim();
         const title = document.getElementById('requestTitle').value.trim();
         const department = document.getElementById('requestDepartment').value.trim();
         const priority = document.getElementById('requestPriority').value;
         const description = document.getElementById('requestDesc').value.trim();
-        
         if(!userEmail) { alert('User Email is required!'); return; }
         if(!title) { alert('Request Title is required!'); return; }
         if(!description) { alert('Description is required!'); return; }
         
         let attachmentUrl = null;
         const file = document.getElementById('fileInput').files[0];
+        const statusDiv = document.getElementById('fileUploadStatus');
         if(file) {
+            if(file.size > 5 * 1024 * 1024) { alert('File too large! Max 5MB.'); return; }
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Uploading attachment...';
             try {
-                const storageRef = storage.ref(`attachments/${Date.now()}_${file.name}`);
+                const storageRef = storage.ref(`attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
                 await storageRef.put(file);
                 attachmentUrl = await storageRef.getDownloadURL();
+                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Attachment uploaded!';
                 addLog(`📎 Attachment uploaded: ${file.name}`);
-            } catch(e) { console.error('Upload error:', e); }
-        }
+            } catch(e) { statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Upload failed'; console.error(e); alert('Attachment upload failed, but request can be submitted without it.'); attachmentUrl = null; }
+        } else { statusDiv.innerHTML = ''; }
         
         const now = new Date();
         const requestDate = now.toLocaleString();
-        
         try {
             await db.collection('requests').add({
-                requesterId: currentUser.uid,
-                requesterName: currentUser.name,
-                requesterEmail: currentUser.email,
-                userEmail: userEmail,
-                title: title,
-                department: department || 'N/A',
-                priority: priority,
-                description: description,
-                attachmentUrl: attachmentUrl,
-                requestDate: requestDate,
-                stage: 'SSE',
-                sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
+                requesterId: currentUser.uid, requesterName: currentUser.name, requesterEmail: currentUser.email,
+                userEmail, title, department: department || 'N/A', priority, description, attachmentUrl,
+                requestDate, stage: 'SSE', sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            
             addLog(`✅ New request created by ${currentUser.name} for ${userEmail}`);
-            document.getElementById('requestUserEmail').value = '';
-            document.getElementById('requestTitle').value = '';
-            document.getElementById('requestDepartment').value = '';
-            document.getElementById('requestDesc').value = '';
-            document.getElementById('fileInput').value = '';
-            await loadAllRequests();
-            loadStats();
+            document.getElementById('requestUserEmail').value = ''; document.getElementById('requestTitle').value = '';
+            document.getElementById('requestDepartment').value = ''; document.getElementById('requestDesc').value = '';
+            document.getElementById('fileInput').value = ''; document.getElementById('fileUploadStatus').innerHTML = '';
+            await loadAllRequests(); loadStats();
             alert('Request submitted successfully!');
-        } catch(e) {
-            console.error('Error:', e);
-            alert('Error submitting request: ' + e.message);
-        }
+        } catch(e) { console.error(e); alert('Error: ' + e.message); }
     };
 
     window.exportAllToPDF = async () => {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4');
-        
         let y = 20;
-        doc.setFontSize(18);
-        doc.setTextColor(249, 115, 22);
-        doc.text('M&P Express Logistics - IT Request Report', 20, y);
-        y += 8;
-        doc.setFontSize(10);
-        doc.setTextColor(107, 114, 128);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, y);
-        y += 10;
-        
+        doc.setFontSize(18); doc.setTextColor(249,115,22); doc.text('M&P Express Logistics - IT Request Report', 20, y);
+        y += 8; doc.setFontSize(10); doc.setTextColor(107,114,128); doc.text(`Generated: ${new Date().toLocaleString()}`, 20, y); y += 10;
         for(let i=0; i<allRequests.length; i++) {
             const req = allRequests[i];
-            if(y > 260) {
-                doc.addPage();
-                y = 20;
-            }
-            doc.setFontSize(10);
-            doc.setTextColor(249, 115, 22);
-            doc.setFont(undefined, 'bold');
-            doc.text(`Request #${req.id.slice(0,8)}`, 20, y);
-            y += 6;
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(55, 65, 81);
-            doc.setFontSize(9);
-            doc.text(`User Email: ${req.userEmail}`, 20, y);
-            y += 5;
-            doc.text(`Title: ${req.title || 'IT Request'}`, 20, y);
-            y += 5;
-            doc.text(`Department: ${req.department || 'N/A'} | Priority: ${req.priority || 'Medium'}`, 20, y);
-            y += 5;
-            doc.text(`Date: ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}`, 20, y);
-            y += 5;
-            doc.text(`Description: ${req.description?.substring(0,80) || ''}`, 20, y);
-            y += 5;
-            doc.text(`Status: ${req.stage === 'COMPLETED' ? 'COMPLETED' : req.stage}`, 20, y);
-            y += 5;
-            doc.text(`SSE: ${req.sseRemark || '—'}`, 20, y);
-            y += 4;
-            doc.text(`AM: ${req.amRemark || '—'}`, 20, y);
-            y += 4;
-            doc.text(`Area Mgr: ${req.areaRemark || '—'}`, 20, y);
-            y += 4;
-            doc.text(`HOD: ${req.hodRemark || '—'}`, 20, y);
-            y += 8;
-            doc.setDrawColor(249, 115, 22);
-            doc.line(20, y-2, 190, y-2);
+            if(y > 260) { doc.addPage(); y = 20; }
+            doc.setFontSize(10); doc.setTextColor(249,115,22); doc.setFont(undefined,'bold'); doc.text(`Request #${req.id.slice(0,8)}`,20,y); y+=6;
+            doc.setFont(undefined,'normal'); doc.setTextColor(55,65,81); doc.setFontSize(9);
+            doc.text(`User Email: ${req.userEmail}`,20,y); y+=5;
+            doc.text(`Title: ${req.title || 'IT Request'}`,20,y); y+=5;
+            doc.text(`Dept: ${req.department || 'N/A'} | Priority: ${req.priority || 'Medium'}`,20,y); y+=5;
+            doc.text(`Date: ${req.requestDate || ''}`,20,y); y+=5;
+            doc.text(`Description: ${req.description?.substring(0,80) || ''}`,20,y); y+=5;
+            doc.text(`Status: ${req.stage === 'COMPLETED' ? 'COMPLETED' : req.stage}`,20,y); y+=5;
+            doc.text(`SSE: ${req.sseRemark || '—'}`,20,y); y+=4;
+            doc.text(`AM: ${req.amRemark || '—'}`,20,y); y+=4;
+            doc.text(`Area Mgr: ${req.areaRemark || '—'}`,20,y); y+=4;
+            doc.text(`HOD: ${req.hodRemark || '—'}`,20,y); y+=8;
+            doc.setDrawColor(249,115,22); doc.line(20,y-2,190,y-2);
         }
-        
         doc.save(`M&P_IT_Requests_${new Date().toISOString().slice(0,19)}.pdf`);
         addLog(`📄 PDF exported with ${allRequests.length} requests`);
     };
@@ -1045,21 +950,10 @@
             document.getElementById('userRole').innerHTML = `<i class="fas fa-tag"></i> ${currentUser.role.toUpperCase()}`;
             document.getElementById('authContainer').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
-            
-            if(currentUser.role === 'admin') {
-                document.getElementById('adminPanel').style.display = 'block';
-                loadAllUsers();
-            }
-            
-            // Only SSE and Admin can create requests
-            if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
-                document.getElementById('createRequestCard').style.display = 'none';
-            }
-            
-            await loadAllRequests();
-            loadStats();
+            if(currentUser.role === 'admin') { document.getElementById('adminPanel').style.display = 'block'; loadAllUsers(); }
+            if(currentUser.role !== 'sse' && currentUser.role !== 'admin') document.getElementById('createRequestCard').style.display = 'none';
+            await loadAllRequests(); loadStats();
             addLog(`Welcome ${currentUser.name} (${getRoleDisplayName(currentUser.role)})`);
-            addLog(`🔒 You can only approve requests at the ${getRoleDisplayName(currentUser.role)} stage`);
         } else {
             document.getElementById('authContainer').style.display = 'flex';
             document.getElementById('appContainer').style.display = 'none';
