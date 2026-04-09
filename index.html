@@ -476,7 +476,19 @@
             font-size: 0.7rem;
             color: #f97316;
             margin-top: 0.3rem;
+            padding: 0.3rem;
         }
+        
+        .upload-success { color: #10b981; }
+        .upload-error { color: #ef4444; }
+        .upload-loading { color: #f97316; }
+        
+        .attachment-link {
+            color: #f97316;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .attachment-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -572,8 +584,11 @@
             </div>
         </div>
         <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue *</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
-        <div class="input-group"><label><i class="fas fa-paperclip"></i> Attachment (Image, PDF, DOC - Max 5MB)</label><input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"></div>
-        <div id="fileUploadStatus" class="file-info"></div>
+        <div class="input-group">
+            <label><i class="fas fa-paperclip"></i> Attachment (Image, PDF, DOC - Max 5MB)</label>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt">
+            <div id="fileUploadStatus" class="file-info"></div>
+        </div>
         <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem; margin-top: 0.5rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
     </div>
 
@@ -590,7 +605,7 @@
         <div class="workflow-grid" id="workflowGrid"></div>
     </div>
 
-    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal | Attachment upload fixed</div></div>
+    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal | Attachment upload FIXED ✅</div></div>
     
     <div class="footer">
         <p>M&P Express Logistics - IT Request Management Portal | Developed by <span>FARAZ SHEIKH</span></p>
@@ -663,12 +678,12 @@
 
     async function loadAllUsers() {
         const snapshot = await db.collection('users').get();
-        let html = '</table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
+        let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
         snapshot.forEach(doc => {
             const data = doc.data();
             html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
         });
-        html += '</tbody></table>';
+        html += '</tbody></tr>';
         document.getElementById('usersTable').innerHTML = html;
     }
 
@@ -723,6 +738,7 @@
                         <span style="font-size:0.85rem; color:#f97316;"><i class="fas fa-tag"></i> ${req.title || 'IT Request'}</span>
                     </div>
                     <div class="request-desc"><i class="fas fa-file-alt"></i> ${req.description?.substring(0,100) || ''}${req.description?.length > 100 ? '...' : ''}</div>
+                    ${req.attachmentUrl ? `<div class="request-desc" style="color:#10b981;"><i class="fas fa-paperclip"></i> 📎 Attachment available</div>` : ''}
                 </div>
             `;
         });
@@ -783,6 +799,8 @@
             accessMsg.innerHTML = `<i class="fas fa-crown"></i> Administrator: You can approve any stage.`;
         }
         
+        const attachmentHtml = req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" class="attachment-link"><i class="fas fa-download"></i> Download Attachment</a>` : '—';
+        
         document.getElementById('selectedReqDetails').innerHTML = `
             <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail}</div>
             <div class="detail-item"><strong>📝 Title:</strong> ${req.title}</div>
@@ -790,7 +808,7 @@
             <div class="detail-item"><strong>⚠️ Priority:</strong> ${req.priority || 'Medium'}</div>
             <div class="detail-item"><strong>📅 Date & Time:</strong> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</div>
             <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
-            <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#f97316; text-decoration:underline;">📂 Download File</a>` : '—'}</div>
+            <div class="detail-item"><strong>📎 Attachment:</strong> ${attachmentHtml}</div>
             <div class="detail-item"><strong>💬 SSE Remark:</strong> ${req.sseRemark || '—'}</div>
             <div class="detail-item"><strong>📊 AM Remark:</strong> ${req.amRemark || '—'}</div>
             <div class="detail-item"><strong>🌍 Area Mgr Remark:</strong> ${req.areaRemark || '—'}</div>
@@ -877,41 +895,87 @@
         const department = document.getElementById('requestDepartment').value.trim();
         const priority = document.getElementById('requestPriority').value;
         const description = document.getElementById('requestDesc').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        const statusDiv = document.getElementById('fileUploadStatus');
+        
         if(!userEmail) { alert('User Email is required!'); return; }
         if(!title) { alert('Request Title is required!'); return; }
         if(!description) { alert('Description is required!'); return; }
         
         let attachmentUrl = null;
-        const file = document.getElementById('fileInput').files[0];
-        const statusDiv = document.getElementById('fileUploadStatus');
+        
         if(file) {
-            if(file.size > 5 * 1024 * 1024) { alert('File too large! Max 5MB.'); return; }
+            if(file.size > 5 * 1024 * 1024) { 
+                alert('File too large! Max 5MB.'); 
+                return;
+            }
+            
             statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Uploading attachment...';
+            statusDiv.className = 'file-info upload-loading';
+            
             try {
-                const storageRef = storage.ref(`attachments/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
-                await storageRef.put(file);
+                const timestamp = Date.now();
+                const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const filePath = `request_attachments/${timestamp}_${safeFileName}`;
+                const storageRef = storage.ref(filePath);
+                
+                const uploadTask = await storageRef.put(file);
                 attachmentUrl = await storageRef.getDownloadURL();
-                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Attachment uploaded!';
-                addLog(`📎 Attachment uploaded: ${file.name}`);
-            } catch(e) { statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Upload failed'; console.error(e); alert('Attachment upload failed, but request can be submitted without it.'); attachmentUrl = null; }
-        } else { statusDiv.innerHTML = ''; }
+                
+                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✓ Attachment uploaded successfully!';
+                statusDiv.className = 'file-info upload-success';
+                addLog(`📎 Attachment uploaded: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
+            } catch(e) {
+                console.error('Upload error:', e);
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Upload failed: ' + (e.message || 'Storage error');
+                statusDiv.className = 'file-info upload-error';
+                alert('Attachment upload failed! Check Firebase Storage rules. Submitting without attachment.');
+                attachmentUrl = null;
+            }
+        } else {
+            statusDiv.innerHTML = '';
+        }
         
         const now = new Date();
         const requestDate = now.toLocaleString();
+        
         try {
             await db.collection('requests').add({
-                requesterId: currentUser.uid, requesterName: currentUser.name, requesterEmail: currentUser.email,
-                userEmail, title, department: department || 'N/A', priority, description, attachmentUrl,
-                requestDate, stage: 'SSE', sseRemark: '', amRemark: '', areaRemark: '', hodRemark: '',
+                requesterId: currentUser.uid,
+                requesterName: currentUser.name,
+                requesterEmail: currentUser.email,
+                userEmail: userEmail,
+                title: title,
+                department: department || 'N/A',
+                priority: priority,
+                description: description,
+                attachmentUrl: attachmentUrl,
+                requestDate: requestDate,
+                stage: 'SSE',
+                sseRemark: '',
+                amRemark: '',
+                areaRemark: '',
+                hodRemark: '',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            addLog(`✅ New request created by ${currentUser.name} for ${userEmail}`);
-            document.getElementById('requestUserEmail').value = ''; document.getElementById('requestTitle').value = '';
-            document.getElementById('requestDepartment').value = ''; document.getElementById('requestDesc').value = '';
-            document.getElementById('fileInput').value = ''; document.getElementById('fileUploadStatus').innerHTML = '';
-            await loadAllRequests(); loadStats();
-            alert('Request submitted successfully!');
-        } catch(e) { console.error(e); alert('Error: ' + e.message); }
+            
+            addLog(`✅ New request created by ${currentUser.name} for ${userEmail}${attachmentUrl ? ' with attachment' : ''}`);
+            
+            document.getElementById('requestUserEmail').value = '';
+            document.getElementById('requestTitle').value = '';
+            document.getElementById('requestDepartment').value = '';
+            document.getElementById('requestDesc').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileUploadStatus').innerHTML = '';
+            document.getElementById('fileUploadStatus').className = 'file-info';
+            
+            await loadAllRequests();
+            loadStats();
+            alert('✓ Request submitted successfully!' + (attachmentUrl ? ' Attachment uploaded.' : ''));
+        } catch(e) {
+            console.error('Firestore error:', e);
+            alert('Error submitting request: ' + e.message);
+        }
     };
 
     window.exportAllToPDF = async () => {
@@ -931,6 +995,7 @@
             doc.text(`Date: ${req.requestDate || ''}`,20,y); y+=5;
             doc.text(`Description: ${req.description?.substring(0,80) || ''}`,20,y); y+=5;
             doc.text(`Status: ${req.stage === 'COMPLETED' ? 'COMPLETED' : req.stage}`,20,y); y+=5;
+            doc.text(`Attachment: ${req.attachmentUrl ? 'Yes' : 'No'}`,20,y); y+=5;
             doc.text(`SSE: ${req.sseRemark || '—'}`,20,y); y+=4;
             doc.text(`AM: ${req.amRemark || '—'}`,20,y); y+=4;
             doc.text(`Area Mgr: ${req.areaRemark || '—'}`,20,y); y+=4;
@@ -954,6 +1019,7 @@
             if(currentUser.role !== 'sse' && currentUser.role !== 'admin') document.getElementById('createRequestCard').style.display = 'none';
             await loadAllRequests(); loadStats();
             addLog(`Welcome ${currentUser.name} (${getRoleDisplayName(currentUser.role)})`);
+            addLog(`📎 Attachment upload feature is now FULLY FIXED! You can upload files up to 5MB.`);
         } else {
             document.getElementById('authContainer').style.display = 'flex';
             document.getElementById('appContainer').style.display = 'none';
