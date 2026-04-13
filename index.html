@@ -2,19 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express Logistics | IT Complaint Portal</title>
-    <!-- Tailwind + Font Awesome + Google Fonts + Chart.js -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&P Express Logistics | IT Portal (Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- Firebase SDK v12.12.0 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDUWw4CWZbL35zpQn4FA1m_fsJj95FpOec",
@@ -42,6 +41,7 @@
         window.getDoc = getDoc;
         window.getDocs = getDocs;
         window.addDoc = addDoc;
+        window.setDoc = setDoc;
         window.updateDoc = updateDoc;
         window.deleteDoc = deleteDoc;
         window.query = query;
@@ -50,19 +50,18 @@
     </script>
     <style>
         body { background: #fef9f1; font-family: 'Inter', sans-serif; }
-        .luxury-card { background: rgba(255,255,255,0.96); backdrop-filter: blur(2px); border-radius: 2rem; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.1), 0 2px 5px rgba(0,0,0,0.02); transition: all 0.25s ease; }
-        .luxury-card:hover { transform: translateY(-3px); box-shadow: 0 30px 40px -15px rgba(249,115,22,0.2); }
+        .luxury-card { background: rgba(255,255,255,0.96); border-radius: 2rem; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.1); transition: all 0.2s; }
+        .luxury-card:hover { transform: translateY(-3px); }
         .gradient-orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
         .glass-nav { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(249,115,22,0.2); }
-        .stat-card { border-left: 4px solid #f97316; }
         .btn-luxury { background: linear-gradient(105deg, #f97316, #ea580c); box-shadow: 0 8px 18px rgba(249,115,22,0.25); transition: all 0.2s; }
-        .btn-luxury:hover { transform: scale(1.02); box-shadow: 0 12px 22px rgba(249,115,22,0.35); }
+        .btn-luxury:hover { transform: scale(1.02); }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <!-- LOGIN SCREEN (no default admin text) -->
+    <!-- LOGIN SCREEN (no default text) -->
     <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100 px-4">
         <div class="max-w-md w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-orange-100">
             <div class="text-center">
@@ -70,15 +69,15 @@
                     <i class="fas fa-truck-fast text-white text-4xl"></i>
                 </div>
                 <h2 class="text-3xl font-extrabold mt-5 text-gray-800">M&P Express</h2>
-                <p class="text-orange-600 font-medium text-sm tracking-wide">IT Complaint Portal — Luxury Edition</p>
+                <p class="text-orange-600 font-medium text-sm">IT Complaint Portal — Luxury</p>
             </div>
             <form id="loginForm" class="mt-8">
                 <div class="mb-4">
-                    <label class="block text-gray-700 font-semibold mb-2"><i class="fas fa-envelope mr-2 text-orange-500"></i>Email</label>
+                    <label class="block text-gray-700 font-semibold mb-2">Email</label>
                     <input type="email" id="loginEmail" required class="w-full border border-gray-200 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-orange-400 outline-none bg-gray-50">
                 </div>
                 <div class="mb-6">
-                    <label class="block text-gray-700 font-semibold mb-2"><i class="fas fa-lock mr-2 text-orange-500"></i>Password</label>
+                    <label class="block text-gray-700 font-semibold mb-2">Password</label>
                     <input type="password" id="loginPassword" required class="w-full border border-gray-200 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-orange-400 outline-none bg-gray-50">
                 </div>
                 <button type="submit" class="w-full btn-luxury text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2"><i class="fas fa-sign-in-alt"></i> Access Portal</button>
@@ -105,11 +104,8 @@
                 </div>
             </div>
         </nav>
-
-        <main class="max-w-7xl mx-auto px-5 sm:px-8 py-10">
-            <div id="dynamicView"></div>
-        </main>
-        <footer class="text-center text-gray-400 text-xs py-6 border-t border-orange-100">© 2026 M&P Express Logistics – Luxury IT Portal | Powered by Firebase</footer>
+        <main class="max-w-7xl mx-auto px-5 sm:px-8 py-10"><div id="dynamicView"></div></main>
+        <footer class="text-center text-gray-400 text-xs py-6 border-t border-orange-100">© 2026 M&P Express Logistics – Powered by Firebase | Developed by Faraz Sheikh</footer>
     </div>
 </div>
 
@@ -126,6 +122,7 @@
     const getDoc = window.getDoc;
     const getDocs = window.getDocs;
     const addDoc = window.addDoc;
+    const setDoc = window.setDoc;
     const updateDoc = window.updateDoc;
     const deleteDoc = window.deleteDoc;
     const query = window.query;
@@ -133,7 +130,7 @@
     const onSnapshot = window.onSnapshot;
 
     let currentUser = null;
-    let unsubscribeComplaints = null; // for HOD real-time
+    let unsubscribeComplaints = null;
 
     async function getUserProfile(uid) {
         const userDoc = await getDoc(doc(db, "users", uid));
@@ -153,6 +150,7 @@
                 document.getElementById("roleBadge").innerHTML = profile.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (profile.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${profile.designation}`);
                 renderCurrentView();
             } else {
+                console.warn("User profile missing in Firestore, signing out.");
                 await signOut(auth);
                 showLoginScreen();
             }
@@ -174,7 +172,9 @@
         const password = document.getElementById("loginPassword").value;
         try {
             await signInWithEmailAndPassword(auth, email, password);
-        } catch (err) { alert("Login failed: " + err.message); }
+        } catch (err) {
+            alert("Login failed: " + err.message);
+        }
     });
 
     document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -202,7 +202,7 @@
     }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-    // ------------------- ADMIN DASHBOARD (unchanged but with luxury styling) -------------------
+    // ------------------- ADMIN DASHBOARD (Fixed user creation) -------------------
     async function renderAdminDashboard(container) {
         let selectedYear = new Date().getFullYear();
         let selectedMonth = new Date().getMonth() + 1;
@@ -274,14 +274,30 @@
             document.getElementById("createUserForm")?.addEventListener("submit", async (e) => {
                 e.preventDefault();
                 const fullName = document.getElementById("newFullName").value.trim(), email = document.getElementById("newEmail").value.trim(), password = document.getElementById("newPassword").value.trim(), role = document.getElementById("newRole").value, designation = document.getElementById("newDesignation").value;
-                if(!fullName||!email||!password) return alert("Fill all");
+                if(!fullName||!email||!password) return alert("Fill all fields");
                 try {
                     const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                    await addDoc(doc(db, "users", userCred.user.uid), { fullName, email, role, designation, uid: userCred.user.uid });
-                    alert("User created"); refreshUI();
-                } catch(err) { alert(err.message); }
+                    // Use setDoc to create document with specific UID
+                    await setDoc(doc(db, "users", userCred.user.uid), {
+                        fullName, email, role, designation, uid: userCred.user.uid
+                    });
+                    alert("User created successfully!");
+                    refreshUI();
+                    document.getElementById("createUserForm").reset();
+                } catch(err) { alert("Error: " + err.message); }
             });
-            document.querySelectorAll(".deleteUserBtn").forEach(btn => btn.addEventListener("click", async () => { if(confirm("Delete user? Complaints reassigned to admin")) { const admin = allUsers.find(u=>u.role==="admin"); if(admin) { const comps = complaints.filter(c=>c.assignedTo===btn.dataset.uid); for(let c of comps) await updateDoc(doc(db,"complaints",c.id),{assignedTo:admin.uid}); } await deleteDoc(doc(db,"users",btn.dataset.uid)); refreshUI(); } }));
+
+            document.querySelectorAll(".deleteUserBtn").forEach(btn => btn.addEventListener("click", async () => {
+                if(confirm("Delete user? Complaints will be reassigned to admin")) {
+                    const admin = allUsers.find(u=>u.role==="admin");
+                    if(admin) {
+                        const comps = complaints.filter(c=>c.assignedTo===btn.dataset.uid);
+                        for(let c of comps) await updateDoc(doc(db,"complaints",c.id),{assignedTo:admin.uid});
+                    }
+                    await deleteDoc(doc(db,"users",btn.dataset.uid));
+                    refreshUI();
+                }
+            }));
         }
         function exportCSV(year, month) {
             const filtered = complaints.filter(c=>{const d=new Date(c.createdDate); return d.getFullYear()===year && (d.getMonth()+1)===month;});
@@ -294,7 +310,7 @@
         refreshUI();
     }
 
-    // ------------------- HOD DASHBOARD (real-time, charts, export) -------------------
+    // ------------------- HOD DASHBOARD (real-time) -------------------
     async function renderHODDashboard(container) {
         let complaints = [];
         let allUsers = [];
@@ -316,19 +332,16 @@
                     <div class="luxury-card p-5"><p class="text-gray-500 text-sm">High + Critical</p><p class="text-3xl font-black text-rose-600">${highCritical}</p></div>
                 </div>
             `;
-            // trend chart (last 7 days)
             const last7 = [...Array(7)].map((_,i)=>{const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().slice(0,10);}).reverse();
             const counts = last7.map(date=> complaints.filter(c=>c.createdDate?.slice(0,10)===date).length);
             if(chartTrend) chartTrend.destroy();
             const ctxTrend = document.getElementById("trendChart").getContext("2d");
             chartTrend = new Chart(ctxTrend, { type:"line", data:{ labels:last7.map(d=>d.slice(5)), datasets:[{ label:"Complaints per day", data:counts, borderColor:"#f97316", backgroundColor:"rgba(249,115,22,0.1)", tension:0.3, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false } });
-            // priority pie
             const priorityLabels = ["low","medium","high","critical"];
             const priorityData = priorityLabels.map(p=> complaints.filter(c=>c.priority===p).length);
             if(chartPriority) chartPriority.destroy();
             const ctxPie = document.getElementById("priorityChart").getContext("2d");
             chartPriority = new Chart(ctxPie, { type:"doughnut", data:{ labels:priorityLabels, datasets:[{ data:priorityData, backgroundColor:["#9ca3af","#f97316","#ef4444","#be123c"] }] }, options:{ responsive:true } });
-            // recent complaints table
             const recent = [...complaints].sort((a,b)=>new Date(b.createdDate)-new Date(a.createdDate)).slice(0,8);
             document.getElementById("recentTable").innerHTML = `<div class="overflow-auto"><table class="min-w-full"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
             ${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${getUserById(c.assignedTo)?.fullName || "?"}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
@@ -361,7 +374,7 @@
         });
     }
 
-    // ------------------- SSE DASHBOARD (with self-assignment enabled) -------------------
+    // ------------------- SSE DASHBOARD (self-assign enabled) -------------------
     async function renderSSEDashboard(container) {
         let complaints = [], allUsers = [];
         async function loadData() {
@@ -391,12 +404,12 @@
         document.getElementById("sseNewComplaintBtn")?.addEventListener("click", () => openComplaintModal());
     }
 
-    // ------------------- SHARED COMPLAINT MODAL (SSE can assign to self) -------------------
+    // ------------------- SHARED COMPLAINT MODAL (with self-assign) -------------------
     async function openComplaintModal(complaint = null) {
         const isEdit = !!complaint;
         const usersSnap = await getDocs(collection(db,"users"));
         const allUsers = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
-        const sseList = allUsers.filter(u => u.role === "sse" || u.role === "hod"); // allow HOD also
+        const sseList = allUsers.filter(u => u.role === "sse" || u.role === "hod");
         const modalDiv = document.createElement("div");
         modalDiv.className = "fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm";
         modalDiv.innerHTML = `
@@ -440,7 +453,7 @@
         });
     }
 
-    // Auto create admin profile if missing
+    // Ensure admin profile exists in Firestore (using setDoc)
     async function ensureAdminProfile() {
         const adminEmail = "admin@mpexpress.com";
         const adminPassword = "admin123";
@@ -449,8 +462,17 @@
         if(snap.empty) {
             try {
                 const userCred = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
-                await addDoc(doc(db,"users",userCred.user.uid), { fullName:"Admin", email:adminEmail, role:"admin", designation:"Admin", uid:userCred.user.uid });
-            } catch(e) { console.warn(e); }
+                await setDoc(doc(db,"users",userCred.user.uid), {
+                    fullName: "Admin",
+                    email: adminEmail,
+                    role: "admin",
+                    designation: "Admin",
+                    uid: userCred.user.uid
+                });
+                console.log("Admin user created in Firestore");
+            } catch(e) {
+                console.warn("Admin creation error (maybe already exists):", e);
+            }
         }
     }
     onAuthStateChanged(auth, async (user) => { if(!user) await ensureAdminProfile(); });
