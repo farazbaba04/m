@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express Logistics | IT Complaint Portal (Final)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&P Express Logistics | IT Portal (Final Fixed)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -12,7 +12,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
         import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -47,6 +47,7 @@
         window.query = query;
         window.where = where;
         window.onSnapshot = onSnapshot;
+        window.fetchSignInMethodsForEmail = fetchSignInMethodsForEmail;
     </script>
     <style>
         body { background: #fef9f1; font-family: 'Inter', sans-serif; }
@@ -82,6 +83,9 @@
                 </div>
                 <button type="submit" class="w-full btn-luxury text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2"><i class="fas fa-sign-in-alt"></i> Access Portal</button>
             </form>
+            <div class="mt-4 text-center">
+                <button id="forceCreateAdminBtn" class="text-orange-500 text-sm underline hover:text-orange-700">🔧 Create Admin User (if missing)</button>
+            </div>
             <p class="text-center text-xs text-gray-400 mt-6">Developed by Faraz Sheikh</p>
         </div>
     </div>
@@ -128,6 +132,7 @@
     const query = window.query;
     const where = window.where;
     const onSnapshot = window.onSnapshot;
+    const fetchSignInMethodsForEmail = window.fetchSignInMethodsForEmail;
 
     let currentUser = null;
     let unsubscribeComplaints = null;
@@ -173,7 +178,7 @@
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err) {
-            alert("Login failed: " + err.message);
+            alert("Login failed: " + err.message + "\n\nIf admin user is missing, click the 'Create Admin User' button below.");
         }
     });
 
@@ -450,31 +455,59 @@
         });
     }
 
-    // ------------------- ENSURE ADMIN USER WITH PASSWORD 54321 -------------------
-    async function ensureAdminProfile() {
+    // ------------------- FORCE CREATE ADMIN USER (with password 54321) -------------------
+    async function createAdminUser() {
         const adminEmail = "admin@mpexpress.com";
         const adminPassword = "54321";
-        const q = query(collection(db,"users"), where("email","==",adminEmail));
-        const snap = await getDocs(q);
-        if(snap.empty) {
-            try {
-                // Create auth user
+        try {
+            // Check if user already exists
+            const methods = await fetchSignInMethodsForEmail(auth, adminEmail);
+            if (methods.length > 0) {
+                // User exists, try to update Firestore profile
+                const userCred = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+                const uid = userCred.user.uid;
+                const userRef = doc(db, "users", uid);
+                const userSnap = await getDoc(userRef);
+                if (!userSnap.exists()) {
+                    await setDoc(userRef, { fullName: "Admin", email: adminEmail, role: "admin", designation: "Admin", uid: uid });
+                    alert("Admin Firestore profile created! You can now log in.");
+                } else {
+                    alert("Admin user already exists. Please log in.");
+                }
+                await signOut(auth);
+            } else {
+                // Create new admin user
                 const userCred = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
-                // Create Firestore profile
-                await setDoc(doc(db,"users",userCred.user.uid), {
+                await setDoc(doc(db, "users", userCred.user.uid), {
                     fullName: "Admin",
                     email: adminEmail,
                     role: "admin",
                     designation: "Admin",
                     uid: userCred.user.uid
                 });
-                console.log("Admin user created with password 54321");
-            } catch(e) {
-                console.warn("Admin creation error (maybe already exists):", e);
+                alert("Admin user created successfully! Email: admin@mpexpress.com, Password: 54321");
+                await signOut(auth);
             }
+        } catch (err) {
+            alert("Error creating admin: " + err.message);
         }
     }
-    onAuthStateChanged(auth, async (user) => { if(!user) await ensureAdminProfile(); });
+
+    // Attach manual creation button
+    document.getElementById("forceCreateAdminBtn")?.addEventListener("click", createAdminUser);
+
+    // Auto-creation on first load (if no user logged in and no admin exists)
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            // Try to see if admin exists; if not, create it automatically
+            try {
+                const methods = await fetchSignInMethodsForEmail(auth, "admin@mpexpress.com");
+                if (methods.length === 0) {
+                    await createAdminUser();
+                }
+            } catch(e) { console.warn("Auto admin check failed", e); }
+        }
+    });
 </script>
 </body>
 </html>
