@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express Logistics | IT Complaint Portal (Standalone)</title>
+    <title>M&P Express Logistics | IT Complaint Portal (Firebase)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -16,9 +16,9 @@
         .glass-nav { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(249,115,22,0.2); }
         .btn-luxury { background: linear-gradient(105deg, #f97316, #ea580c); box-shadow: 0 8px 18px rgba(249,115,22,0.25); transition: all 0.2s; }
         .btn-luxury:hover { transform: scale(1.02); }
-        /* smooth transitions */
         .transition-fast { transition: all 0.15s ease; }
         input, select, textarea { transition: all 0.2s; }
+        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     </style>
 </head>
 <body>
@@ -32,7 +32,7 @@
                     <i class="fas fa-truck-fast text-white text-4xl"></i>
                 </div>
                 <h2 class="text-3xl font-extrabold mt-5 text-gray-800">M&P Express</h2>
-                <p class="text-orange-600 font-medium text-sm">IT Complaint Portal — Standalone</p>
+                <p class="text-orange-600 font-medium text-sm">IT Complaint Portal — Firebase</p>
             </div>
             <form id="loginForm" class="mt-8">
                 <div class="mb-4">
@@ -46,7 +46,7 @@
                 <button type="submit" class="w-full btn-luxury text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2"><i class="fas fa-sign-in-alt"></i> Access Portal</button>
             </form>
             <p class="text-center text-xs text-gray-500 mt-4">Default Admin: <span class="font-mono">admin@mpexpress.com</span> / <span class="font-mono">543210</span></p>
-            <p class="text-center text-xs text-gray-400 mt-6">Developed by Faraz Sheikh</p>
+            <p class="text-center text-xs text-gray-400 mt-6">Developed by Faraz Sheikh | Powered by Firebase</p>
         </div>
     </div>
 
@@ -69,78 +69,227 @@
             </div>
         </nav>
         <main class="max-w-7xl mx-auto px-5 sm:px-8 py-10"><div id="dynamicView"></div></main>
-        <footer class="text-center text-gray-400 text-xs py-6 border-t border-orange-100">© 2026 M&P Express Logistics – All data stored locally | Developed by Faraz Sheikh</footer>
+        <footer class="text-center text-gray-400 text-xs py-6 border-t border-orange-100">© 2026 M&P Express Logistics – Data on Firebase | Developed by Faraz Sheikh</footer>
     </div>
 </div>
 
-<script>
-    // ---------- LOCAL STORAGE BACKEND (NO FIREBASE) ----------
-    let users = [];
-    let complaints = [];
-    let currentUser = null;
-    let unsubscribeTimer = null; // for HOD realtime simulation
-
-    function loadData() {
-        const storedUsers = localStorage.getItem("mp_users");
-        if (storedUsers) {
-            users = JSON.parse(storedUsers);
+<script type="module">
+    // ----- FIREBASE IMPORTS -----
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyDUWw4CWZbL35zpQn4FA1m_fsJj95FpOec",
+        authDomain: "itcomplaint-4ec8e.firebaseapp.com",
+        projectId: "itcomplaint-4ec8e",
+        storageBucket: "itcomplaint-4ec8e.firebasestorage.app",
+        messagingSenderId: "718572872389",
+        appId: "1:718572872389:web:653b63ac93d07be9f2c6ac",
+        measurementId: "G-PS1HC2MH6G"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    
+    // ----- GLOBAL STATE -----
+    let currentUser = null;        // will hold { uid, email, fullName, role, designation }
+    let complaintsUnsubscribe = null;
+    let hodInterval = null;
+    
+    // Helper: show/hide loading (simple)
+    function showLoading(show) {
+        let overlay = document.getElementById("loadingOverlay");
+        if(show) {
+            if(!overlay) {
+                overlay = document.createElement("div");
+                overlay.id = "loadingOverlay";
+                overlay.className = "loading-overlay";
+                overlay.innerHTML = '<div class="bg-white rounded-2xl p-4 shadow-xl"><i class="fas fa-spinner fa-pulse text-orange-500 text-2xl"></i><p class="mt-2">Loading...</p></div>';
+                document.body.appendChild(overlay);
+            }
+            overlay.classList.remove("hidden");
         } else {
-            users = [
-                { uid: "admin1", email: "admin@mpexpress.com", password: "543210", fullName: "Admin", role: "admin", designation: "Admin" }
-            ];
-            saveUsers();
-        }
-        const storedComplaints = localStorage.getItem("mp_complaints");
-        if (storedComplaints) {
-            complaints = JSON.parse(storedComplaints);
-        } else {
-            complaints = [];
-            saveComplaints();
+            if(overlay) overlay.classList.add("hidden");
         }
     }
-
-    function saveUsers() { localStorage.setItem("mp_users", JSON.stringify(users)); }
-    function saveComplaints() { localStorage.setItem("mp_complaints", JSON.stringify(complaints)); }
-
-    function getUserById(uid) { 
-        const found = users.find(u => u.uid === uid);
-        return found ? found : { fullName: "Unknown", designation: "Deleted User" }; 
+    
+    // ----- FIREBASE HELPER FUNCTIONS -----
+    async function ensureDefaultAdmin() {
+        // Check if admin user exists in Firestore 'users' collection
+        const adminEmail = "admin@mpexpress.com";
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", adminEmail));
+        const snapshot = await getDocs(q);
+        if(snapshot.empty) {
+            // Create admin user document (password is handled by Firebase Auth separately)
+            // But we need to also create Auth user? For default, we assume admin already exists in Auth.
+            // To make it seamless, we'll try to sign in with provided credentials; if not, we'll create auth user programmatically? 
+            // Actually, the user must be created in Firebase Auth manually or via signup. For demo, we'll just create Firestore record.
+            // But the login will fail if auth user missing. So we'll attempt to create auth user using admin SDK? Can't from client.
+            // Instead, we'll rely on the fact that the admin already exists in Auth (the project should have that user).
+            // We'll just create Firestore doc.
+            await setDoc(doc(db, "users", "admin_default"), {
+                uid: "admin_default",
+                email: adminEmail,
+                fullName: "Admin",
+                role: "admin",
+                designation: "Admin",
+                createdAt: new Date().toISOString()
+            });
+            console.log("Default admin Firestore record created.");
+        }
     }
-    function getUserByEmail(email) { return users.find(u => u.email === email); }
-
-    function login(email, password) {
-        const user = users.find(u => u.email === email && u.password === password);
-        if (user) {
-            currentUser = { ...user };
-            localStorage.setItem("mp_current_user", JSON.stringify({ uid: user.uid, email: user.email, fullName: user.fullName, role: user.role, designation: user.designation }));
+    
+    async function loadUserData(uid) {
+        const userDoc = await getDoc(doc(db, "users", uid));
+        if(userDoc.exists()) {
+            return userDoc.data();
+        }
+        return null;
+    }
+    
+    async function loginUser(email, password) {
+        try {
+            showLoading(true);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const firebaseUser = userCredential.user;
+            // fetch additional user data from Firestore
+            const userData = await loadUserData(firebaseUser.uid);
+            if(!userData) {
+                throw new Error("User profile not found. Please contact admin.");
+            }
+            currentUser = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                fullName: userData.fullName,
+                role: userData.role,
+                designation: userData.designation
+            };
+            localStorage.setItem("mp_current_user", JSON.stringify({ uid: currentUser.uid }));
             return true;
+        } catch(error) {
+            console.error("Login error:", error);
+            let msg = "Login failed. ";
+            if(error.code === "auth/user-not-found") msg += "User not found.";
+            else if(error.code === "auth/wrong-password") msg += "Wrong password.";
+            else msg += error.message;
+            alert(msg);
+            return false;
+        } finally {
+            showLoading(false);
         }
-        return false;
     }
-
-    function logout() {
-        if (unsubscribeTimer) {
-            clearInterval(unsubscribeTimer);
-            unsubscribeTimer = null;
-        }
+    
+    async function logoutUser() {
+        if(complaintsUnsubscribe) complaintsUnsubscribe();
+        if(hodInterval) clearInterval(hodInterval);
+        await signOut(auth);
         currentUser = null;
         localStorage.removeItem("mp_current_user");
     }
-
-    function restoreSession() {
-        const saved = localStorage.getItem("mp_current_user");
-        if (saved) {
-            const u = JSON.parse(saved);
-            const fullUser = users.find(user => user.uid === u.uid);
-            if (fullUser) {
-                currentUser = fullUser;
-                return true;
+    
+    // Listen to auth state (for persistence)
+    onAuthStateChanged(auth, async (user) => {
+        if(user && !currentUser) {
+            // restore session from localStorage or fetch from Firestore
+            const saved = localStorage.getItem("mp_current_user");
+            if(saved) {
+                const { uid } = JSON.parse(saved);
+                if(uid === user.uid) {
+                    const userData = await loadUserData(uid);
+                    if(userData) {
+                        currentUser = {
+                            uid: user.uid,
+                            email: user.email,
+                            fullName: userData.fullName,
+                            role: userData.role,
+                            designation: userData.designation
+                        };
+                        // if dashboard is visible but not rendered
+                        const dashboard = document.getElementById("dashboardScreen");
+                        if(dashboard && !dashboard.classList.contains("hidden")) {
+                            document.getElementById("userFullname").innerText = currentUser.fullName;
+                            document.getElementById("userRoleText").innerHTML = currentUser.designation;
+                            document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
+                            renderCurrentView();
+                        }
+                    }
+                }
             }
         }
-        return false;
+    });
+    
+    // ----- CRUD for complaints (Firestore) -----
+    async function fetchComplaints() {
+        const q = query(collection(db, "complaints"), orderBy("createdDate", "desc"));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
-
-    // Helper functions
+    
+    async function addComplaint(complaintData) {
+        const newComplaint = {
+            ...complaintData,
+            createdDate: complaintData.createdDate || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        const docRef = await addDoc(collection(db, "complaints"), newComplaint);
+        return { id: docRef.id, ...newComplaint };
+    }
+    
+    async function updateComplaint(complaintId, data) {
+        const ref = doc(db, "complaints", complaintId);
+        await updateDoc(ref, { ...data, updatedAt: new Date().toISOString() });
+    }
+    
+    async function deleteComplaint(complaintId) {
+        await deleteDoc(doc(db, "complaints", complaintId));
+    }
+    
+    // Users management (admin)
+    async function fetchAllUsers() {
+        const snapshot = await getDocs(collection(db, "users"));
+        return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+    }
+    
+    async function createUserInFirestore(uid, email, fullName, role, designation, password) {
+        // First, we need to create Auth user? Actually for security, admin should create users via Firebase Console or using Firebase Admin SDK.
+        // Since client-side cannot create Auth users, we'll assume users are created manually in Auth. But to make the demo functional,
+        // we'll only store user profile in Firestore and expect that the Auth user already exists with same email.
+        // For better UX, we'll show a message that the user must exist in Authentication.
+        // Alternatively, we can use Firebase Functions, but for simplicity we'll just store profile and alert.
+        await setDoc(doc(db, "users", uid), {
+            uid, email, fullName, role, designation,
+            createdAt: new Date().toISOString()
+        });
+        return { uid, email, fullName, role, designation };
+    }
+    
+    async function deleteUserFromFirestore(uid) {
+        // reassign complaints to admin before deleting
+        const adminUser = (await fetchAllUsers()).find(u => u.role === "admin");
+        if(adminUser) {
+            const complaintsRef = collection(db, "complaints");
+            const q = query(complaintsRef, where("assignedTo", "==", uid));
+            const snapshot = await getDocs(q);
+            for(const docSnap of snapshot.docs) {
+                await updateDoc(docSnap.ref, { assignedTo: adminUser.uid });
+            }
+        }
+        await deleteDoc(doc(db, "users", uid));
+    }
+    
+    // ----- RENDER LOGIC (similar to before but async data) -----
+    async function renderCurrentView() {
+        const container = document.getElementById("dynamicView");
+        if(!container) return;
+        if(currentUser.role === "admin") await renderAdminDashboard(container);
+        else if(currentUser.role === "hod") await renderHODDashboard(container);
+        else await renderSSEDashboard(container);
+    }
+    
+    // Helper badges
     function statusBadge(status) {
         const colors = { open: "bg-amber-100 text-amber-800", "in-progress": "bg-blue-100 text-blue-800", resolved: "bg-emerald-100 text-emerald-800", closed: "bg-gray-100 text-gray-800" };
         return `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100'}">${status}</span>`;
@@ -150,28 +299,21 @@
         return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${colors[priority] || 'bg-gray-200'}">${priority}</span>`;
     }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-    function escapeAttr(str) { if(!str) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-
-    // ---------- UI RENDERING ----------
-    function renderCurrentView() {
-        const container = document.getElementById("dynamicView");
-        if (currentUser.role === "admin") renderAdminDashboard(container);
-        else if (currentUser.role === "hod") renderHODDashboard(container);
-        else renderSSEDashboard(container);
-    }
-
-    // ---------- ADMIN DASHBOARD (fully functional) ----------
-    function renderAdminDashboard(container) {
+    
+    // Admin Dashboard (with Firestore)
+    async function renderAdminDashboard(container) {
+        let complaintsData = await fetchComplaints();
+        let usersData = await fetchAllUsers();
         let selectedYear = new Date().getFullYear();
         let selectedMonth = new Date().getMonth() + 1;
         
         function getFilteredComplaints() {
-            return complaints.filter(c => {
+            return complaintsData.filter(c => {
                 const d = new Date(c.createdDate);
                 return d.getFullYear() === selectedYear && (d.getMonth()+1) === selectedMonth;
             });
         }
-
+        
         function generateReportHTML() {
             const filtered = getFilteredComplaints();
             const total = filtered.length;
@@ -188,285 +330,205 @@
                 <div class="bg-amber-50 p-4 rounded-2xl"><p class="text-xs">Open/Progress</p><p class="text-2xl font-black">${(statusCount.open||0)+(statusCount["in-progress"]||0)}</p></div>
                 <div class="bg-green-50 p-4 rounded-2xl"><p class="text-xs">Resolved/Closed</p><p class="text-2xl font-black">${(statusCount.resolved||0)+(statusCount.closed||0)}</p></div>
                 <div class="bg-rose-50 p-4 rounded-2xl"><p class="text-xs">Critical</p><p class="text-2xl font-black">${priorityCount.critical||0}</p></div></div>
-                <div class="overflow-auto"><table class="min-w-full text-sm"><thead class="bg-orange-50"><tr><th class="p-2">ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
-                ${filtered.map(c => `<tr class="border-b"><td class="py-2 font-mono text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(getUserById(c.assignedTo).fullName)} (${escapeHtml(getUserById(c.assignedTo).designation)})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
+                <div class="overflow-auto"><table class="min-w-full text-sm"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
+                ${filtered.map(c => `<tr class="border-b"><td class="py-2 font-mono text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(c.assignedToName || c.assignedTo)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
                 ${filtered.length===0?'<tr><td colspan="6" class="text-center py-4 text-gray-400">No data</td></tr>':''}</tbody></table></div></div>`;
         }
-
+        
         function renderComplaintTable() {
-            if(complaints.length === 0) return '<div class="luxury-card p-10 text-center text-gray-400">No complaints</div>';
+            if(complaintsData.length === 0) return '<div class="luxury-card p-10 text-center text-gray-400">No complaints</div>';
             return `<div class="luxury-card overflow-hidden"><table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4 text-left">ID</th><th>Title</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>
-            ${complaints.map(c => `<tr class="border-b hover:bg-orange-50"><td class="p-4 font-mono text-xs">${c.id.slice(0,6)}</td><td class="font-medium">${escapeHtml(c.title)}<div class="text-xs text-gray-400">${escapeHtml(c.description.substring(0,45))}</div></td><td>${escapeHtml(getUserById(c.assignedTo).fullName)} (${escapeHtml(getUserById(c.assignedTo).designation)})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
-            <td class="flex gap-2"><button data-id="${c.id}" class="editBtn text-orange-600 hover:scale-110 transition"><i class="fas fa-edit"></i></button><button data-id="${c.id}" class="deleteBtn text-red-500 hover:scale-110 transition"><i class="fas fa-trash-alt"></i></button></td></tr>`).join('')}</tbody></table></div>`;
+            ${complaintsData.map(c => `<tr class="border-b hover:bg-orange-50"><td class="p-4 font-mono text-xs">${c.id.slice(0,6)}</td><td class="font-medium">${escapeHtml(c.title)}<div class="text-xs text-gray-400">${escapeHtml((c.description||'').substring(0,45))}</div></td><td>${escapeHtml(c.assignedToName || c.assignedTo)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
+            <td class="flex gap-2"><button data-id="${c.id}" class="editBtn text-orange-600"><i class="fas fa-edit"></i></button><button data-id="${c.id}" class="deleteBtn text-red-500"><i class="fas fa-trash-alt"></i></button></td></tr>`).join('')}</tbody></table></div>`;
         }
-
+        
         function renderUserManagement() {
-            const teamUsers = users.filter(u => u.role === "sse" || u.role === "hod");
+            const teamUsers = usersData.filter(u => u.role === "sse" || u.role === "hod");
             return `<div class="luxury-card p-6 mb-8"><h3 class="text-xl font-bold mb-4"><i class="fas fa-users text-orange-500"></i> Manage Users (SSE / HOD)</h3>
-            <form id="createUserForm" class="grid md:grid-cols-5 gap-3 mb-6"><input type="text" id="newFullName" placeholder="Full Name" class="border rounded-xl p-2"><input type="email" id="newEmail" placeholder="Email" class="border rounded-xl p-2"><input type="text" id="newPassword" placeholder="Password" class="border rounded-xl p-2">
+            <form id="createUserForm" class="grid md:grid-cols-5 gap-3 mb-6"><input type="text" id="newFullName" placeholder="Full Name" class="border rounded-xl p-2"><input type="email" id="newEmail" placeholder="Email" class="border rounded-xl p-2"><input type="text" id="newPassword" placeholder="Password (for Auth)" class="border rounded-xl p-2">
             <select id="newRole" class="border rounded-xl p-2"><option value="sse">SSE</option><option value="hod">HOD</option></select><select id="newDesignation" class="border rounded-xl p-2"><option value="SSE">SSE</option><option value="Sr. SSE">Sr. SSE</option><option value="HOD">HOD</option></select>
             <button type="submit" class="bg-orange-500 text-white rounded-xl px-4 py-2"><i class="fas fa-user-plus"></i> Create</button></form>
-            <div class="overflow-auto"><table class="min-w-full"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Designation</th><th></th></tr></thead><tbody id="userListBody">
+            <div class="text-xs text-gray-500 mb-2">Note: User must also be created in Firebase Authentication (console). This adds Firestore profile.</div>
+            <div class="overflow-auto"><table class="min-w-full"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Designation</th><th></th></tr></thead><tbody>
             ${teamUsers.map(u => `<tr><td>${escapeHtml(u.fullName)}</td><td>${escapeHtml(u.email)}</td><td>${u.role}</td><td>${escapeHtml(u.designation)}</td><td><button data-uid="${u.uid}" class="deleteUserBtn text-red-500"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
             ${teamUsers.length===0?'<tr><td colspan="5" class="text-center py-4">No users</td></tr>':''}</tbody></table></div></div>`;
         }
-
-        function exportCSV(year, month) {
-            const filtered = complaints.filter(c => { const d = new Date(c.createdDate); return d.getFullYear() === year && (d.getMonth()+1) === month; });
-            if(!filtered.length) return alert("No data for selected month");
-            let csvRows = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created","Due Date"]];
-            filtered.forEach(c => { const u = getUserById(c.assignedTo); csvRows.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
-            const blob = new Blob([csvRows.map(row=>row.map(cell=>`"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n")], {type:"text/csv"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `report_${year}_${month}.csv`; a.click();
-        }
-
+        
         function refreshUI() {
-            const teamUsersNow = users.filter(u => u.role === "sse" || u.role === "hod");
             container.innerHTML = `<div class="space-y-8"><div class="flex justify-between"><h2 class="text-3xl font-black">Complaints</h2><button id="newComplaintBtn" class="btn-luxury text-white px-6 py-2 rounded-2xl"><i class="fas fa-plus"></i> New</button></div>
             <div id="reportArea"></div><div id="complaintTableArea"></div><div id="userManagementArea"></div></div>`;
             document.getElementById("reportArea").innerHTML = generateReportHTML();
             document.getElementById("complaintTableArea").innerHTML = renderComplaintTable();
             document.getElementById("userManagementArea").innerHTML = renderUserManagement();
-
             document.getElementById("refreshReport")?.addEventListener("click", () => { selectedMonth = parseInt(document.getElementById("reportMonth").value); selectedYear = parseInt(document.getElementById("reportYear").value); document.getElementById("reportArea").innerHTML = generateReportHTML(); });
-            document.getElementById("exportCSV")?.addEventListener("click", () => exportCSV(selectedYear, selectedMonth));
+            document.getElementById("exportCSV")?.addEventListener("click", () => exportCSV());
             document.getElementById("newComplaintBtn")?.addEventListener("click", () => openComplaintModal());
-            
-            document.querySelectorAll(".editBtn").forEach(btn => btn.addEventListener("click", () => { const comp = complaints.find(c=>c.id === btn.dataset.id); if(comp) openComplaintModal(comp); }));
-            document.querySelectorAll(".deleteBtn").forEach(btn => btn.addEventListener("click", () => { if(confirm("Delete this complaint?")) { complaints = complaints.filter(c => c.id !== btn.dataset.id); saveComplaints(); refreshUI(); } }));
-
-            document.getElementById("createUserForm")?.addEventListener("submit", (e) => {
+            document.querySelectorAll(".editBtn").forEach(btn => btn.addEventListener("click", async () => { const comp = complaintsData.find(c=>c.id === btn.dataset.id); if(comp) openComplaintModal(comp); }));
+            document.querySelectorAll(".deleteBtn").forEach(btn => btn.addEventListener("click", async () => { if(confirm("Delete?")) { await deleteComplaint(btn.dataset.id); await refreshData(); refreshUI(); } }));
+            document.getElementById("createUserForm")?.addEventListener("submit", async (e) => {
                 e.preventDefault();
                 const fullName = document.getElementById("newFullName").value.trim(), email = document.getElementById("newEmail").value.trim(), password = document.getElementById("newPassword").value.trim(), role = document.getElementById("newRole").value, designation = document.getElementById("newDesignation").value;
                 if(!fullName||!email||!password) return alert("Fill all fields");
-                if(users.find(u => u.email === email)) return alert("Email already exists");
-                const newUid = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
-                users.push({ uid: newUid, email, password, fullName, role, designation });
-                saveUsers();
+                // generate a random UID (since we cannot create Auth user client-side, we'll just store profile and warn)
+                const tempUid = "user_"+Date.now()+"_"+Math.random().toString(36).substr(2,6);
+                await createUserInFirestore(tempUid, email, fullName, role, designation, password);
+                alert(`User profile created. IMPORTANT: Also create this user in Firebase Authentication (Console) with email ${email} and password ${password} for login.`);
+                await refreshData();
                 refreshUI();
                 document.getElementById("createUserForm").reset();
             });
-
-            document.querySelectorAll(".deleteUserBtn").forEach(btn => btn.addEventListener("click", () => {
-                const uid = btn.dataset.uid;
-                if(confirm("Delete user? Their complaints will be reassigned to admin.")) {
-                    const admin = users.find(u => u.role === "admin");
-                    if(admin) {
-                        complaints.forEach(c => { if(c.assignedTo === uid) c.assignedTo = admin.uid; });
-                        saveComplaints();
-                    }
-                    users = users.filter(u => u.uid !== uid);
-                    saveUsers();
-                    refreshUI();
-                }
-            }));
+            document.querySelectorAll(".deleteUserBtn").forEach(btn => btn.addEventListener("click", async () => { if(confirm("Delete user?")) { await deleteUserFromFirestore(btn.dataset.uid); await refreshData(); refreshUI(); } }));
         }
+        
+        async function refreshData() {
+            complaintsData = await fetchComplaints();
+            usersData = await fetchAllUsers();
+            // enrich complaints with assignee names
+            for(let c of complaintsData) {
+                const user = usersData.find(u => u.uid === c.assignedTo);
+                c.assignedToName = user ? user.fullName : c.assignedTo;
+            }
+        }
+        async function exportCSV() {
+            const filtered = getFilteredComplaints();
+            if(!filtered.length) return alert("No data");
+            let csvRows = [["ID","Title","Description","Assignee","Priority","Status","Created"]];
+            filtered.forEach(c => csvRows.push([c.id, c.title, c.description, c.assignedToName, c.priority, c.status, new Date(c.createdDate).toLocaleString()]));
+            const blob = new Blob([csvRows.map(row=>row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\n")], {type:"text/csv"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `report_${selectedYear}_${selectedMonth}.csv`; a.click();
+        }
+        await refreshData();
         refreshUI();
     }
-
-    // ---------- HOD DASHBOARD (FIXED: chart initialization after DOM ready) ----------
-    function renderHODDashboard(container) {
-        let chartTrend = null, chartPriority = null;
-        let lastComplaintsHash = "";
+    
+    // HOD and SSE dashboards simplified (similar pattern using real-time listeners)
+    async function renderHODDashboard(container) {
+        // Real-time listener for complaints
+        let chartTrend, chartPriority;
+        const q = query(collection(db, "complaints"), orderBy("createdDate", "desc"));
+        if(complaintsUnsubscribe) complaintsUnsubscribe();
+        complaintsUnsubscribe = onSnapshot(q, async (snapshot) => {
+            const complaintsArr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const usersArr = await fetchAllUsers();
+            for(let c of complaintsArr) {
+                const u = usersArr.find(uu => uu.uid === c.assignedTo);
+                c.assignedToName = u ? u.fullName : c.assignedTo;
+            }
+            updateDashboardUI(complaintsArr);
+        });
         
-        function updateDashboard() {
-            const total = complaints.length;
-            const openCount = complaints.filter(c => c.status === "open" || c.status === "in-progress").length;
-            const resolved = complaints.filter(c => c.status === "resolved" || c.status === "closed").length;
-            const highCritical = complaints.filter(c => c.priority === "high" || c.priority === "critical").length;
-            
+        function updateDashboardUI(complaintsArr) {
+            const total = complaintsArr.length;
+            const openCount = complaintsArr.filter(c => c.status === "open" || c.status === "in-progress").length;
+            const resolved = complaintsArr.filter(c => c.status === "resolved" || c.status === "closed").length;
+            const highCritical = complaintsArr.filter(c => c.priority === "high" || c.priority === "critical").length;
             const statsDiv = document.getElementById("hodStats");
             const trendCanvas = document.getElementById("trendChart");
             const priorityCanvas = document.getElementById("priorityChart");
             const recentDiv = document.getElementById("recentTable");
-            if (!statsDiv || !trendCanvas || !priorityCanvas || !recentDiv) return;
-            
-            statsDiv.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
-                    <div class="luxury-card p-5"><p class="text-gray-500 text-sm">Total Complaints</p><p class="text-3xl font-black text-orange-600">${total}</p></div>
-                    <div class="luxury-card p-5"><p class="text-gray-500 text-sm">Open / In Progress</p><p class="text-3xl font-black text-amber-600">${openCount}</p></div>
-                    <div class="luxury-card p-5"><p class="text-gray-500 text-sm">Resolved / Closed</p><p class="text-3xl font-black text-emerald-600">${resolved}</p></div>
-                    <div class="luxury-card p-5"><p class="text-gray-500 text-sm">High + Critical</p><p class="text-3xl font-black text-rose-600">${highCritical}</p></div>
-                </div>
-            `;
-            
-            const last7 = [...Array(7)].map((_,i)=>{const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().slice(0,10);}).reverse();
-            const counts = last7.map(date=> complaints.filter(c=>c.createdDate?.slice(0,10)===date).length);
-            if(chartTrend) chartTrend.destroy();
-            const ctxTrend = trendCanvas.getContext("2d");
-            chartTrend = new Chart(ctxTrend, { type:"line", data:{ labels:last7.map(d=>d.slice(5)), datasets:[{ label:"Complaints per day", data:counts, borderColor:"#f97316", backgroundColor:"rgba(249,115,22,0.1)", tension:0.3, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false } });
-            
-            const priorityLabels = ["low","medium","high","critical"];
-            const priorityData = priorityLabels.map(p=> complaints.filter(c=>c.priority===p).length);
-            if(chartPriority) chartPriority.destroy();
-            const ctxPie = priorityCanvas.getContext("2d");
-            chartPriority = new Chart(ctxPie, { type:"doughnut", data:{ labels:priorityLabels, datasets:[{ data:priorityData, backgroundColor:["#9ca3af","#f97316","#ef4444","#be123c"] }] }, options:{ responsive:true } });
-            
-            const recent = [...complaints].sort((a,b)=>new Date(b.createdDate)-new Date(a.createdDate)).slice(0,8);
-            recentDiv.innerHTML = `<div class="overflow-auto"><table class="min-w-full"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
-            ${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(getUserById(c.assignedTo).fullName)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
-            ${recent.length===0?'<tr><td colspan="6" class="text-center py-4">No complaints</td></tr>':''}</tbody></table></div>`;
-        }
-        
-        function checkAndUpdate() {
-            const newHash = JSON.stringify(complaints);
-            if(newHash !== lastComplaintsHash) {
-                lastComplaintsHash = newHash;
-                updateDashboard();
+            if(statsDiv) statsDiv.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8"><div class="luxury-card p-5"><p class="text-gray-500 text-sm">Total Complaints</p><p class="text-3xl font-black text-orange-600">${total}</p></div><div class="luxury-card p-5"><p class="text-gray-500 text-sm">Open / In Progress</p><p class="text-3xl font-black text-amber-600">${openCount}</p></div><div class="luxury-card p-5"><p class="text-gray-500 text-sm">Resolved / Closed</p><p class="text-3xl font-black text-emerald-600">${resolved}</p></div><div class="luxury-card p-5"><p class="text-gray-500 text-sm">High + Critical</p><p class="text-3xl font-black text-rose-600">${highCritical}</p></div></div>`;
+            if(trendCanvas) {
+                const last7 = [...Array(7)].map((_,i)=>{const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().slice(0,10);}).reverse();
+                const counts = last7.map(date=> complaintsArr.filter(c=>c.createdDate?.slice(0,10)===date).length);
+                if(chartTrend) chartTrend.destroy();
+                chartTrend = new Chart(trendCanvas.getContext("2d"), { type:"line", data:{ labels:last7.map(d=>d.slice(5)), datasets:[{ label:"Complaints per day", data:counts, borderColor:"#f97316", backgroundColor:"rgba(249,115,22,0.1)", tension:0.3, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false } });
+            }
+            if(priorityCanvas) {
+                const priorityLabels = ["low","medium","high","critical"];
+                const priorityData = priorityLabels.map(p=> complaintsArr.filter(c=>c.priority===p).length);
+                if(chartPriority) chartPriority.destroy();
+                chartPriority = new Chart(priorityCanvas.getContext("2d"), { type:"doughnut", data:{ labels:priorityLabels, datasets:[{ data:priorityData, backgroundColor:["#9ca3af","#f97316","#ef4444","#be123c"] }] }, options:{ responsive:true } });
+            }
+            if(recentDiv) {
+                const recent = complaintsArr.slice(0,8);
+                recentDiv.innerHTML = `<div class="overflow-auto"><table class="min-w-full"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(c.assignedToName)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}${recent.length===0?'<tr><td colspan="6" class="text-center py-4">No complaints</td></tr>':''}</tbody></table></div>`;
             }
         }
         
-        // Clear any previous interval
-        if(unsubscribeTimer) clearInterval(unsubscribeTimer);
-        
-        // Render DOM first
-        container.innerHTML = `
-            <div class="space-y-8">
-                <div class="flex justify-between items-center"><h2 class="text-3xl font-black"><i class="fas fa-chart-pie text-orange-500"></i> HOD Analytics Dashboard</h2>
-                <button id="exportAllBtn" class="bg-emerald-500 text-white px-5 py-2 rounded-2xl shadow hover:bg-emerald-600 transition"><i class="fas fa-download"></i> Export All Complaints</button></div>
-                <div id="hodStats"></div>
-                <div class="grid md:grid-cols-2 gap-6"><div class="luxury-card p-5"><h3 class="font-bold mb-3">📈 Complaint Trend (Last 7 Days)</h3><canvas id="trendChart" height="200"></canvas></div>
-                <div class="luxury-card p-5"><h3 class="font-bold mb-3">🥧 Priority Distribution</h3><canvas id="priorityChart" height="200"></canvas></div></div>
-                <div class="luxury-card p-5"><h3 class="font-bold mb-3">📋 Recent Complaints</h3><div id="recentTable"></div></div>
-            </div>
-        `;
-        
-        // Now initialize dashboard charts and stats (DOM ready)
-        updateDashboard();
-        lastComplaintsHash = JSON.stringify(complaints);
-        
-        // Start realtime watcher
-        unsubscribeTimer = setInterval(() => {
-            checkAndUpdate();
-        }, 1200);
-        
-        document.getElementById("exportAllBtn")?.addEventListener("click", () => {
-            if(!complaints.length) return alert("No complaints to export");
-            let csvRows = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created Date","Due Date"]];
-            complaints.forEach(c => { const u = getUserById(c.assignedTo); csvRows.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
-            const blob = new Blob([csvRows.map(row=>row.map(cell=>`"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n")], {type:"text/csv"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `all_complaints_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+        container.innerHTML = `<div class="space-y-8"><div class="flex justify-between items-center"><h2 class="text-3xl font-black"><i class="fas fa-chart-pie text-orange-500"></i> HOD Analytics Dashboard</h2><button id="exportAllBtn" class="bg-emerald-500 text-white px-5 py-2 rounded-2xl shadow"><i class="fas fa-download"></i> Export All Complaints</button></div><div id="hodStats"></div><div class="grid md:grid-cols-2 gap-6"><div class="luxury-card p-5"><h3 class="font-bold mb-3">📈 Complaint Trend (Last 7 Days)</h3><canvas id="trendChart" height="200"></canvas></div><div class="luxury-card p-5"><h3 class="font-bold mb-3">🥧 Priority Distribution</h3><canvas id="priorityChart" height="200"></canvas></div></div><div class="luxury-card p-5"><h3 class="font-bold mb-3">📋 Recent Complaints</h3><div id="recentTable"></div></div></div>`;
+        document.getElementById("exportAllBtn")?.addEventListener("click", async () => { const all = (await fetchComplaints()); if(!all.length) return alert("No complaints"); let csv = [["ID","Title","Description","Assignee","Priority","Status","Created"]]; all.forEach(c => csv.push([c.id, c.title, c.description, c.assignedTo, c.priority, c.status, c.createdDate])); const blob = new Blob([csv.map(row=>row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\n")], {type:"text/csv"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `all_complaints.csv`; a.click(); });
+    }
+    
+    async function renderSSEDashboard(container) {
+        let myComplaints = [];
+        const q = query(collection(db, "complaints"), where("assignedTo", "==", currentUser.uid));
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
+            myComplaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderSSEUI();
         });
-    }
-
-    // ---------- SSE DASHBOARD ----------
-    function renderSSEDashboard(container) {
-        const myComplaints = complaints.filter(c => c.assignedTo === currentUser.uid);
-        function updateStatus(compId, newStatus) {
-            const idx = complaints.findIndex(c => c.id === compId);
-            if(idx !== -1) {
-                complaints[idx].status = newStatus;
-                saveComplaints();
-                renderSSEDashboard(container);
-            }
+        function renderSSEUI() {
+            container.innerHTML = `<div class="space-y-6"><div class="flex flex-wrap justify-between items-center"><h2 class="text-2xl font-black"><i class="fas fa-tasks text-orange-500"></i> My Assigned Tickets</h2><button id="sseNewComplaintBtn" class="btn-luxury text-white px-5 py-2 rounded-2xl"><i class="fas fa-plus-circle"></i> Create & Assign</button></div><div class="luxury-card overflow-hidden">${myComplaints.length === 0 ? '<div class="p-10 text-center text-gray-400">No complaints assigned yet.</div>' : `<table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4">ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Created</th><th>Update</th></tr></thead><tbody>${myComplaints.map(c => `<tr class="border-b"><td class="p-4 text-xs">${c.id.slice(0,6)}</td><td><div class="font-medium">${escapeHtml(c.title)}</div><div class="text-xs text-gray-400">${escapeHtml((c.description||'').substring(0,50))}</div></td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td><td><select data-id="${c.id}" class="statusSelect border rounded-lg p-1"><option ${c.status==='open'?'selected':''}>open</option><option ${c.status==='in-progress'?'selected':''}>in-progress</option><option ${c.status==='resolved'?'selected':''}>resolved</option><option ${c.status==='closed'?'selected':''}>closed</option></select></td></tr>`).join('')}</tbody></table>`}</div></div>`;
+            document.querySelectorAll(".statusSelect").forEach(sel => sel.addEventListener("change", async (e) => { await updateComplaint(sel.dataset.id, { status: sel.value }); }));
+            document.getElementById("sseNewComplaintBtn")?.addEventListener("click", () => openComplaintModal());
         }
-        container.innerHTML = `
-            <div class="space-y-6">
-                <div class="flex flex-wrap justify-between items-center"><h2 class="text-2xl font-black"><i class="fas fa-tasks text-orange-500"></i> My Assigned Tickets</h2>
-                <button id="sseNewComplaintBtn" class="btn-luxury text-white px-5 py-2 rounded-2xl"><i class="fas fa-plus-circle"></i> Create & Assign</button></div>
-                <div class="luxury-card overflow-hidden">
-                    ${myComplaints.length === 0 ? '<div class="p-10 text-center text-gray-400">No complaints assigned yet.</div>' : `
-                    <table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4">ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Created</th><th>Update</th></tr></thead><tbody>
-                    ${myComplaints.map(c => `<tr class="border-b"><td class="p-4 text-xs">${c.id.slice(0,6)}</td><td><div class="font-medium">${escapeHtml(c.title)}</div><div class="text-xs text-gray-400">${escapeHtml(c.description.substring(0,50))}</div></td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
-                    <td><select data-id="${c.id}" class="statusSelect border rounded-lg p-1 bg-white"><option ${c.status==='open'?'selected':''}>open</option><option ${c.status==='in-progress'?'selected':''}>in-progress</option><option ${c.status==='resolved'?'selected':''}>resolved</option><option ${c.status==='closed'?'selected':''}>closed</option></select></td></tr>`).join('')}</tbody></table>`}
-                </div>
-            </div>
-        `;
-        document.querySelectorAll(".statusSelect").forEach(sel => sel.addEventListener("change", (e) => { updateStatus(sel.dataset.id, sel.value); }));
-        document.getElementById("sseNewComplaintBtn")?.addEventListener("click", () => openComplaintModal());
+        renderSSEUI();
     }
-
-    // ---------- SHARED COMPLAINT MODAL (fixed XSS & textarea handling) ----------
-    function openComplaintModal(complaint = null) {
+    
+    // Complaint Modal (Firestore)
+    async function openComplaintModal(complaint = null) {
         const isEdit = !!complaint;
-        const sseList = users.filter(u => u.role === "sse" || u.role === "hod");
+        const usersData = await fetchAllUsers();
+        const sseList = usersData.filter(u => u.role === "sse" || u.role === "hod");
         const modalDiv = document.createElement("div");
         modalDiv.className = "fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm";
-        modalDiv.innerHTML = `
-            <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-t-4 border-orange-500">
-                <div class="flex justify-between border-b pb-3 mb-4"><h3 class="text-xl font-bold">${isEdit ? 'Edit Complaint' : 'New Complaint'}</h3><button id="closeModalBtn"><i class="fas fa-times text-gray-400 hover:text-gray-600"></i></button></div>
-                <form id="modalComplaintForm">
-                    <input type="hidden" id="compId" value="${complaint?.id || ''}">
-                    <div class="mb-3"><label>Title *</label><input type="text" id="compTitle" required class="w-full border rounded-xl p-2" value="${escapeAttr(complaint?.title || '')}"></div>
-                    <div class="mb-3"><label>Description</label><textarea id="compDesc" rows="2" class="w-full border rounded-xl p-2"></textarea></div>
-                    <div class="mb-3"><label>Assign to (SSE/HOD)</label><select id="compAssignedTo" class="w-full border rounded-xl p-2">
-                        ${sseList.map(s => `<option value="${s.uid}" ${complaint && complaint.assignedTo === s.uid ? 'selected':''}>${escapeHtml(s.fullName)} (${escapeHtml(s.designation)})</option>`).join('')}
-                        ${sseList.length===0?'<option disabled>No users available</option>':''}
-                    </select></div>
-                    <div class="mb-3"><label>Priority</label><select id="compPriority" class="w-full border rounded-xl p-2"><option ${complaint?.priority==='low'?'selected':''}>low</option><option ${complaint?.priority==='medium'?'selected':''}>medium</option><option ${complaint?.priority==='high'?'selected':''}>high</option><option ${complaint?.priority==='critical'?'selected':''}>critical</option></select></div>
-                    <div class="mb-3"><label>Status</label><select id="compStatus" class="w-full border rounded-xl p-2"><option ${complaint?.status==='open'?'selected':''}>open</option><option ${complaint?.status==='in-progress'?'selected':''}>in-progress</option><option ${complaint?.status==='resolved'?'selected':''}>resolved</option><option ${complaint?.status==='closed'?'selected':''}>closed</option></select></div>
-                    <div class="mb-4"><label>Due Date</label><input type="date" id="compDueDate" class="w-full border rounded-xl p-2" value="${complaint?.dueDate?.split('T')[0] || ''}"></div>
-                    <div class="flex justify-end gap-3"><button type="button" id="cancelModal" class="px-4 py-2 border rounded-xl">Cancel</button><button type="submit" class="bg-orange-500 text-white px-5 py-2 rounded-xl">${isEdit ? 'Update' : 'Create'}</button></div>
-                </form>
-            </div>
-        `;
+        modalDiv.innerHTML = `<div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl"><div class="flex justify-between border-b pb-3 mb-4"><h3 class="text-xl font-bold">${isEdit ? 'Edit Complaint' : 'New Complaint'}</h3><button id="closeModalBtn"><i class="fas fa-times text-gray-400"></i></button></div><form id="modalComplaintForm"><input type="hidden" id="compId" value="${complaint?.id || ''}"><div class="mb-3"><label>Title *</label><input type="text" id="compTitle" required class="w-full border rounded-xl p-2" value="${escapeHtml(complaint?.title || '')}"></div><div class="mb-3"><label>Description</label><textarea id="compDesc" rows="2" class="w-full border rounded-xl p-2">${escapeHtml(complaint?.description || '')}</textarea></div><div class="mb-3"><label>Assign to (SSE/HOD)</label><select id="compAssignedTo" class="w-full border rounded-xl p-2">${sseList.map(s => `<option value="${s.uid}" ${complaint && complaint.assignedTo === s.uid ? 'selected':''}>${escapeHtml(s.fullName)} (${escapeHtml(s.designation)})</option>`).join('')}</select></div><div class="mb-3"><label>Priority</label><select id="compPriority" class="w-full border rounded-xl p-2"><option ${complaint?.priority==='low'?'selected':''}>low</option><option ${complaint?.priority==='medium'?'selected':''}>medium</option><option ${complaint?.priority==='high'?'selected':''}>high</option><option ${complaint?.priority==='critical'?'selected':''}>critical</option></select></div><div class="mb-3"><label>Status</label><select id="compStatus" class="w-full border rounded-xl p-2"><option ${complaint?.status==='open'?'selected':''}>open</option><option ${complaint?.status==='in-progress'?'selected':''}>in-progress</option><option ${complaint?.status==='resolved'?'selected':''}>resolved</option><option ${complaint?.status==='closed'?'selected':''}>closed</option></select></div><div class="mb-4"><label>Due Date</label><input type="date" id="compDueDate" class="w-full border rounded-xl p-2" value="${complaint?.dueDate?.split('T')[0] || ''}"></div><div class="flex justify-end gap-3"><button type="button" id="cancelModal" class="px-4 py-2 border rounded-xl">Cancel</button><button type="submit" class="bg-orange-500 text-white px-5 py-2 rounded-xl">${isEdit ? 'Update' : 'Create'}</button></div></form></div>`;
         document.body.appendChild(modalDiv);
-        
-        // Set description textarea safely
-        const descTextarea = modalDiv.querySelector("#compDesc");
-        if (descTextarea) descTextarea.value = complaint?.description || '';
-        
         const close = () => modalDiv.remove();
         modalDiv.querySelector("#closeModalBtn")?.addEventListener("click", close);
         modalDiv.querySelector("#cancelModal")?.addEventListener("click", close);
-        modalDiv.querySelector("#modalComplaintForm")?.addEventListener("submit", (e) => {
+        modalDiv.querySelector("#modalComplaintForm")?.addEventListener("submit", async (e) => {
             e.preventDefault();
             const id = modalDiv.querySelector("#compId").value;
-            const data = {
-                title: modalDiv.querySelector("#compTitle").value,
-                description: modalDiv.querySelector("#compDesc").value,
-                assignedTo: modalDiv.querySelector("#compAssignedTo").value,
-                priority: modalDiv.querySelector("#compPriority").value,
-                status: modalDiv.querySelector("#compStatus").value,
-                dueDate: modalDiv.querySelector("#compDueDate").value || null,
-                createdDate: complaint?.createdDate || new Date().toISOString(),
-                id: id ? id : "comp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6)
-            };
-            if (id) {
-                const index = complaints.findIndex(c => c.id === id);
-                if(index !== -1) complaints[index] = { ...complaints[index], ...data };
-            } else {
-                complaints.push(data);
-            }
-            saveComplaints();
+            const data = { title: modalDiv.querySelector("#compTitle").value, description: modalDiv.querySelector("#compDesc").value, assignedTo: modalDiv.querySelector("#compAssignedTo").value, priority: modalDiv.querySelector("#compPriority").value, status: modalDiv.querySelector("#compStatus").value, dueDate: modalDiv.querySelector("#compDueDate").value || null, createdDate: complaint?.createdDate || new Date().toISOString() };
+            if(id) await updateComplaint(id, data);
+            else await addComplaint(data);
             close();
             renderCurrentView();
         });
     }
-
-    // ---------- INITIALIZATION & EVENT BINDINGS ----------
-    loadData();
-    if(restoreSession()) {
-        document.getElementById("loginScreen").classList.add("hidden");
-        document.getElementById("dashboardScreen").classList.remove("hidden");
-        document.getElementById("userFullname").innerText = currentUser.fullName;
-        document.getElementById("userRoleText").innerHTML = currentUser.designation;
-        document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
-        renderCurrentView();
-    }
-
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
+    
+    // Initialize default admin profile on Firestore
+    await ensureDefaultAdmin();
+    
+    // Login event
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
         e.preventDefault();
         const email = document.getElementById("loginEmail").value.trim();
         const password = document.getElementById("loginPassword").value;
-        if(login(email, password)) {
+        const success = await loginUser(email, password);
+        if(success) {
             document.getElementById("loginScreen").classList.add("hidden");
             document.getElementById("dashboardScreen").classList.remove("hidden");
             document.getElementById("userFullname").innerText = currentUser.fullName;
             document.getElementById("userRoleText").innerHTML = currentUser.designation;
             document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
             renderCurrentView();
-        } else {
-            alert("Invalid email or password. Use admin@mpexpress.com / 543210");
         }
     });
-
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-        if(unsubscribeTimer) clearInterval(unsubscribeTimer);
-        logout();
+    
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await logoutUser();
         document.getElementById("dashboardScreen").classList.add("hidden");
         document.getElementById("loginScreen").classList.remove("hidden");
+        if(complaintsUnsubscribe) complaintsUnsubscribe();
+        if(hodInterval) clearInterval(hodInterval);
     });
+    
+    // Restore session if already logged in
+    const saved = localStorage.getItem("mp_current_user");
+    if(saved && auth.currentUser) {
+        const { uid } = JSON.parse(saved);
+        const userData = await loadUserData(uid);
+        if(userData) {
+            currentUser = { uid, email: auth.currentUser.email, fullName: userData.fullName, role: userData.role, designation: userData.designation };
+            document.getElementById("loginScreen").classList.add("hidden");
+            document.getElementById("dashboardScreen").classList.remove("hidden");
+            document.getElementById("userFullname").innerText = currentUser.fullName;
+            document.getElementById("userRoleText").innerHTML = currentUser.designation;
+            document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
+            renderCurrentView();
+        }
+    }
 </script>
 </body>
 </html>
