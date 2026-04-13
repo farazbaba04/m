@@ -3,52 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M&P Express Logistics | IT Portal (Final Working)</title>
+    <title>M&P Express Logistics | IT Complaint Portal (Standalone)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Firebase SDK v12.12.0 -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-analytics.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDUWw4CWZbL35zpQn4FA1m_fsJj95FpOec",
-            authDomain: "itcomplaint-4ec8e.firebaseapp.com",
-            projectId: "itcomplaint-4ec8e",
-            storageBucket: "itcomplaint-4ec8e.firebasestorage.app",
-            messagingSenderId: "718572872389",
-            appId: "1:718572872389:web:653b63ac93d07be9f2c6ac",
-            measurementId: "G-PS1HC2MH6G"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        window.auth = auth;
-        window.db = db;
-        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
-        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
-        window.signOut = signOut;
-        window.onAuthStateChanged = onAuthStateChanged;
-        window.collection = collection;
-        window.doc = doc;
-        window.getDoc = getDoc;
-        window.getDocs = getDocs;
-        window.addDoc = addDoc;
-        window.setDoc = setDoc;
-        window.updateDoc = updateDoc;
-        window.deleteDoc = deleteDoc;
-        window.query = query;
-        window.where = where;
-        window.onSnapshot = onSnapshot;
-        window.fetchSignInMethodsForEmail = fetchSignInMethodsForEmail;
-    </script>
     <style>
         body { background: #fef9f1; font-family: 'Inter', sans-serif; }
         .luxury-card { background: rgba(255,255,255,0.96); border-radius: 2rem; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.1); transition: all 0.2s; }
@@ -70,7 +29,7 @@
                     <i class="fas fa-truck-fast text-white text-4xl"></i>
                 </div>
                 <h2 class="text-3xl font-extrabold mt-5 text-gray-800">M&P Express</h2>
-                <p class="text-orange-600 font-medium text-sm">IT Complaint Portal — Final</p>
+                <p class="text-orange-600 font-medium text-sm">IT Complaint Portal — Standalone</p>
             </div>
             <form id="loginForm" class="mt-8">
                 <div class="mb-4">
@@ -83,9 +42,7 @@
                 </div>
                 <button type="submit" class="w-full btn-luxury text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2"><i class="fas fa-sign-in-alt"></i> Access Portal</button>
             </form>
-            <div class="mt-4 text-center">
-                <button id="forceCreateAdminBtn" class="text-orange-500 text-sm underline hover:text-orange-700">🔧 Create Admin User (if missing)</button>
-            </div>
+            <p class="text-center text-xs text-gray-500 mt-4">Default Admin: <span class="font-mono">admin@mpexpress.com</span> / <span class="font-mono">543210</span></p>
             <p class="text-center text-xs text-gray-400 mt-6">Developed by Faraz Sheikh</p>
         </div>
     </div>
@@ -109,94 +66,72 @@
             </div>
         </nav>
         <main class="max-w-7xl mx-auto px-5 sm:px-8 py-10"><div id="dynamicView"></div></main>
-        <footer class="text-center text-gray-400 text-xs py-6 border-t border-orange-100">© 2026 M&P Express Logistics – Powered by Firebase | Developed by Faraz Sheikh</footer>
+        <footer class="text-center text-gray-400 text-xs py-6 border-t border-orange-100">© 2026 M&P Express Logistics – All data stored locally | Developed by Faraz Sheikh</footer>
     </div>
 </div>
 
-<script type="module">
-    // ------------------- FIREBASE HELPERS -------------------
-    const auth = window.auth;
-    const db = window.db;
-    const signInWithEmailAndPassword = window.signInWithEmailAndPassword;
-    const createUserWithEmailAndPassword = window.createUserWithEmailAndPassword;
-    const signOut = window.signOut;
-    const onAuthStateChanged = window.onAuthStateChanged;
-    const collection = window.collection;
-    const doc = window.doc;
-    const getDoc = window.getDoc;
-    const getDocs = window.getDocs;
-    const addDoc = window.addDoc;
-    const setDoc = window.setDoc;
-    const updateDoc = window.updateDoc;
-    const deleteDoc = window.deleteDoc;
-    const query = window.query;
-    const where = window.where;
-    const onSnapshot = window.onSnapshot;
-    const fetchSignInMethodsForEmail = window.fetchSignInMethodsForEmail;
-
+<script>
+    // ---------- LOCAL STORAGE BACKEND (NO FIREBASE) ----------
+    // Initialize default data if empty
+    let users = [];
+    let complaints = [];
     let currentUser = null;
-    let unsubscribeComplaints = null;
+    let unsubscribeTimer = null; // for HOD realtime simulation
 
-    async function getUserProfile(uid) {
-        const userDoc = await getDoc(doc(db, "users", uid));
-        if (userDoc.exists()) return { uid, ...userDoc.data() };
-        return null;
-    }
-
-    async function onAuthChange(user) {
-        if (user) {
-            const profile = await getUserProfile(user.uid);
-            if (profile) {
-                currentUser = profile;
-                document.getElementById("loginScreen").classList.add("hidden");
-                document.getElementById("dashboardScreen").classList.remove("hidden");
-                document.getElementById("userFullname").innerText = profile.fullName;
-                document.getElementById("userRoleText").innerHTML = profile.designation;
-                document.getElementById("roleBadge").innerHTML = profile.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (profile.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${profile.designation}`);
-                renderCurrentView();
-            } else {
-                console.warn("User profile missing, signing out.");
-                await signOut(auth);
-                showLoginScreen();
-            }
+    function loadData() {
+        const storedUsers = localStorage.getItem("mp_users");
+        if (storedUsers) {
+            users = JSON.parse(storedUsers);
         } else {
-            showLoginScreen();
+            users = [
+                { uid: "admin1", email: "admin@mpexpress.com", password: "543210", fullName: "Admin", role: "admin", designation: "Admin" }
+            ];
+            saveUsers();
+        }
+        const storedComplaints = localStorage.getItem("mp_complaints");
+        if (storedComplaints) {
+            complaints = JSON.parse(storedComplaints);
+        } else {
+            complaints = [];
+            saveComplaints();
         }
     }
 
-    function showLoginScreen() {
-        if (unsubscribeComplaints) unsubscribeComplaints();
+    function saveUsers() { localStorage.setItem("mp_users", JSON.stringify(users)); }
+    function saveComplaints() { localStorage.setItem("mp_complaints", JSON.stringify(complaints)); }
+
+    function getUserById(uid) { return users.find(u => u.uid === uid) || { fullName: "Unknown", designation: "" }; }
+    function getUserByEmail(email) { return users.find(u => u.email === email); }
+
+    function login(email, password) {
+        const user = users.find(u => u.email === email && u.password === password);
+        if (user) {
+            currentUser = { ...user };
+            localStorage.setItem("mp_current_user", JSON.stringify({ uid: user.uid, email: user.email, fullName: user.fullName, role: user.role, designation: user.designation }));
+            return true;
+        }
+        return false;
+    }
+
+    function logout() {
         currentUser = null;
-        document.getElementById("dashboardScreen").classList.add("hidden");
-        document.getElementById("loginScreen").classList.remove("hidden");
+        localStorage.removeItem("mp_current_user");
     }
 
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("loginEmail").value.trim();
-        const password = document.getElementById("loginPassword").value;
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-        } catch (err) {
-            alert("Login failed: " + err.message + "\n\nIf admin user is missing, click the 'Create Admin User' button below.");
+    function restoreSession() {
+        const saved = localStorage.getItem("mp_current_user");
+        if (saved) {
+            const u = JSON.parse(saved);
+            const fullUser = users.find(user => user.uid === u.uid);
+            if (fullUser) {
+                currentUser = fullUser;
+                return true;
+            }
         }
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-        if (unsubscribeComplaints) unsubscribeComplaints();
-        await signOut(auth);
-    });
-
-    onAuthStateChanged(auth, onAuthChange);
-
-    function renderCurrentView() {
-        const container = document.getElementById("dynamicView");
-        if (currentUser.role === "admin") renderAdminDashboard(container);
-        else if (currentUser.role === "hod") renderHODDashboard(container);
-        else renderSSEDashboard(container);
+        return false;
     }
 
-    // Helper UI
+    // Helper functions
     function statusBadge(status) {
         const colors = { open: "bg-amber-100 text-amber-800", "in-progress": "bg-blue-100 text-blue-800", resolved: "bg-emerald-100 text-emerald-800", closed: "bg-gray-100 text-gray-800" };
         return `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${colors[status]}">${status}</span>`;
@@ -207,24 +142,29 @@
     }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-    // ------------------- ADMIN DASHBOARD -------------------
-    async function renderAdminDashboard(container) {
+    // ---------- UI RENDERING ----------
+    function renderCurrentView() {
+        const container = document.getElementById("dynamicView");
+        if (currentUser.role === "admin") renderAdminDashboard(container);
+        else if (currentUser.role === "hod") renderHODDashboard(container);
+        else renderSSEDashboard(container);
+    }
+
+    // ---------- ADMIN DASHBOARD ----------
+    function renderAdminDashboard(container) {
         let selectedYear = new Date().getFullYear();
         let selectedMonth = new Date().getMonth() + 1;
-        let complaints = [], allUsers = [], sseUsers = [];
+        let sseUsers = users.filter(u => u.role === "sse" || u.role === "hod");
 
-        async function loadData() {
-            const complaintsSnap = await getDocs(collection(db, "complaints"));
-            complaints = complaintsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            const usersSnap = await getDocs(collection(db, "users"));
-            allUsers = usersSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
-            sseUsers = allUsers.filter(u => u.role === "sse" || u.role === "hod");
+        function getFilteredComplaints() {
+            return complaints.filter(c => {
+                const d = new Date(c.createdDate);
+                return d.getFullYear() === selectedYear && (d.getMonth()+1) === selectedMonth;
+            });
         }
-        function getUserById(uid) { return allUsers.find(u => u.uid === uid) || { fullName: "Unknown", designation: "" }; }
-        function getUserDisplayName(user) { return `${user.fullName} (${user.designation})`; }
-        function getFilteredComplaints() { return complaints.filter(c => { const d = new Date(c.createdDate); return d.getFullYear() === selectedYear && (d.getMonth()+1) === selectedMonth; }); }
 
-        function generateReportHTML(filtered) {
+        function generateReportHTML() {
+            const filtered = getFilteredComplaints();
             const total = filtered.length;
             const statusCount = { open:0, "in-progress":0, resolved:0, closed:0 };
             const priorityCount = { low:0, medium:0, high:0, critical:0 };
@@ -240,14 +180,14 @@
                 <div class="bg-green-50 p-4 rounded-2xl"><p class="text-xs">Resolved/Closed</p><p class="text-2xl font-black">${(statusCount.resolved||0)+(statusCount.closed||0)}</p></div>
                 <div class="bg-rose-50 p-4 rounded-2xl"><p class="text-xs">Critical</p><p class="text-2xl font-black">${priorityCount.critical||0}</p></div></div>
                 <div class="overflow-auto"><table class="min-w-full text-sm"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
-                ${filtered.map(c => `<tr class="border-b"><td class="py-2 font-mono text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${getUserDisplayName(getUserById(c.assignedTo))}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
+                ${filtered.map(c => `<tr class="border-b"><td class="py-2 font-mono text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${getUserById(c.assignedTo).fullName} (${getUserById(c.assignedTo).designation})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
                 ${filtered.length===0?'<tr><td colspan="6" class="text-center py-4 text-gray-400">No data</td></tr>':''}</tbody></table></div></div>`;
         }
 
         function renderComplaintTable() {
-            if(!complaints.length) return '<div class="luxury-card p-10 text-center text-gray-400">No complaints</div>';
+            if(complaints.length === 0) return '<div class="luxury-card p-10 text-center text-gray-400">No complaints</div>';
             return `<div class="luxury-card overflow-hidden"><table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4 text-left">ID</th><th>Title</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>
-            ${complaints.map(c => `<tr class="border-b hover:bg-orange-50"><td class="p-4 font-mono text-xs">${c.id.slice(0,6)}</td><td class="font-medium">${escapeHtml(c.title)}<div class="text-xs text-gray-400">${escapeHtml(c.description.substring(0,45))}</div></td><td>${getUserDisplayName(getUserById(c.assignedTo))}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
+            ${complaints.map(c => `<tr class="border-b hover:bg-orange-50"><td class="p-4 font-mono text-xs">${c.id.slice(0,6)}</td><td class="font-medium">${escapeHtml(c.title)}<div class="text-xs text-gray-400">${escapeHtml(c.description.substring(0,45))}</div></td><td>${getUserById(c.assignedTo).fullName} (${getUserById(c.assignedTo).designation})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
             <td class="flex gap-2"><button data-id="${c.id}" class="editBtn text-orange-600"><i class="fas fa-edit"></i></button><button data-id="${c.id}" class="deleteBtn text-red-500"><i class="fas fa-trash-alt"></i></button></td></tr>`).join('')}</tbody></table></div>`;
         }
 
@@ -261,71 +201,67 @@
             ${sseUsers.length===0?'<tr><td colspan="5" class="text-center py-4">No users</td></tr>':''}</tbody></table></div></div>`;
         }
 
-        async function refreshUI() {
-            await loadData();
-            const filtered = getFilteredComplaints();
+        function refreshUI() {
+            sseUsers = users.filter(u => u.role === "sse" || u.role === "hod");
             container.innerHTML = `<div class="space-y-8"><div class="flex justify-between"><h2 class="text-3xl font-black">Complaints</h2><button id="newComplaintBtn" class="btn-luxury text-white px-6 py-2 rounded-2xl"><i class="fas fa-plus"></i> New</button></div>
             <div id="reportArea"></div><div id="complaintTableArea"></div><div id="userManagementArea"></div></div>`;
-            document.getElementById("reportArea").innerHTML = generateReportHTML(filtered);
+            document.getElementById("reportArea").innerHTML = generateReportHTML();
             document.getElementById("complaintTableArea").innerHTML = renderComplaintTable();
             document.getElementById("userManagementArea").innerHTML = renderUserManagement();
 
-            document.getElementById("refreshReport")?.addEventListener("click", async () => { selectedMonth = parseInt(document.getElementById("reportMonth").value); selectedYear = parseInt(document.getElementById("reportYear").value); await loadData(); document.getElementById("reportArea").innerHTML = generateReportHTML(getFilteredComplaints()); });
+            document.getElementById("refreshReport")?.addEventListener("click", () => { selectedMonth = parseInt(document.getElementById("reportMonth").value); selectedYear = parseInt(document.getElementById("reportYear").value); document.getElementById("reportArea").innerHTML = generateReportHTML(); });
             document.getElementById("exportCSV")?.addEventListener("click", () => exportCSV(selectedYear, selectedMonth));
             document.getElementById("newComplaintBtn")?.addEventListener("click", () => openComplaintModal());
             document.querySelectorAll(".editBtn").forEach(btn => btn.addEventListener("click", () => { const id = btn.dataset.id; const comp = complaints.find(c=>c.id===id); if(comp) openComplaintModal(comp); }));
-            document.querySelectorAll(".deleteBtn").forEach(btn => btn.addEventListener("click", async () => { if(confirm("Delete?")) { await deleteDoc(doc(db, "complaints", btn.dataset.id)); refreshUI(); } }));
+            document.querySelectorAll(".deleteBtn").forEach(btn => btn.addEventListener("click", () => { if(confirm("Delete?")) { complaints = complaints.filter(c => c.id !== btn.dataset.id); saveComplaints(); refreshUI(); } }));
 
-            document.getElementById("createUserForm")?.addEventListener("submit", async (e) => {
+            document.getElementById("createUserForm")?.addEventListener("submit", (e) => {
                 e.preventDefault();
                 const fullName = document.getElementById("newFullName").value.trim(), email = document.getElementById("newEmail").value.trim(), password = document.getElementById("newPassword").value.trim(), role = document.getElementById("newRole").value, designation = document.getElementById("newDesignation").value;
                 if(!fullName||!email||!password) return alert("Fill all fields");
-                try {
-                    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                    await setDoc(doc(db, "users", userCred.user.uid), { fullName, email, role, designation, uid: userCred.user.uid });
-                    alert("User created successfully!");
-                    refreshUI();
-                    document.getElementById("createUserForm").reset();
-                } catch(err) { alert("Error: " + err.message); }
+                if(users.find(u => u.email === email)) return alert("Email already exists");
+                const newUid = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+                users.push({ uid: newUid, email, password, fullName, role, designation });
+                saveUsers();
+                refreshUI();
+                document.getElementById("createUserForm").reset();
             });
 
-            document.querySelectorAll(".deleteUserBtn").forEach(btn => btn.addEventListener("click", async () => {
-                if(confirm("Delete user? Complaints will be reassigned to admin")) {
-                    const admin = allUsers.find(u=>u.role==="admin");
+            document.querySelectorAll(".deleteUserBtn").forEach(btn => btn.addEventListener("click", () => {
+                const uid = btn.dataset.uid;
+                if(confirm("Delete user? Their complaints will be reassigned to admin.")) {
+                    const admin = users.find(u => u.role === "admin");
                     if(admin) {
-                        const comps = complaints.filter(c=>c.assignedTo===btn.dataset.uid);
-                        for(let c of comps) await updateDoc(doc(db,"complaints",c.id),{assignedTo:admin.uid});
+                        complaints.forEach(c => { if(c.assignedTo === uid) c.assignedTo = admin.uid; });
+                        saveComplaints();
                     }
-                    await deleteDoc(doc(db,"users",btn.dataset.uid));
+                    users = users.filter(u => u.uid !== uid);
+                    saveUsers();
                     refreshUI();
                 }
             }));
         }
+
         function exportCSV(year, month) {
-            const filtered = complaints.filter(c=>{const d=new Date(c.createdDate); return d.getFullYear()===year && (d.getMonth()+1)===month;});
+            const filtered = complaints.filter(c => { const d = new Date(c.createdDate); return d.getFullYear() === year && (d.getMonth()+1) === month; });
             if(!filtered.length) return alert("No data");
-            let csv=[["ID","Title","Description","Assignee","Priority","Status","Created","Due Date"]];
-            filtered.forEach(c=>{const u=getUserById(c.assignedTo); csv.push([c.id, c.title, c.description, u.fullName, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']);});
-            const blob=new Blob([csv.map(row=>row.join(",")).join("\n")],{type:"text/csv"});
-            const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`report_${year}_${month}.csv`; a.click();
+            let csv = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created","Due Date"]];
+            filtered.forEach(c => { const u = getUserById(c.assignedTo); csv.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
+            const blob = new Blob([csv.map(row=>row.join(",")).join("\n")], {type:"text/csv"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `report_${year}_${month}.csv`; a.click();
         }
         refreshUI();
     }
 
-    // ------------------- HOD DASHBOARD (real-time) -------------------
-    async function renderHODDashboard(container) {
-        let complaints = [];
-        let allUsers = [];
+    // ---------- HOD DASHBOARD (real-time simulation with setInterval) ----------
+    function renderHODDashboard(container) {
         let chartTrend = null, chartPriority = null;
 
-        const loadUsers = async () => { const snap = await getDocs(collection(db,"users")); allUsers = snap.docs.map(d=>({uid:d.id,...d.data()})); };
-        const getUserById = (uid) => allUsers.find(u=>u.uid===uid) || { fullName:"Unknown", designation:"" };
-
-        const updateDashboard = () => {
+        function updateDashboard() {
             const total = complaints.length;
-            const openCount = complaints.filter(c=>c.status==="open" || c.status==="in-progress").length;
-            const resolved = complaints.filter(c=>c.status==="resolved"||c.status==="closed").length;
-            const highCritical = complaints.filter(c=>c.priority==="high"||c.priority==="critical").length;
+            const openCount = complaints.filter(c => c.status === "open" || c.status === "in-progress").length;
+            const resolved = complaints.filter(c => c.status === "resolved" || c.status === "closed").length;
+            const highCritical = complaints.filter(c => c.priority === "high" || c.priority === "critical").length;
             document.getElementById("hodStats").innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
                     <div class="luxury-card p-5"><p class="text-gray-500 text-sm">Total Complaints</p><p class="text-3xl font-black text-orange-600">${total}</p></div>
@@ -346,16 +282,24 @@
             chartPriority = new Chart(ctxPie, { type:"doughnut", data:{ labels:priorityLabels, datasets:[{ data:priorityData, backgroundColor:["#9ca3af","#f97316","#ef4444","#be123c"] }] }, options:{ responsive:true } });
             const recent = [...complaints].sort((a,b)=>new Date(b.createdDate)-new Date(a.createdDate)).slice(0,8);
             document.getElementById("recentTable").innerHTML = `<div class="overflow-auto"><table class="min-w-full"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
-            ${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${getUserById(c.assignedTo)?.fullName || "?"}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
+            ${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${getUserById(c.assignedTo).fullName}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
             ${recent.length===0?'<tr><td colspan="6" class="text-center py-4">No complaints</td></tr>':''}</tbody></table></div>`;
-        };
+        }
 
-        await loadUsers();
-        if(unsubscribeComplaints) unsubscribeComplaints();
-        unsubscribeComplaints = onSnapshot(collection(db,"complaints"), (snapshot) => {
-            complaints = snapshot.docs.map(d=> ({ id:d.id, ...d.data() }));
-            updateDashboard();
-        });
+        // Simulate real-time updates by re-rendering every 2 seconds (but only if data changed)
+        let lastComplaintsHash = "";
+        function checkAndUpdate() {
+            const newHash = JSON.stringify(complaints);
+            if(newHash !== lastComplaintsHash) {
+                lastComplaintsHash = newHash;
+                updateDashboard();
+            }
+        }
+        if(unsubscribeTimer) clearInterval(unsubscribeTimer);
+        unsubscribeTimer = setInterval(() => {
+            checkAndUpdate();
+        }, 1000);
+        updateDashboard();
 
         container.innerHTML = `
             <div class="space-y-8">
@@ -369,27 +313,24 @@
         `;
         document.getElementById("exportAllBtn")?.addEventListener("click", () => {
             if(!complaints.length) return alert("No complaints");
-            let csv = [["ID","Title","Description","Assignee","Priority","Status","Created Date","Due Date"]];
-            complaints.forEach(c => { const u = getUserById(c.assignedTo); csv.push([c.id, c.title, c.description, u.fullName, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
+            let csv = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created Date","Due Date"]];
+            complaints.forEach(c => { const u = getUserById(c.assignedTo); csv.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
             const blob = new Blob([csv.map(row=>row.join(",")).join("\n")], {type:"text/csv"});
             const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `all_complaints_${new Date().toISOString().slice(0,10)}.csv`; a.click();
         });
     }
 
-    // ------------------- SSE DASHBOARD (self-assign) -------------------
-    async function renderSSEDashboard(container) {
-        let complaints = [], allUsers = [];
-        async function loadData() {
-            const snap = await getDocs(collection(db,"complaints"));
-            complaints = snap.docs.map(d=>({id:d.id,...d.data()}));
-            const usersSnap = await getDocs(collection(db,"users"));
-            allUsers = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
-        }
-        const getUserById = (uid) => allUsers.find(u=>u.uid===uid) || { fullName:"Unknown", designation:"" };
-        await loadData();
+    // ---------- SSE DASHBOARD (self-assign) ----------
+    function renderSSEDashboard(container) {
         const myComplaints = complaints.filter(c => c.assignedTo === currentUser.uid);
-        async function updateStatus(compId, newStatus) { await updateDoc(doc(db,"complaints",compId), { status: newStatus }); renderSSEDashboard(container); }
-
+        function updateStatus(compId, newStatus) {
+            const idx = complaints.findIndex(c => c.id === compId);
+            if(idx !== -1) {
+                complaints[idx].status = newStatus;
+                saveComplaints();
+                renderSSEDashboard(container);
+            }
+        }
         container.innerHTML = `
             <div class="space-y-6">
                 <div class="flex flex-wrap justify-between items-center"><h2 class="text-2xl font-black"><i class="fas fa-tasks text-orange-500"></i> My Assigned Tickets</h2>
@@ -402,16 +343,14 @@
                 </div>
             </div>
         `;
-        document.querySelectorAll(".statusSelect").forEach(sel => sel.addEventListener("change", async (e) => { await updateStatus(sel.dataset.id, sel.value); }));
+        document.querySelectorAll(".statusSelect").forEach(sel => sel.addEventListener("change", (e) => { updateStatus(sel.dataset.id, sel.value); }));
         document.getElementById("sseNewComplaintBtn")?.addEventListener("click", () => openComplaintModal());
     }
 
-    // ------------------- SHARED COMPLAINT MODAL (with self-assign) -------------------
-    async function openComplaintModal(complaint = null) {
+    // ---------- SHARED COMPLAINT MODAL (assign to any SSE/HOD, including self) ----------
+    function openComplaintModal(complaint = null) {
         const isEdit = !!complaint;
-        const usersSnap = await getDocs(collection(db,"users"));
-        const allUsers = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
-        const sseList = allUsers.filter(u => u.role === "sse" || u.role === "hod");
+        const sseList = users.filter(u => u.role === "sse" || u.role === "hod");
         const modalDiv = document.createElement("div");
         modalDiv.className = "fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm";
         modalDiv.innerHTML = `
@@ -435,7 +374,7 @@
         const close = () => modalDiv.remove();
         document.getElementById("closeModalBtn")?.addEventListener("click", close);
         document.getElementById("cancelModal")?.addEventListener("click", close);
-        document.getElementById("modalComplaintForm")?.addEventListener("submit", async (e) => {
+        document.getElementById("modalComplaintForm")?.addEventListener("submit", (e) => {
             e.preventDefault();
             const id = document.getElementById("compId").value;
             const data = {
@@ -446,63 +385,52 @@
                 status: document.getElementById("compStatus").value,
                 dueDate: document.getElementById("compDueDate").value || null,
                 createdDate: complaint?.createdDate || new Date().toISOString(),
+                id: id ? id : "comp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6)
             };
-            try {
-                if(id) await updateDoc(doc(db,"complaints",id), data);
-                else await addDoc(collection(db,"complaints"), data);
-                close(); renderCurrentView();
-            } catch(err) { alert("Error: "+err.message); }
+            if (id) {
+                const index = complaints.findIndex(c => c.id === id);
+                if(index !== -1) complaints[index] = { ...complaints[index], ...data };
+            } else {
+                complaints.push(data);
+            }
+            saveComplaints();
+            close();
+            renderCurrentView();
         });
     }
 
-    // ------------------- FORCE CREATE ADMIN USER (password 543210) -------------------
-    async function createAdminUser() {
-        const adminEmail = "admin@mpexpress.com";
-        const adminPassword = "543210";   // 6 characters to satisfy Firebase
-        try {
-            const methods = await fetchSignInMethodsForEmail(auth, adminEmail);
-            if (methods.length > 0) {
-                // User exists, try to log in and update Firestore profile
-                const userCred = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
-                const uid = userCred.user.uid;
-                const userRef = doc(db, "users", uid);
-                const userSnap = await getDoc(userRef);
-                if (!userSnap.exists()) {
-                    await setDoc(userRef, { fullName: "Admin", email: adminEmail, role: "admin", designation: "Admin", uid: uid });
-                    alert("Admin Firestore profile created! You can now log in.");
-                } else {
-                    alert("Admin user already exists. Please log in.");
-                }
-                await signOut(auth);
-            } else {
-                const userCred = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
-                await setDoc(doc(db, "users", userCred.user.uid), {
-                    fullName: "Admin",
-                    email: adminEmail,
-                    role: "admin",
-                    designation: "Admin",
-                    uid: userCred.user.uid
-                });
-                alert("Admin user created successfully!\nEmail: admin@mpexpress.com\nPassword: 543210");
-                await signOut(auth);
-            }
-        } catch (err) {
-            alert("Error creating admin: " + err.message);
-        }
+    // ---------- INITIALIZATION ----------
+    loadData();
+    if(restoreSession()) {
+        document.getElementById("loginScreen").classList.add("hidden");
+        document.getElementById("dashboardScreen").classList.remove("hidden");
+        document.getElementById("userFullname").innerText = currentUser.fullName;
+        document.getElementById("userRoleText").innerHTML = currentUser.designation;
+        document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
+        renderCurrentView();
     }
 
-    document.getElementById("forceCreateAdminBtn")?.addEventListener("click", createAdminUser);
-
-    // Auto-creation on first load (if no user logged in and no admin exists)
-    onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            try {
-                const methods = await fetchSignInMethodsForEmail(auth, "admin@mpexpress.com");
-                if (methods.length === 0) {
-                    await createAdminUser();
-                }
-            } catch(e) { console.warn("Auto admin check failed", e); }
+    document.getElementById("loginForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        if(login(email, password)) {
+            document.getElementById("loginScreen").classList.add("hidden");
+            document.getElementById("dashboardScreen").classList.remove("hidden");
+            document.getElementById("userFullname").innerText = currentUser.fullName;
+            document.getElementById("userRoleText").innerHTML = currentUser.designation;
+            document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
+            renderCurrentView();
+        } else {
+            alert("Invalid email or password. Use admin@mpexpress.com / 543210");
         }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+        if(unsubscribeTimer) clearInterval(unsubscribeTimer);
+        logout();
+        document.getElementById("dashboardScreen").classList.add("hidden");
+        document.getElementById("loginScreen").classList.remove("hidden");
     });
 </script>
 </body>
