@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>M&P Express Logistics | IT Complaint Portal (Standalone)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -16,6 +16,9 @@
         .glass-nav { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(249,115,22,0.2); }
         .btn-luxury { background: linear-gradient(105deg, #f97316, #ea580c); box-shadow: 0 8px 18px rgba(249,115,22,0.25); transition: all 0.2s; }
         .btn-luxury:hover { transform: scale(1.02); }
+        /* smooth transitions */
+        .transition-fast { transition: all 0.15s ease; }
+        input, select, textarea { transition: all 0.2s; }
     </style>
 </head>
 <body>
@@ -72,7 +75,6 @@
 
 <script>
     // ---------- LOCAL STORAGE BACKEND (NO FIREBASE) ----------
-    // Initialize default data if empty
     let users = [];
     let complaints = [];
     let currentUser = null;
@@ -100,7 +102,10 @@
     function saveUsers() { localStorage.setItem("mp_users", JSON.stringify(users)); }
     function saveComplaints() { localStorage.setItem("mp_complaints", JSON.stringify(complaints)); }
 
-    function getUserById(uid) { return users.find(u => u.uid === uid) || { fullName: "Unknown", designation: "" }; }
+    function getUserById(uid) { 
+        const found = users.find(u => u.uid === uid);
+        return found ? found : { fullName: "Unknown", designation: "Deleted User" }; 
+    }
     function getUserByEmail(email) { return users.find(u => u.email === email); }
 
     function login(email, password) {
@@ -114,6 +119,10 @@
     }
 
     function logout() {
+        if (unsubscribeTimer) {
+            clearInterval(unsubscribeTimer);
+            unsubscribeTimer = null;
+        }
         currentUser = null;
         localStorage.removeItem("mp_current_user");
     }
@@ -134,13 +143,14 @@
     // Helper functions
     function statusBadge(status) {
         const colors = { open: "bg-amber-100 text-amber-800", "in-progress": "bg-blue-100 text-blue-800", resolved: "bg-emerald-100 text-emerald-800", closed: "bg-gray-100 text-gray-800" };
-        return `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${colors[status]}">${status}</span>`;
+        return `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100'}">${status}</span>`;
     }
     function priorityBadge(priority) {
-        const colors = { low: "bg-gray-200", medium: "bg-orange-100 text-orange-700", high: "bg-red-100 text-red-700", critical: "bg-rose-200 text-rose-800" };
-        return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${colors[priority]}">${priority}</span>`;
+        const colors = { low: "bg-gray-200 text-gray-800", medium: "bg-orange-100 text-orange-700", high: "bg-red-100 text-red-700", critical: "bg-rose-200 text-rose-800" };
+        return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${colors[priority] || 'bg-gray-200'}">${priority}</span>`;
     }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+    function escapeAttr(str) { if(!str) return ''; return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
     // ---------- UI RENDERING ----------
     function renderCurrentView() {
@@ -150,12 +160,11 @@
         else renderSSEDashboard(container);
     }
 
-    // ---------- ADMIN DASHBOARD ----------
+    // ---------- ADMIN DASHBOARD (fully functional) ----------
     function renderAdminDashboard(container) {
         let selectedYear = new Date().getFullYear();
         let selectedMonth = new Date().getMonth() + 1;
-        let sseUsers = users.filter(u => u.role === "sse" || u.role === "hod");
-
+        
         function getFilteredComplaints() {
             return complaints.filter(c => {
                 const d = new Date(c.createdDate);
@@ -179,30 +188,40 @@
                 <div class="bg-amber-50 p-4 rounded-2xl"><p class="text-xs">Open/Progress</p><p class="text-2xl font-black">${(statusCount.open||0)+(statusCount["in-progress"]||0)}</p></div>
                 <div class="bg-green-50 p-4 rounded-2xl"><p class="text-xs">Resolved/Closed</p><p class="text-2xl font-black">${(statusCount.resolved||0)+(statusCount.closed||0)}</p></div>
                 <div class="bg-rose-50 p-4 rounded-2xl"><p class="text-xs">Critical</p><p class="text-2xl font-black">${priorityCount.critical||0}</p></div></div>
-                <div class="overflow-auto"><table class="min-w-full text-sm"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
-                ${filtered.map(c => `<tr class="border-b"><td class="py-2 font-mono text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${getUserById(c.assignedTo).fullName} (${getUserById(c.assignedTo).designation})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
+                <div class="overflow-auto"><table class="min-w-full text-sm"><thead class="bg-orange-50"><tr><th class="p-2">ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
+                ${filtered.map(c => `<tr class="border-b"><td class="py-2 font-mono text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(getUserById(c.assignedTo).fullName)} (${escapeHtml(getUserById(c.assignedTo).designation)})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
                 ${filtered.length===0?'<tr><td colspan="6" class="text-center py-4 text-gray-400">No data</td></tr>':''}</tbody></table></div></div>`;
         }
 
         function renderComplaintTable() {
             if(complaints.length === 0) return '<div class="luxury-card p-10 text-center text-gray-400">No complaints</div>';
             return `<div class="luxury-card overflow-hidden"><table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4 text-left">ID</th><th>Title</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>
-            ${complaints.map(c => `<tr class="border-b hover:bg-orange-50"><td class="p-4 font-mono text-xs">${c.id.slice(0,6)}</td><td class="font-medium">${escapeHtml(c.title)}<div class="text-xs text-gray-400">${escapeHtml(c.description.substring(0,45))}</div></td><td>${getUserById(c.assignedTo).fullName} (${getUserById(c.assignedTo).designation})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
-            <td class="flex gap-2"><button data-id="${c.id}" class="editBtn text-orange-600"><i class="fas fa-edit"></i></button><button data-id="${c.id}" class="deleteBtn text-red-500"><i class="fas fa-trash-alt"></i></button></td></tr>`).join('')}</tbody></table></div>`;
+            ${complaints.map(c => `<tr class="border-b hover:bg-orange-50"><td class="p-4 font-mono text-xs">${c.id.slice(0,6)}</td><td class="font-medium">${escapeHtml(c.title)}<div class="text-xs text-gray-400">${escapeHtml(c.description.substring(0,45))}</div></td><td>${escapeHtml(getUserById(c.assignedTo).fullName)} (${escapeHtml(getUserById(c.assignedTo).designation)})</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
+            <td class="flex gap-2"><button data-id="${c.id}" class="editBtn text-orange-600 hover:scale-110 transition"><i class="fas fa-edit"></i></button><button data-id="${c.id}" class="deleteBtn text-red-500 hover:scale-110 transition"><i class="fas fa-trash-alt"></i></button></td></tr>`).join('')}</tbody></table></div>`;
         }
 
         function renderUserManagement() {
+            const teamUsers = users.filter(u => u.role === "sse" || u.role === "hod");
             return `<div class="luxury-card p-6 mb-8"><h3 class="text-xl font-bold mb-4"><i class="fas fa-users text-orange-500"></i> Manage Users (SSE / HOD)</h3>
             <form id="createUserForm" class="grid md:grid-cols-5 gap-3 mb-6"><input type="text" id="newFullName" placeholder="Full Name" class="border rounded-xl p-2"><input type="email" id="newEmail" placeholder="Email" class="border rounded-xl p-2"><input type="text" id="newPassword" placeholder="Password" class="border rounded-xl p-2">
             <select id="newRole" class="border rounded-xl p-2"><option value="sse">SSE</option><option value="hod">HOD</option></select><select id="newDesignation" class="border rounded-xl p-2"><option value="SSE">SSE</option><option value="Sr. SSE">Sr. SSE</option><option value="HOD">HOD</option></select>
             <button type="submit" class="bg-orange-500 text-white rounded-xl px-4 py-2"><i class="fas fa-user-plus"></i> Create</button></form>
             <div class="overflow-auto"><table class="min-w-full"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Designation</th><th></th></tr></thead><tbody id="userListBody">
-            ${sseUsers.map(u => `<tr><td>${escapeHtml(u.fullName)}</td><td>${escapeHtml(u.email)}</td><td>${u.role}</td><td>${u.designation}</td><td><button data-uid="${u.uid}" class="deleteUserBtn text-red-500"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
-            ${sseUsers.length===0?'<tr><td colspan="5" class="text-center py-4">No users</td></tr>':''}</tbody></table></div></div>`;
+            ${teamUsers.map(u => `<tr><td>${escapeHtml(u.fullName)}</td><td>${escapeHtml(u.email)}</td><td>${u.role}</td><td>${escapeHtml(u.designation)}</td><td><button data-uid="${u.uid}" class="deleteUserBtn text-red-500"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
+            ${teamUsers.length===0?'<tr><td colspan="5" class="text-center py-4">No users</td></tr>':''}</tbody></table></div></div>`;
+        }
+
+        function exportCSV(year, month) {
+            const filtered = complaints.filter(c => { const d = new Date(c.createdDate); return d.getFullYear() === year && (d.getMonth()+1) === month; });
+            if(!filtered.length) return alert("No data for selected month");
+            let csvRows = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created","Due Date"]];
+            filtered.forEach(c => { const u = getUserById(c.assignedTo); csvRows.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
+            const blob = new Blob([csvRows.map(row=>row.map(cell=>`"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n")], {type:"text/csv"});
+            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `report_${year}_${month}.csv`; a.click();
         }
 
         function refreshUI() {
-            sseUsers = users.filter(u => u.role === "sse" || u.role === "hod");
+            const teamUsersNow = users.filter(u => u.role === "sse" || u.role === "hod");
             container.innerHTML = `<div class="space-y-8"><div class="flex justify-between"><h2 class="text-3xl font-black">Complaints</h2><button id="newComplaintBtn" class="btn-luxury text-white px-6 py-2 rounded-2xl"><i class="fas fa-plus"></i> New</button></div>
             <div id="reportArea"></div><div id="complaintTableArea"></div><div id="userManagementArea"></div></div>`;
             document.getElementById("reportArea").innerHTML = generateReportHTML();
@@ -212,8 +231,9 @@
             document.getElementById("refreshReport")?.addEventListener("click", () => { selectedMonth = parseInt(document.getElementById("reportMonth").value); selectedYear = parseInt(document.getElementById("reportYear").value); document.getElementById("reportArea").innerHTML = generateReportHTML(); });
             document.getElementById("exportCSV")?.addEventListener("click", () => exportCSV(selectedYear, selectedMonth));
             document.getElementById("newComplaintBtn")?.addEventListener("click", () => openComplaintModal());
-            document.querySelectorAll(".editBtn").forEach(btn => btn.addEventListener("click", () => { const id = btn.dataset.id; const comp = complaints.find(c=>c.id===id); if(comp) openComplaintModal(comp); }));
-            document.querySelectorAll(".deleteBtn").forEach(btn => btn.addEventListener("click", () => { if(confirm("Delete?")) { complaints = complaints.filter(c => c.id !== btn.dataset.id); saveComplaints(); refreshUI(); } }));
+            
+            document.querySelectorAll(".editBtn").forEach(btn => btn.addEventListener("click", () => { const comp = complaints.find(c=>c.id === btn.dataset.id); if(comp) openComplaintModal(comp); }));
+            document.querySelectorAll(".deleteBtn").forEach(btn => btn.addEventListener("click", () => { if(confirm("Delete this complaint?")) { complaints = complaints.filter(c => c.id !== btn.dataset.id); saveComplaints(); refreshUI(); } }));
 
             document.getElementById("createUserForm")?.addEventListener("submit", (e) => {
                 e.preventDefault();
@@ -241,28 +261,27 @@
                 }
             }));
         }
-
-        function exportCSV(year, month) {
-            const filtered = complaints.filter(c => { const d = new Date(c.createdDate); return d.getFullYear() === year && (d.getMonth()+1) === month; });
-            if(!filtered.length) return alert("No data");
-            let csv = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created","Due Date"]];
-            filtered.forEach(c => { const u = getUserById(c.assignedTo); csv.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
-            const blob = new Blob([csv.map(row=>row.join(",")).join("\n")], {type:"text/csv"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `report_${year}_${month}.csv`; a.click();
-        }
         refreshUI();
     }
 
-    // ---------- HOD DASHBOARD (real-time simulation with setInterval) ----------
+    // ---------- HOD DASHBOARD (FIXED: chart initialization after DOM ready) ----------
     function renderHODDashboard(container) {
         let chartTrend = null, chartPriority = null;
-
+        let lastComplaintsHash = "";
+        
         function updateDashboard() {
             const total = complaints.length;
             const openCount = complaints.filter(c => c.status === "open" || c.status === "in-progress").length;
             const resolved = complaints.filter(c => c.status === "resolved" || c.status === "closed").length;
             const highCritical = complaints.filter(c => c.priority === "high" || c.priority === "critical").length;
-            document.getElementById("hodStats").innerHTML = `
+            
+            const statsDiv = document.getElementById("hodStats");
+            const trendCanvas = document.getElementById("trendChart");
+            const priorityCanvas = document.getElementById("priorityChart");
+            const recentDiv = document.getElementById("recentTable");
+            if (!statsDiv || !trendCanvas || !priorityCanvas || !recentDiv) return;
+            
+            statsDiv.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
                     <div class="luxury-card p-5"><p class="text-gray-500 text-sm">Total Complaints</p><p class="text-3xl font-black text-orange-600">${total}</p></div>
                     <div class="luxury-card p-5"><p class="text-gray-500 text-sm">Open / In Progress</p><p class="text-3xl font-black text-amber-600">${openCount}</p></div>
@@ -270,24 +289,25 @@
                     <div class="luxury-card p-5"><p class="text-gray-500 text-sm">High + Critical</p><p class="text-3xl font-black text-rose-600">${highCritical}</p></div>
                 </div>
             `;
+            
             const last7 = [...Array(7)].map((_,i)=>{const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().slice(0,10);}).reverse();
             const counts = last7.map(date=> complaints.filter(c=>c.createdDate?.slice(0,10)===date).length);
             if(chartTrend) chartTrend.destroy();
-            const ctxTrend = document.getElementById("trendChart").getContext("2d");
+            const ctxTrend = trendCanvas.getContext("2d");
             chartTrend = new Chart(ctxTrend, { type:"line", data:{ labels:last7.map(d=>d.slice(5)), datasets:[{ label:"Complaints per day", data:counts, borderColor:"#f97316", backgroundColor:"rgba(249,115,22,0.1)", tension:0.3, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false } });
+            
             const priorityLabels = ["low","medium","high","critical"];
             const priorityData = priorityLabels.map(p=> complaints.filter(c=>c.priority===p).length);
             if(chartPriority) chartPriority.destroy();
-            const ctxPie = document.getElementById("priorityChart").getContext("2d");
+            const ctxPie = priorityCanvas.getContext("2d");
             chartPriority = new Chart(ctxPie, { type:"doughnut", data:{ labels:priorityLabels, datasets:[{ data:priorityData, backgroundColor:["#9ca3af","#f97316","#ef4444","#be123c"] }] }, options:{ responsive:true } });
+            
             const recent = [...complaints].sort((a,b)=>new Date(b.createdDate)-new Date(a.createdDate)).slice(0,8);
-            document.getElementById("recentTable").innerHTML = `<div class="overflow-auto"><table class="min-w-full"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
-            ${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${getUserById(c.assignedTo).fullName}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
+            recentDiv.innerHTML = `<div class="overflow-auto"><table class="min-w-full"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
+            ${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(getUserById(c.assignedTo).fullName)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
             ${recent.length===0?'<tr><td colspan="6" class="text-center py-4">No complaints</td></tr>':''}</tbody></table></div>`;
         }
-
-        // Simulate real-time updates by re-rendering every 2 seconds (but only if data changed)
-        let lastComplaintsHash = "";
+        
         function checkAndUpdate() {
             const newHash = JSON.stringify(complaints);
             if(newHash !== lastComplaintsHash) {
@@ -295,32 +315,41 @@
                 updateDashboard();
             }
         }
+        
+        // Clear any previous interval
         if(unsubscribeTimer) clearInterval(unsubscribeTimer);
-        unsubscribeTimer = setInterval(() => {
-            checkAndUpdate();
-        }, 1000);
-        updateDashboard();
-
+        
+        // Render DOM first
         container.innerHTML = `
             <div class="space-y-8">
                 <div class="flex justify-between items-center"><h2 class="text-3xl font-black"><i class="fas fa-chart-pie text-orange-500"></i> HOD Analytics Dashboard</h2>
-                <button id="exportAllBtn" class="bg-emerald-500 text-white px-5 py-2 rounded-2xl shadow"><i class="fas fa-download"></i> Export All Complaints</button></div>
+                <button id="exportAllBtn" class="bg-emerald-500 text-white px-5 py-2 rounded-2xl shadow hover:bg-emerald-600 transition"><i class="fas fa-download"></i> Export All Complaints</button></div>
                 <div id="hodStats"></div>
                 <div class="grid md:grid-cols-2 gap-6"><div class="luxury-card p-5"><h3 class="font-bold mb-3">📈 Complaint Trend (Last 7 Days)</h3><canvas id="trendChart" height="200"></canvas></div>
                 <div class="luxury-card p-5"><h3 class="font-bold mb-3">🥧 Priority Distribution</h3><canvas id="priorityChart" height="200"></canvas></div></div>
                 <div class="luxury-card p-5"><h3 class="font-bold mb-3">📋 Recent Complaints</h3><div id="recentTable"></div></div>
             </div>
         `;
+        
+        // Now initialize dashboard charts and stats (DOM ready)
+        updateDashboard();
+        lastComplaintsHash = JSON.stringify(complaints);
+        
+        // Start realtime watcher
+        unsubscribeTimer = setInterval(() => {
+            checkAndUpdate();
+        }, 1200);
+        
         document.getElementById("exportAllBtn")?.addEventListener("click", () => {
-            if(!complaints.length) return alert("No complaints");
-            let csv = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created Date","Due Date"]];
-            complaints.forEach(c => { const u = getUserById(c.assignedTo); csv.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
-            const blob = new Blob([csv.map(row=>row.join(",")).join("\n")], {type:"text/csv"});
+            if(!complaints.length) return alert("No complaints to export");
+            let csvRows = [["ID","Title","Description","Assignee","Designation","Priority","Status","Created Date","Due Date"]];
+            complaints.forEach(c => { const u = getUserById(c.assignedTo); csvRows.push([c.id, c.title, c.description, u.fullName, u.designation, c.priority, c.status, new Date(c.createdDate).toLocaleString(), c.dueDate||'N/A']); });
+            const blob = new Blob([csvRows.map(row=>row.map(cell=>`"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n")], {type:"text/csv"});
             const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `all_complaints_${new Date().toISOString().slice(0,10)}.csv`; a.click();
         });
     }
 
-    // ---------- SSE DASHBOARD (self-assign) ----------
+    // ---------- SSE DASHBOARD ----------
     function renderSSEDashboard(container) {
         const myComplaints = complaints.filter(c => c.assignedTo === currentUser.uid);
         function updateStatus(compId, newStatus) {
@@ -339,7 +368,7 @@
                     ${myComplaints.length === 0 ? '<div class="p-10 text-center text-gray-400">No complaints assigned yet.</div>' : `
                     <table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4">ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Created</th><th>Update</th></tr></thead><tbody>
                     ${myComplaints.map(c => `<tr class="border-b"><td class="p-4 text-xs">${c.id.slice(0,6)}</td><td><div class="font-medium">${escapeHtml(c.title)}</div><div class="text-xs text-gray-400">${escapeHtml(c.description.substring(0,50))}</div></td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
-                    <td><select data-id="${c.id}" class="statusSelect border rounded-lg p-1"><option ${c.status==='open'?'selected':''}>open</option><option ${c.status==='in-progress'?'selected':''}>in-progress</option><option ${c.status==='resolved'?'selected':''}>resolved</option><option ${c.status==='closed'?'selected':''}>closed</option></select></td></tr>`).join('')}</tbody></table>`}
+                    <td><select data-id="${c.id}" class="statusSelect border rounded-lg p-1 bg-white"><option ${c.status==='open'?'selected':''}>open</option><option ${c.status==='in-progress'?'selected':''}>in-progress</option><option ${c.status==='resolved'?'selected':''}>resolved</option><option ${c.status==='closed'?'selected':''}>closed</option></select></td></tr>`).join('')}</tbody></table>`}
                 </div>
             </div>
         `;
@@ -347,7 +376,7 @@
         document.getElementById("sseNewComplaintBtn")?.addEventListener("click", () => openComplaintModal());
     }
 
-    // ---------- SHARED COMPLAINT MODAL (assign to any SSE/HOD, including self) ----------
+    // ---------- SHARED COMPLAINT MODAL (fixed XSS & textarea handling) ----------
     function openComplaintModal(complaint = null) {
         const isEdit = !!complaint;
         const sseList = users.filter(u => u.role === "sse" || u.role === "hod");
@@ -355,35 +384,41 @@
         modalDiv.className = "fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm";
         modalDiv.innerHTML = `
             <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border-t-4 border-orange-500">
-                <div class="flex justify-between border-b pb-3 mb-4"><h3 class="text-xl font-bold">${isEdit ? 'Edit Complaint' : 'New Complaint'}</h3><button id="closeModalBtn"><i class="fas fa-times text-gray-400"></i></button></div>
-                <form id="modalComplaintForm"><input type="hidden" id="compId" value="${complaint?.id||''}">
-                    <div class="mb-3"><label>Title *</label><input type="text" id="compTitle" required class="w-full border rounded-xl p-2" value="${escapeHtml(complaint?.title||'')}"></div>
-                    <div class="mb-3"><label>Description</label><textarea id="compDesc" rows="2" class="w-full border rounded-xl p-2">${escapeHtml(complaint?.description||'')}</textarea></div>
+                <div class="flex justify-between border-b pb-3 mb-4"><h3 class="text-xl font-bold">${isEdit ? 'Edit Complaint' : 'New Complaint'}</h3><button id="closeModalBtn"><i class="fas fa-times text-gray-400 hover:text-gray-600"></i></button></div>
+                <form id="modalComplaintForm">
+                    <input type="hidden" id="compId" value="${complaint?.id || ''}">
+                    <div class="mb-3"><label>Title *</label><input type="text" id="compTitle" required class="w-full border rounded-xl p-2" value="${escapeAttr(complaint?.title || '')}"></div>
+                    <div class="mb-3"><label>Description</label><textarea id="compDesc" rows="2" class="w-full border rounded-xl p-2"></textarea></div>
                     <div class="mb-3"><label>Assign to (SSE/HOD)</label><select id="compAssignedTo" class="w-full border rounded-xl p-2">
-                        ${sseList.map(s => `<option value="${s.uid}" ${complaint && complaint.assignedTo === s.uid ? 'selected':''}>${s.fullName} (${s.designation})</option>`).join('')}
-                        ${sseList.length===0?'<option disabled>No users</option>':''}
+                        ${sseList.map(s => `<option value="${s.uid}" ${complaint && complaint.assignedTo === s.uid ? 'selected':''}>${escapeHtml(s.fullName)} (${escapeHtml(s.designation)})</option>`).join('')}
+                        ${sseList.length===0?'<option disabled>No users available</option>':''}
                     </select></div>
                     <div class="mb-3"><label>Priority</label><select id="compPriority" class="w-full border rounded-xl p-2"><option ${complaint?.priority==='low'?'selected':''}>low</option><option ${complaint?.priority==='medium'?'selected':''}>medium</option><option ${complaint?.priority==='high'?'selected':''}>high</option><option ${complaint?.priority==='critical'?'selected':''}>critical</option></select></div>
                     <div class="mb-3"><label>Status</label><select id="compStatus" class="w-full border rounded-xl p-2"><option ${complaint?.status==='open'?'selected':''}>open</option><option ${complaint?.status==='in-progress'?'selected':''}>in-progress</option><option ${complaint?.status==='resolved'?'selected':''}>resolved</option><option ${complaint?.status==='closed'?'selected':''}>closed</option></select></div>
-                    <div class="mb-4"><label>Due Date</label><input type="date" id="compDueDate" class="w-full border rounded-xl p-2" value="${complaint?.dueDate?.split('T')[0]||''}"></div>
+                    <div class="mb-4"><label>Due Date</label><input type="date" id="compDueDate" class="w-full border rounded-xl p-2" value="${complaint?.dueDate?.split('T')[0] || ''}"></div>
                     <div class="flex justify-end gap-3"><button type="button" id="cancelModal" class="px-4 py-2 border rounded-xl">Cancel</button><button type="submit" class="bg-orange-500 text-white px-5 py-2 rounded-xl">${isEdit ? 'Update' : 'Create'}</button></div>
                 </form>
             </div>
         `;
         document.body.appendChild(modalDiv);
+        
+        // Set description textarea safely
+        const descTextarea = modalDiv.querySelector("#compDesc");
+        if (descTextarea) descTextarea.value = complaint?.description || '';
+        
         const close = () => modalDiv.remove();
-        document.getElementById("closeModalBtn")?.addEventListener("click", close);
-        document.getElementById("cancelModal")?.addEventListener("click", close);
-        document.getElementById("modalComplaintForm")?.addEventListener("submit", (e) => {
+        modalDiv.querySelector("#closeModalBtn")?.addEventListener("click", close);
+        modalDiv.querySelector("#cancelModal")?.addEventListener("click", close);
+        modalDiv.querySelector("#modalComplaintForm")?.addEventListener("submit", (e) => {
             e.preventDefault();
-            const id = document.getElementById("compId").value;
+            const id = modalDiv.querySelector("#compId").value;
             const data = {
-                title: document.getElementById("compTitle").value,
-                description: document.getElementById("compDesc").value,
-                assignedTo: document.getElementById("compAssignedTo").value,
-                priority: document.getElementById("compPriority").value,
-                status: document.getElementById("compStatus").value,
-                dueDate: document.getElementById("compDueDate").value || null,
+                title: modalDiv.querySelector("#compTitle").value,
+                description: modalDiv.querySelector("#compDesc").value,
+                assignedTo: modalDiv.querySelector("#compAssignedTo").value,
+                priority: modalDiv.querySelector("#compPriority").value,
+                status: modalDiv.querySelector("#compStatus").value,
+                dueDate: modalDiv.querySelector("#compDueDate").value || null,
                 createdDate: complaint?.createdDate || new Date().toISOString(),
                 id: id ? id : "comp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6)
             };
@@ -399,7 +434,7 @@
         });
     }
 
-    // ---------- INITIALIZATION ----------
+    // ---------- INITIALIZATION & EVENT BINDINGS ----------
     loadData();
     if(restoreSession()) {
         document.getElementById("loginScreen").classList.add("hidden");
