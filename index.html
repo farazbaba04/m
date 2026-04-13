@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M&P Express Logistics | IT Portal (Final Fixed)</title>
+    <title>M&P Express Logistics | IT Portal (Final Working)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -455,15 +455,14 @@
         });
     }
 
-    // ------------------- FORCE CREATE ADMIN USER (with password 54321) -------------------
+    // ------------------- FORCE CREATE ADMIN USER (password 543210) -------------------
     async function createAdminUser() {
         const adminEmail = "admin@mpexpress.com";
-        const adminPassword = "54321";
+        const adminPassword = "543210";   // 6 characters to satisfy Firebase
         try {
-            // Check if user already exists
             const methods = await fetchSignInMethodsForEmail(auth, adminEmail);
             if (methods.length > 0) {
-                // User exists, try to update Firestore profile
+                // User exists, try to log in and update Firestore profile
                 const userCred = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
                 const uid = userCred.user.uid;
                 const userRef = doc(db, "users", uid);
@@ -476,7 +475,6 @@
                 }
                 await signOut(auth);
             } else {
-                // Create new admin user
                 const userCred = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
                 await setDoc(doc(db, "users", userCred.user.uid), {
                     fullName: "Admin",
@@ -485,7 +483,7 @@
                     designation: "Admin",
                     uid: userCred.user.uid
                 });
-                alert("Admin user created successfully! Email: admin@mpexpress.com, Password: 54321");
+                alert("Admin user created successfully!\nEmail: admin@mpexpress.com\nPassword: 543210");
                 await signOut(auth);
             }
         } catch (err) {
@@ -493,13 +491,11 @@
         }
     }
 
-    // Attach manual creation button
     document.getElementById("forceCreateAdminBtn")?.addEventListener("click", createAdminUser);
 
     // Auto-creation on first load (if no user logged in and no admin exists)
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
-            // Try to see if admin exists; if not, create it automatically
             try {
                 const methods = await fetchSignInMethodsForEmail(auth, "admin@mpexpress.com");
                 if (methods.length === 0) {
