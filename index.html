@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express | Advanced Task Hub</title>
+    <title>M&P Express | Task Management Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -77,6 +77,7 @@
             background: rgba(0,0,0,0.7);
             backdrop-filter: blur(4px);
         }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-gray-950">
@@ -89,7 +90,7 @@
                     <i class="fas fa-truck-fast text-4xl text-orange-500"></i>
                 </div>
                 <h2 class="text-3xl font-bold text-white tracking-tight">M&P Express</h2>
-                <p class="text-gray-400 text-sm mt-1">Intelligent Task Management</p>
+                <p class="text-gray-400 text-sm mt-1">Task & Complaint Intelligence</p>
                 <div id="initStatus" class="mt-3 text-xs text-gray-400 bg-gray-800/50 p-2 rounded-xl"></div>
             </div>
             <form id="loginForm">
@@ -298,8 +299,8 @@
                 } else {
                     userNavGroup.classList.remove('hidden');
                     adminNavGroup.classList.add('hidden');
-                    pageTitle.innerText = "Team Workspace";
-                    renderMyAssignedTasks(); // default show their own tasks
+                    pageTitle.innerText = "My Tasks";
+                    renderMyAssignedTasks(); // default view for users
                 }
                 bindNavigation();
             } else {
@@ -321,19 +322,19 @@
 
         logoutBtn.addEventListener('click', () => signOut(auth));
 
-        // ========== CREATE TASK ==========
+        // ========== CREATE TASK (assign to anyone) ==========
         async function renderCreateTask() {
             await refreshUsers();
             const userOptions = allUsersCache.map(u => `<option value="${u.uid}">${u.name || u.email} (${u.role})</option>`).join('');
             dynamicContent.innerHTML = `
                 <div class="max-w-3xl mx-auto glass-card p-8">
-                    <h2 class="text-2xl font-bold text-white mb-6"><i class="fas fa-plus-circle text-orange-500 mr-3"></i>New Task</h2>
+                    <h2 class="text-2xl font-bold text-white mb-6"><i class="fas fa-plus-circle text-orange-500 mr-3"></i>Create New Task</h2>
                     <div class="space-y-5">
-                        <div><label class="text-gray-300 text-sm">Description *</label><input id="taskDesc" class="w-full p-3 text-white" placeholder="Describe the task / complaint"></div>
+                        <div><label class="text-gray-300 text-sm">Task Description *</label><input id="taskDesc" class="w-full p-3 text-white" placeholder="Describe the task / complaint"></div>
                         <div><label class="text-gray-300 text-sm">Assign To</label><select id="assignedTo" class="w-full p-3 text-white">${userOptions}</select></div>
                         <div><label class="text-gray-300 text-sm">Due Date</label><input type="date" id="taskDate" class="w-full p-3 text-white" value="${new Date().toISOString().slice(0,10)}"></div>
                         <div><label class="text-gray-300 text-sm">Initial Status</label><select id="taskStatus" class="w-full p-3 text-white"><option value="false">Pending</option><option value="true">Resolved</option></select></div>
-                        <div><label class="text-gray-300 text-sm">Notes</label><textarea id="taskNotes" rows="3" class="w-full p-3 text-white"></textarea></div>
+                        <div><label class="text-gray-300 text-sm">Notes / Comments</label><textarea id="taskNotes" rows="3" class="w-full p-3 text-white" placeholder="Add any initial comments"></textarea></div>
                         <button id="saveTaskBtn" class="w-full bg-orange-600 hover:bg-orange-500 py-3 rounded-xl font-semibold">Create Task</button>
                         <div id="taskFeedback" class="text-sm"></div>
                     </div>
@@ -360,7 +361,7 @@
             });
         }
 
-        // ========== ADMIN: ALL TASKS (with toggle) ==========
+        // ========== ADMIN: VIEW ALL TASKS (with edit) ==========
         async function renderAdminAllTasks() {
             dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>All Tasks (Admin)</h2><div id="adminTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
             await loadAdminTasks();
@@ -379,15 +380,17 @@
                             <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
                                 <span><i class="fas fa-user-check"></i> Assigned: ${userMap[t.assignedTo] || '?'}</span>
                                 <span><i class="fas fa-calendar-alt"></i> Due: ${t.date}</span>
-                                <span><i class="fas fa-sticky-note"></i> ${t.notes || '-'}</span>
+                                <span><i class="fas fa-sticky-note"></i> Notes: ${t.notes || '-'}</span>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
                             <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
-                            <button data-id="${t.id}" data-status="${!t.status}" class="adminToggleBtn bg-blue-600/80 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs text-white"><i class="fas fa-sync-alt mr-1"></i>Toggle</button>
+                            <button data-id="${t.id}" data-status="${!t.status}" class="adminToggleBtn bg-blue-600/80 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-sync-alt mr-1"></i>Toggle</button>
+                            <button data-id="${t.id}" data-notes="${t.notes || ''}" class="adminCommentBtn bg-purple-600/80 hover:bg-purple-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-comment"></i> Add Comment</button>
                         </div>
                     </div>
                 </div>`).join('');
+            // Toggle status
             document.querySelectorAll('.adminToggleBtn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     await updateDoc(doc(db, "tasks", btn.dataset.id), { status: btn.dataset.status === 'true' });
@@ -395,11 +398,25 @@
                     loadAdminTasks();
                 });
             });
+            // Add comment modal for admin
+            document.querySelectorAll('.adminCommentBtn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const taskId = btn.dataset.id;
+                    const currentNotes = btn.dataset.notes;
+                    const newNote = prompt("Add your comment:", currentNotes);
+                    if (newNote !== null) {
+                        updateDoc(doc(db, "tasks", taskId), { notes: newNote }).then(() => {
+                            showToast("Comment added");
+                            loadAdminTasks();
+                        }).catch(err => alert(err.message));
+                    }
+                });
+            });
         }
 
-        // ========== USER: VIEW ALL TASKS (READ ONLY) ==========
+        // ========== USER: VIEW ALL TASKS (read-only) ==========
         async function renderUserAllTasksReadonly() {
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-globe text-orange-500 mr-2"></i>All Team Tasks</h2><div id="userAllTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
+            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-globe text-orange-500 mr-2"></i>All Team Tasks (Read Only)</h2><div id="userAllTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
             const snap = await getDocs(query(collection(db, "tasks"), orderBy("date", "desc")));
             const tasks = []; snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
             const container = document.getElementById('userAllTasksContainer');
@@ -411,9 +428,9 @@
                         <div>
                             <p class="font-bold text-white">${escapeHtml(t.description)}</p>
                             <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
-                                <span><i class="fas fa-user-check"></i> ${userMap[t.assignedTo] || '?'}</span>
-                                <span><i class="fas fa-calendar-alt"></i> ${t.date}</span>
-                                <span><i class="fas fa-comment"></i> ${t.notes || '-'}</span>
+                                <span><i class="fas fa-user-check"></i> Assigned: ${userMap[t.assignedTo] || '?'}</span>
+                                <span><i class="fas fa-calendar-alt"></i> Due: ${t.date}</span>
+                                <span><i class="fas fa-comment"></i> Comments: ${t.notes || '-'}</span>
                             </div>
                         </div>
                         <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
@@ -421,7 +438,7 @@
                 </div>`).join('');
         }
 
-        // ========== USER: MY ASSIGNED TASKS (CAN RESOLVE) ==========
+        // ========== USER: MY ASSIGNED TASKS (can add comment & resolve) ==========
         async function renderMyAssignedTasks() {
             dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>Tasks Assigned to Me</h2><div id="myTasksList" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
             await loadMyAssignedTasks();
@@ -434,23 +451,43 @@
             if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks assigned to you.</div>'; return; }
             container.innerHTML = tasks.map(t => `
                 <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'}">
-                    <div class="flex flex-wrap justify-between gap-3 items-center">
+                    <div class="flex flex-wrap justify-between gap-3 items-start">
                         <div class="flex-1">
-                            <p class="font-bold text-white">${escapeHtml(t.description)}</p>
-                            <div class="text-xs text-gray-400 mt-1">Due: ${t.date} | Notes: ${t.notes || '-'}</div>
+                            <p class="font-bold text-white text-lg">${escapeHtml(t.description)}</p>
+                            <div class="text-xs text-gray-400 mt-1">Due: ${t.date}</div>
+                            <div class="mt-2 bg-gray-800/50 p-2 rounded-lg">
+                                <p class="text-xs text-gray-300"><i class="fas fa-comment-dots mr-1"></i> Comments:</p>
+                                <p class="text-sm text-white">${escapeHtml(t.notes) || 'No comments yet.'}</p>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'}">${t.status ? 'RESOLVED' : 'PENDING'}</span>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
                             ${!t.status ? `<button data-id="${t.id}" class="resolveMyBtn bg-green-600/80 hover:bg-green-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-check"></i> Mark Resolved</button>` : ''}
+                            <button data-id="${t.id}" data-notes="${t.notes || ''}" class="addCommentBtn bg-purple-600/80 hover:bg-purple-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-plus-circle"></i> Add Comment</button>
                         </div>
                     </div>
                 </div>`).join('');
+            // Resolve button
             document.querySelectorAll('.resolveMyBtn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     await updateDoc(doc(db, "tasks", btn.dataset.id), { status: true });
-                    showToast("Task resolved!");
-                    loadMyAssignedTasks();     // refresh my tasks
+                    showToast("Task marked resolved!");
+                    loadMyAssignedTasks();
                     renderUserAllTasksReadonly(); // update global view
+                });
+            });
+            // Add comment button (update notes)
+            document.querySelectorAll('.addCommentBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const taskId = btn.dataset.id;
+                    const currentNotes = btn.dataset.notes;
+                    const newComment = prompt("Add your comment:", currentNotes);
+                    if (newComment !== null) {
+                        await updateDoc(doc(db, "tasks", taskId), { notes: newComment });
+                        showToast("Comment added");
+                        loadMyAssignedTasks();
+                        renderUserAllTasksReadonly(); // also update global view
+                    }
                 });
             });
         }
@@ -535,7 +572,7 @@
                     const pending = userTasks.length - resolved;
                     pdf.setFontSize(12); pdf.text(`${userName} - Resolved: ${resolved} | Pending: ${pending} | Rate: ${((resolved/(resolved+pending||1))*100).toFixed(1)}%`, 14, y);
                     y += 8;
-                    pdf.autoTable({ startY: y, head: [['Date','Task','Status','Notes']], body: userTasks.map(t=>[t.date, t.description, t.status?'Resolved':'Pending', t.notes||'']), margin: {left:14}, headStyles: { fillColor: [249,115,22] } });
+                    pdf.autoTable({ startY: y, head: [['Date','Task','Status','Comments']], body: userTasks.map(t=>[t.date, t.description, t.status?'Resolved':'Pending', t.notes||'']), margin: {left:14}, headStyles: { fillColor: [249,115,22] } });
                     y = pdf.lastAutoTable.finalY + 10;
                     if (y > 200) { pdf.addPage(); y = 20; }
                 }
