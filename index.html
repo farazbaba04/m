@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M&P Express Logistics | Task Manager with Assignment</title>
+    <title>M&P Express Logistics | Full Task Visibility</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -22,6 +22,7 @@
         .modal-content { background-color: #1e293b; border: 1px solid #334155; }
         .sidebar-link { transition: all 0.2s; border-radius: 0.5rem; }
         .sidebar-link:hover { background-color: #f97316; color: white; }
+        .disabled-btn { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body class="bg-gray-900">
@@ -57,7 +58,6 @@
 
     <!-- MAIN APP DASHBOARD -->
     <div id="appContainer" class="hidden min-h-screen bg-gray-900 flex">
-        <!-- Sidebar -->
         <aside class="w-64 bg-gray-800 shadow-xl flex flex-col fixed inset-y-0 left-0 z-20 border-r border-gray-700">
             <div class="p-5 border-b border-gray-700">
                 <div class="flex items-center space-x-2">
@@ -69,17 +69,18 @@
                 <!-- Admin Navigation -->
                 <div id="navAdminItems" class="space-y-2 hidden">
                     <a href="#" data-view="team" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-users w-5"></i><span>Team Management</span></a>
-                    <a href="#" data-view="alltasks" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-tasks w-5"></i><span>All Tasks</span></a>
+                    <a href="#" data-view="alltasks" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-tasks w-5"></i><span>All Tasks (Admin)</span></a>
                     <a href="#" data-view="analytics" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-chart-line w-5"></i><span>Analytics</span></a>
                     <a href="#" data-view="report" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-file-pdf w-5"></i><span>Monthly Report</span></a>
                 </div>
                 <!-- User Navigation -->
                 <div id="navUserItems" class="space-y-2 hidden">
-                    <a href="#" data-view="mytasks" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-tasks w-5"></i><span>My Tasks</span></a>
+                    <a href="#" data-view="allTasksUser" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-globe w-5"></i><span>All Tasks (View Only)</span></a>
+                    <a href="#" data-view="myTasksUser" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-tasks w-5"></i><span>My Assigned Tasks</span></a>
                     <a href="#" data-view="mystats" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-chart-pie w-5"></i><span>My Performance</span></a>
                 </div>
                 <!-- Common: Add Task (both roles) -->
-                <a href="#" data-view="addtask" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-plus-circle w-5"></i><span>Add Task</span></a>
+                <a href="#" data-view="addtask" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-plus-circle w-5"></i><span>Add New Task</span></a>
             </nav>
             <div class="p-4 border-t border-gray-700 text-xs text-gray-400">
                 <div class="flex justify-between items-center">
@@ -89,7 +90,6 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="flex-1 ml-64">
             <header class="bg-gray-800 shadow-sm sticky top-0 z-10 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
                 <h1 class="text-xl font-semibold text-white" id="pageTitle">Dashboard</h1>
@@ -125,9 +125,9 @@
 
         let currentUser = null;
         let currentRole = null;
-        let allUsers = []; // cache for assigned to dropdown
+        let allUsers = [];
 
-        // DOM Elements
+        // DOM elements
         const authContainer = document.getElementById('authContainer');
         const appContainer = document.getElementById('appContainer');
         const loginForm = document.getElementById('loginForm');
@@ -148,7 +148,6 @@
             setTimeout(() => toast.remove(), 4000);
         }
 
-        // Fetch all users (for assign dropdown)
         async function fetchAllUsers() {
             const usersSnap = await getDocs(collection(db, "users"));
             const users = [];
@@ -157,7 +156,6 @@
             return users;
         }
 
-        // Auto-create admin if none exists
         async function ensureAdminAccount() {
             adminStatusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Initializing system...';
             try {
@@ -189,10 +187,10 @@
                 }
                 return true;
             } catch (err) {
-                console.error("Admin creation error:", err);
+                console.error(err);
                 let msg = err.message;
-                if (err.code === 'auth/operation-not-allowed') msg = "Enable Email/Password in Firebase Console → Authentication.";
-                else if (err.code === 'permission-denied') msg = "Set Firestore rules to allow read/write (see instructions).";
+                if (err.code === 'auth/operation-not-allowed') msg = "Enable Email/Password in Firebase Console.";
+                else if (err.code === 'permission-denied') msg = "Set Firestore rules to allow read/write temporarily.";
                 adminStatusMsg.innerHTML = `⚠️ ${msg}`;
                 return false;
             }
@@ -208,7 +206,6 @@
             return snap.exists() ? snap.data() : null;
         }
 
-        // Navigation setup
         function setupNavigation() {
             document.querySelectorAll('.sidebar-link').forEach(link => {
                 link.removeEventListener('click', link._listener);
@@ -219,11 +216,12 @@
                         renderAddTaskForm();
                     } else if (currentRole === 'admin') {
                         if (view === 'team') renderTeamManagement();
-                        else if (view === 'alltasks') renderAllTasks();
+                        else if (view === 'alltasks') renderAdminAllTasks();
                         else if (view === 'analytics') renderAdminAnalytics();
                         else if (view === 'report') renderReportPanel();
                     } else {
-                        if (view === 'mytasks') renderMyTasks();
+                        if (view === 'allTasksUser') renderUserAllTasksReadOnly();
+                        else if (view === 'myTasksUser') renderMyAssignedTasks();
                         else if (view === 'mystats') renderUserStatsView();
                     }
                 };
@@ -232,13 +230,12 @@
             });
         }
 
-        // Auth state
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const userData = await getUserData(user.uid);
                 if (!userData || !userData.role) {
                     await signOut(auth);
-                    showToast("Unauthorized. Please login with valid account.", true);
+                    showToast("Unauthorized.", true);
                     return;
                 }
                 currentUser = user;
@@ -249,17 +246,17 @@
                 roleBadgeHeader.className = `px-2 py-1 text-xs rounded-full ${currentRole === 'admin' ? 'bg-orange-600' : 'bg-green-600'} text-white`;
                 authContainer.classList.add('hidden');
                 appContainer.classList.remove('hidden');
-                await fetchAllUsers(); // cache users
+                await fetchAllUsers();
                 if (currentRole === 'admin') {
                     navAdminItems.classList.remove('hidden');
                     navUserItems.classList.add('hidden');
                     pageTitle.innerText = "Admin Dashboard";
-                    renderAllTasks(); // default view for admin
+                    renderAdminAllTasks();
                 } else {
                     navUserItems.classList.remove('hidden');
                     navAdminItems.classList.add('hidden');
-                    pageTitle.innerText = "My Workspace";
-                    renderMyTasks();
+                    pageTitle.innerText = "Team Member Workspace";
+                    renderUserAllTasksReadOnly();
                 }
                 setupNavigation();
             } else {
@@ -286,7 +283,7 @@
             showToast("Logged out");
         });
 
-        // ========== ADD TASK FORM (Common for both roles) ==========
+        // ========== ADD TASK (common) ==========
         async function renderAddTaskForm() {
             await fetchAllUsers();
             const userOptions = allUsers.map(u => `<option value="${u.uid}">${u.name || u.email} (${u.role})</option>`).join('');
@@ -294,91 +291,49 @@
                 <div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700 max-w-2xl mx-auto">
                     <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-plus-circle text-orange-500 mr-2"></i>Create New Task</h2>
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-gray-300 mb-1">Task Title / Description *</label>
-                            <input type="text" id="taskDesc" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white" placeholder="Enter task details">
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 mb-1">Assigned To *</label>
-                            <select id="assignedTo" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white">
-                                ${userOptions}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 mb-1">Due Date</label>
-                            <input type="date" id="taskDate" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white" value="${new Date().toISOString().slice(0,10)}">
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 mb-1">Status</label>
-                            <select id="taskStatus" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white">
-                                <option value="false">Pending</option>
-                                <option value="true">Resolved / Completed</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-gray-300 mb-1">Notes (Optional)</label>
-                            <textarea id="taskNotes" rows="2" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white"></textarea>
-                        </div>
-                        <button id="submitTaskBtn" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg font-semibold"><i class="fas fa-save mr-2"></i>Save Task</button>
+                        <div><label class="block text-gray-300 mb-1">Task Description *</label><input type="text" id="taskDesc" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white" placeholder="Enter task details"></div>
+                        <div><label class="block text-gray-300 mb-1">Assign To *</label><select id="assignedTo" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white">${userOptions}</select></div>
+                        <div><label class="block text-gray-300 mb-1">Due Date</label><input type="date" id="taskDate" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white" value="${new Date().toISOString().slice(0,10)}"></div>
+                        <div><label class="block text-gray-300 mb-1">Status</label><select id="taskStatus" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white"><option value="false">Pending</option><option value="true">Resolved</option></select></div>
+                        <div><label class="block text-gray-300 mb-1">Notes</label><textarea id="taskNotes" rows="2" class="w-full bg-gray-800 border border-gray-600 p-2 rounded text-white"></textarea></div>
+                        <button id="submitTaskBtn" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 rounded-lg"><i class="fas fa-save mr-2"></i>Save Task</button>
                     </div>
                     <div id="taskMsg" class="mt-4 text-sm"></div>
-                </div>
-            `;
+                </div>`;
             document.getElementById('submitTaskBtn').addEventListener('click', async () => {
                 const description = document.getElementById('taskDesc').value.trim();
                 const assignedTo = document.getElementById('assignedTo').value;
                 const date = document.getElementById('taskDate').value;
                 const status = document.getElementById('taskStatus').value === 'true';
                 const notes = document.getElementById('taskNotes').value;
-                if (!description) {
-                    document.getElementById('taskMsg').innerHTML = '<span class="text-red-400">Task description required</span>';
-                    return;
-                }
+                if (!description) { document.getElementById('taskMsg').innerHTML = '<span class="text-red-400">Description required</span>'; return; }
                 try {
                     await addDoc(collection(db, "tasks"), {
-                        description: description,
-                        assignedTo: assignedTo,
-                        assignedBy: currentUser.uid,
-                        date: date,
-                        status: status,
-                        notes: notes,
-                        createdAt: Timestamp.now()
+                        description, assignedTo, assignedBy: currentUser.uid, date, status, notes, createdAt: Timestamp.now()
                     });
-                    showToast("Task added successfully!");
+                    showToast("Task added!");
                     document.getElementById('taskDesc').value = "";
-                    document.getElementById('taskNotes').value = "";
                     document.getElementById('taskMsg').innerHTML = '<span class="text-green-400">Task created!</span>';
-                    // refresh current view if it's tasks list
-                    if (currentRole === 'admin') renderAllTasks();
-                    else renderMyTasks();
-                } catch (error) {
-                    console.error(error);
-                    document.getElementById('taskMsg').innerHTML = `<span class="text-red-400">Error: ${error.message}</span>`;
+                    if (currentRole === 'admin') renderAdminAllTasks();
+                    else renderUserAllTasksReadOnly();
+                } catch (err) {
+                    document.getElementById('taskMsg').innerHTML = `<span class="text-red-400">Error: ${err.message}</span>`;
                 }
             });
         }
 
-        // ========== ADMIN: All Tasks View ==========
-        async function renderAllTasks() {
-            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>All Tasks</h2>
-                <div id="tasksList" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
-            </div>`;
-            await loadAllTasks();
+        // ========== ADMIN: All tasks with toggle ==========
+        async function renderAdminAllTasks() {
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>All Tasks (Admin Control)</h2><div id="tasksList" class="space-y-3 max-h-[600px] overflow-y-auto"></div></div>`;
+            await loadAllTasksAdmin();
         }
 
-        async function loadAllTasks() {
+        async function loadAllTasksAdmin() {
             const tasksSnap = await getDocs(query(collection(db, "tasks"), orderBy("date", "desc")));
-            const tasks = [];
-            tasksSnap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+            const tasks = []; tasksSnap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
             const container = document.getElementById('tasksList');
-            if (tasks.length === 0) {
-                container.innerHTML = '<div class="text-gray-400 text-center py-8">No tasks found. Create a task using "Add Task" menu.</div>';
-                return;
-            }
-            // get user names mapping
-            const userMap = {};
-            allUsers.forEach(u => { userMap[u.uid] = u.name || u.email; });
+            if (tasks.length === 0) { container.innerHTML = '<div class="text-gray-400 text-center py-8">No tasks yet.</div>'; return; }
+            const userMap = {}; allUsers.forEach(u => { userMap[u.uid] = u.name || u.email; });
             container.innerHTML = tasks.map(task => `
                 <div class="p-4 rounded-lg border ${task.status ? 'task-resolved' : 'task-pending'} shadow-sm">
                     <div class="flex justify-between items-start flex-wrap gap-2">
@@ -389,44 +344,58 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="px-2 py-1 text-xs rounded-full ${task.status ? 'bg-green-800 text-green-200' : 'bg-orange-800 text-orange-200'}">${task.status ? 'Resolved' : 'Pending'}</span>
-                            <button data-id="${task.id}" data-status="${!task.status}" class="toggleStatusBtn bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"><i class="fas fa-exchange-alt"></i> Toggle</button>
+                            <button data-id="${task.id}" data-status="${!task.status}" class="toggleAdminBtn bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs"><i class="fas fa-exchange-alt"></i> Toggle</button>
                         </div>
                     </div>
-                </div>
-            `).join('');
-            // attach toggle events
-            document.querySelectorAll('.toggleStatusBtn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
+                </div>`).join('');
+            document.querySelectorAll('.toggleAdminBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
                     const taskId = btn.dataset.id;
                     const newStatus = btn.dataset.status === 'true';
-                    try {
-                        await updateDoc(doc(db, "tasks", taskId), { status: newStatus });
-                        showToast("Task status updated");
-                        loadAllTasks(); // refresh
-                    } catch (err) { alert("Error updating: " + err.message); }
+                    await updateDoc(doc(db, "tasks", taskId), { status: newStatus });
+                    showToast("Status updated");
+                    loadAllTasksAdmin();
                 });
             });
         }
 
-        // ========== USER: My Tasks (assigned to me) ==========
-        async function renderMyTasks() {
-            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>Tasks Assigned to Me</h2>
-                <div id="myTasksList" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
-            </div>`;
-            await loadMyTasks();
+        // ========== USER: View all tasks (read-only) ==========
+        async function renderUserAllTasksReadOnly() {
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-globe text-orange-500 mr-2"></i>All Team Tasks (View Only)</h2><div id="allTasksView" class="space-y-3 max-h-[600px] overflow-y-auto"></div></div>`;
+            await loadAllTasksReadOnly();
         }
 
-        async function loadMyTasks() {
+        async function loadAllTasksReadOnly() {
+            const tasksSnap = await getDocs(query(collection(db, "tasks"), orderBy("date", "desc")));
+            const tasks = []; tasksSnap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+            const container = document.getElementById('allTasksView');
+            if (tasks.length === 0) { container.innerHTML = '<div class="text-gray-400 text-center py-8">No tasks yet.</div>'; return; }
+            const userMap = {}; allUsers.forEach(u => { userMap[u.uid] = u.name || u.email; });
+            container.innerHTML = tasks.map(task => `
+                <div class="p-4 rounded-lg border ${task.status ? 'task-resolved' : 'task-pending'} shadow-sm">
+                    <div class="flex justify-between items-start flex-wrap gap-2">
+                        <div class="flex-1">
+                            <p class="font-bold text-white">${task.description}</p>
+                            <p class="text-xs text-gray-400">Assigned to: ${userMap[task.assignedTo] || 'Unknown'} | Due: ${task.date}</p>
+                            <p class="text-xs text-gray-400">Notes: ${task.notes || '-'}</p>
+                        </div>
+                        <div><span class="px-2 py-1 text-xs rounded-full ${task.status ? 'bg-green-800 text-green-200' : 'bg-orange-800 text-orange-200'}">${task.status ? 'Resolved' : 'Pending'}</span></div>
+                    </div>
+                </div>`).join('');
+        }
+
+        // ========== USER: My assigned tasks (can resolve) ==========
+        async function renderMyAssignedTasks() {
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>Tasks Assigned to Me</h2><div id="myTasksList" class="space-y-3 max-h-[600px] overflow-y-auto"></div></div>`;
+            await loadMyAssignments();
+        }
+
+        async function loadMyAssignments() {
             const q = query(collection(db, "tasks"), where("assignedTo", "==", currentUser.uid), orderBy("date", "desc"));
             const tasksSnap = await getDocs(q);
-            const tasks = [];
-            tasksSnap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+            const tasks = []; tasksSnap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
             const container = document.getElementById('myTasksList');
-            if (tasks.length === 0) {
-                container.innerHTML = '<div class="text-gray-400 text-center py-8">No tasks assigned to you.</div>';
-                return;
-            }
+            if (tasks.length === 0) { container.innerHTML = '<div class="text-gray-400 text-center py-8">No tasks assigned to you.</div>'; return; }
             container.innerHTML = tasks.map(task => `
                 <div class="p-4 rounded-lg border ${task.status ? 'task-resolved' : 'task-pending'} shadow-sm">
                     <div class="flex justify-between items-start flex-wrap gap-2">
@@ -437,62 +406,36 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="px-2 py-1 text-xs rounded-full ${task.status ? 'bg-green-800 text-green-200' : 'bg-orange-800 text-orange-200'}">${task.status ? 'Resolved' : 'Pending'}</span>
-                            ${!task.status ? `<button data-id="${task.id}" class="resolveBtn bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check"></i> Mark Resolved</button>` : ''}
+                            ${!task.status ? `<button data-id="${task.id}" class="resolveMyBtn bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"><i class="fas fa-check"></i> Mark Resolved</button>` : ''}
                         </div>
                     </div>
-                </div>
-            `).join('');
-            document.querySelectorAll('.resolveBtn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
+                </div>`).join('');
+            document.querySelectorAll('.resolveMyBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
                     const taskId = btn.dataset.id;
-                    try {
-                        await updateDoc(doc(db, "tasks", taskId), { status: true });
-                        showToast("Task marked as resolved");
-                        loadMyTasks();
-                    } catch (err) { alert("Error: " + err.message); }
+                    await updateDoc(doc(db, "tasks", taskId), { status: true });
+                    showToast("Task marked resolved");
+                    loadMyAssignments();
+                    renderUserAllTasksReadOnly(); // update global view
                 });
             });
         }
 
         // ========== ADMIN: Team Management ==========
         async function renderTeamManagement() {
-            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-users text-orange-500 mr-2"></i>Team Management</h2>
-                <button id="openCreateUserModal" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg mb-6"><i class="fas fa-plus mr-1"></i>Add User</button>
-                <div id="usersList" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
-            </div>`;
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-users text-orange-500 mr-2"></i>Team Management</h2><button id="openCreateUserModal" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg mb-6"><i class="fas fa-plus mr-1"></i>Add User</button><div id="usersList" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div></div>`;
             const usersSnap = await getDocs(collection(db, "users"));
-            const users = [];
-            usersSnap.forEach(d => users.push({ id: d.id, ...d.data() }));
+            const users = []; usersSnap.forEach(d => users.push({ id: d.id, ...d.data() }));
             const container = document.getElementById('usersList');
             if (users.length === 0) container.innerHTML = '<div class="col-span-full text-gray-400 text-center py-8">No users yet.</div>';
             else {
-                container.innerHTML = users.map(u => `<div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div class="flex justify-between items-center">
-                        <div><i class="fas fa-user-circle text-2xl text-gray-400"></i><h3 class="font-bold text-white">${u.name || u.email}</h3><p class="text-sm text-gray-400">${u.email}</p><span class="text-xs ${u.role === 'admin' ? 'text-orange-400' : 'text-green-400'}">${u.role === 'admin' ? 'Admin' : 'Team Member'}</span></div>
-                    </div>
-                </div>`).join('');
+                container.innerHTML = users.map(u => `<div class="bg-gray-800 rounded-lg p-4 border border-gray-700"><div><i class="fas fa-user-circle text-2xl text-gray-400"></i><h3 class="font-bold text-white">${u.name || u.email}</h3><p class="text-sm text-gray-400">${u.email}</p><span class="text-xs ${u.role === 'admin' ? 'text-orange-400' : 'text-green-400'}">${u.role === 'admin' ? 'Admin' : 'Team Member'}</span></div></div>`).join('');
             }
             document.getElementById('openCreateUserModal')?.addEventListener('click', showCreateUserModal);
         }
 
         function showCreateUserModal() {
-            const modalHtml = `<div id="userModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-                <div class="modal-content rounded-xl p-6 w-96 max-w-md">
-                    <h3 class="text-xl font-bold text-white mb-4">Create New User</h3>
-                    <input type="text" id="modalName" placeholder="Full Name" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white">
-                    <input type="email" id="modalEmail" placeholder="Email" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white">
-                    <input type="password" id="modalPassword" placeholder="Password" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white">
-                    <select id="modalRole" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-4 text-white">
-                        <option value="user">Team Member</option>
-                        <option value="admin">Administrator</option>
-                    </select>
-                    <div class="flex justify-end space-x-2">
-                        <button id="modalCancel" class="px-4 py-2 bg-gray-600 rounded text-white">Cancel</button>
-                        <button id="modalConfirm" class="px-4 py-2 bg-orange-600 text-white rounded">Create</button>
-                    </div>
-                </div>
-            </div>`;
+            const modalHtml = `<div id="userModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"><div class="modal-content rounded-xl p-6 w-96 max-w-md"><h3 class="text-xl font-bold text-white mb-4">Create New User</h3><input type="text" id="modalName" placeholder="Full Name" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white"><input type="email" id="modalEmail" placeholder="Email" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white"><input type="password" id="modalPassword" placeholder="Password" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white"><select id="modalRole" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-4 text-white"><option value="user">Team Member</option><option value="admin">Administrator</option></select><div class="flex justify-end space-x-2"><button id="modalCancel" class="px-4 py-2 bg-gray-600 rounded text-white">Cancel</button><button id="modalConfirm" class="px-4 py-2 bg-orange-600 text-white rounded">Create</button></div></div></div>`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
             document.getElementById('modalConfirm').addEventListener('click', async () => {
                 const name = document.getElementById('modalName').value.trim();
@@ -512,41 +455,30 @@
             document.getElementById('modalCancel').addEventListener('click', () => document.getElementById('userModal')?.remove());
         }
 
-        // ========== ADMIN: Analytics (based on assigned tasks) ==========
+        // ========== ADMIN ANALYTICS ==========
         async function renderAdminAnalytics() {
-            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-chart-line text-orange-500 mr-2"></i>Performance Analytics (Assigned Tasks)</h2>
-                <div class="mb-4"><label class="block text-gray-300">Select Team Member</label><select id="analyticsUserSelect" class="bg-gray-800 border border-gray-600 p-2 rounded w-full md:w-64 text-white"></select></div>
-                <canvas id="perfChart" class="max-h-80 w-full"></canvas>
-                <div id="kpiStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div>
-            </div>`;
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-chart-line text-orange-500 mr-2"></i>Performance by Member</h2><div class="mb-4"><label class="block text-gray-300">Select Member</label><select id="analyticsUserSelect" class="bg-gray-800 border border-gray-600 p-2 rounded w-full md:w-64 text-white"></select></div><canvas id="perfChart" class="max-h-80 w-full"></canvas><div id="kpiStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div></div>`;
             const users = allUsers.filter(u => u.role === 'user');
             const select = document.getElementById('analyticsUserSelect');
             if(users.length === 0) { select.innerHTML = '<option>No team members</option>'; return; }
             users.forEach(u => { let opt = document.createElement('option'); opt.value = u.uid; opt.textContent = u.name || u.email; select.appendChild(opt); });
-            async function updateAnalytics(uid) {
+            async function update(uid) {
                 const tasksSnap = await getDocs(query(collection(db, "tasks"), where("assignedTo", "==", uid)));
-                const userTasks = []; tasksSnap.forEach(d => userTasks.push(d.data()));
-                const resolved = userTasks.filter(t => t.status === true).length;
-                const pending = userTasks.filter(t => t.status === false).length;
-                const rate = (resolved + pending) ? ((resolved/(resolved+pending))*100).toFixed(1) : 0;
+                const tasks = []; tasksSnap.forEach(d => tasks.push(d.data()));
+                const resolved = tasks.filter(t => t.status).length, pending = tasks.length - resolved;
+                const rate = tasks.length ? ((resolved/tasks.length)*100).toFixed(1) : 0;
                 const ctx = document.getElementById('perfChart').getContext('2d');
                 if(window.chartInstance) window.chartInstance.destroy();
                 window.chartInstance = new Chart(ctx, { type: 'bar', data: { labels: ['Resolved', 'Pending'], datasets: [{ label: 'Tasks', data: [resolved, pending], backgroundColor: ['#10b981', '#f97316'] }] } });
-                document.getElementById('kpiStats').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-check-circle text-green-500 text-2xl"></i><p class="font-bold text-2xl text-white">${resolved}</p><p class="text-gray-300">Resolved</p></div><div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-clock text-orange-500 text-2xl"></i><p class="font-bold text-2xl text-white">${pending}</p><p class="text-gray-300">Pending</p></div><div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-percent text-blue-400 text-2xl"></i><p class="font-bold text-2xl text-white">${rate}%</p><p class="text-gray-300">Completion</p></div>`;
+                document.getElementById('kpiStats').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-check-circle text-green-500"></i><p class="font-bold text-2xl text-white">${resolved}</p><p>Resolved</p></div><div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-clock text-orange-500"></i><p class="font-bold text-2xl text-white">${pending}</p><p>Pending</p></div><div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-percent text-blue-400"></i><p class="font-bold text-2xl text-white">${rate}%</p><p>Completion</p></div>`;
             }
-            select.addEventListener('change', (e) => updateAnalytics(e.target.value));
-            if(users.length) updateAnalytics(select.value);
+            select.addEventListener('change', (e) => update(e.target.value));
+            if(users.length) update(select.value);
         }
 
-        // ========== MONTHLY PDF REPORT ==========
+        // ========== MONTHLY REPORT PDF ==========
         async function renderReportPanel() {
-            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-file-pdf text-red-500 mr-2"></i>Monthly Report</h2>
-                <div class="grid md:grid-cols-2 gap-6"><div><label class="block text-gray-300">Month</label><input type="month" id="reportMonth" class="bg-gray-800 border border-gray-600 p-2 rounded w-full text-white"></div><div><label class="block text-gray-300">Team Member</label><select id="pdfUserSelect" class="bg-gray-800 border border-gray-600 p-2 rounded w-full text-white"><option value="all">All Members</option></select></div></div>
-                <button id="genReportBtn" class="mt-6 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"><i class="fas fa-download mr-2"></i>Generate PDF</button>
-                <div id="reportMsg" class="mt-4 text-sm"></div>
-            </div>`;
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-file-pdf text-red-500 mr-2"></i>Monthly Report</h2><div class="grid md:grid-cols-2 gap-6"><div><label class="block text-gray-300">Month</label><input type="month" id="reportMonth" class="bg-gray-800 border border-gray-600 p-2 rounded w-full text-white"></div><div><label class="block text-gray-300">Team Member</label><select id="pdfUserSelect" class="bg-gray-800 border border-gray-600 p-2 rounded w-full text-white"><option value="all">All Members</option></select></div></div><button id="genReportBtn" class="mt-6 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"><i class="fas fa-download mr-2"></i>Generate PDF</button><div id="reportMsg" class="mt-4 text-sm"></div></div>`;
             const users = allUsers.filter(u => u.role === 'user');
             const userSelect = document.getElementById('pdfUserSelect');
             users.forEach(u => { let opt = document.createElement('option'); opt.value = u.uid; opt.textContent = u.name || u.email; userSelect.appendChild(opt); });
@@ -554,16 +486,13 @@
                 const monthYear = document.getElementById('reportMonth').value;
                 if(!monthYear) { alert("Select month"); return; }
                 const [year, month] = monthYear.split('-');
-                const start = `${year}-${month}-01`;
-                const lastDay = new Date(year, month, 0).getDate();
-                const end = `${year}-${month}-${lastDay}`;
+                const start = `${year}-${month}-01`, end = `${year}-${month}-${new Date(year, month, 0).getDate()}`;
                 const selectedUid = document.getElementById('pdfUserSelect').value;
                 let q = collection(db, "tasks");
                 if(selectedUid !== "all") q = query(q, where("assignedTo", "==", selectedUid));
                 const snap = await getDocs(q);
-                const tasks = [];
-                snap.forEach(d => { const task = d.data(); if(task.date >= start && task.date <= end) tasks.push(task); });
-                if(tasks.length === 0) { document.getElementById('reportMsg').innerHTML = '<span class="text-red-400">No tasks found.</span>'; return; }
+                const tasks = []; snap.forEach(d => { const task = d.data(); if(task.date >= start && task.date <= end) tasks.push(task); });
+                if(tasks.length === 0) { document.getElementById('reportMsg').innerHTML = '<span class="text-red-400">No tasks.</span>'; return; }
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF('landscape');
                 pdf.setFillColor(249, 115, 22); pdf.rect(0, 0, 297, 20, 'F');
@@ -587,22 +516,17 @@
             });
         }
 
-        // User stats view (assigned tasks)
+        // ========== USER MY PERFORMANCE ==========
         async function renderUserStatsView() {
-            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
-                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-chart-pie text-orange-500 mr-2"></i>My Performance Summary</h2>
-                <canvas id="userPerfChart" class="max-h-72 w-full"></canvas>
-                <div id="userKpi" class="grid grid-cols-2 gap-4 mt-6"></div>
-            </div>`;
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-chart-pie text-orange-500 mr-2"></i>My Performance</h2><canvas id="userPerfChart" class="max-h-72 w-full"></canvas><div id="userKpi" class="grid grid-cols-2 gap-4 mt-6"></div></div>`;
             const q = query(collection(db, "tasks"), where("assignedTo", "==", currentUser.uid));
             const snap = await getDocs(q);
             const tasks = []; snap.forEach(d => tasks.push(d.data()));
-            const resolved = tasks.filter(t => t.status).length;
-            const pending = tasks.length - resolved;
+            const resolved = tasks.filter(t => t.status).length, pending = tasks.length - resolved;
             const ctx = document.getElementById('userPerfChart').getContext('2d');
             if(window.userChart) window.userChart.destroy();
-            window.userChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Resolved', 'Pending'], datasets: [{ data: [resolved, pending], backgroundColor: ['#10b981', '#f97316'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } } });
-            document.getElementById('userKpi').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-green-400">${resolved}</p><p class="text-gray-300">Completed</p></div><div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-orange-400">${pending}</p><p class="text-gray-300">Pending</p></div>`;
+            window.userChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Resolved', 'Pending'], datasets: [{ data: [resolved, pending], backgroundColor: ['#10b981', '#f97316'] }] }, options: { plugins: { legend: { labels: { color: 'white' } } } } });
+            document.getElementById('userKpi').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-green-400">${resolved}</p><p>Completed</p></div><div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-orange-400">${pending}</p><p>Pending</p></div>`;
         }
     </script>
 </body>
