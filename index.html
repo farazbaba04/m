@@ -2,533 +2,491 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express Logistics | IT Complaint Portal (Firebase)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M&P Express Logistics | Task Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { background: #fef9f1; font-family: 'Inter', sans-serif; }
-        .luxury-card { background: rgba(255,255,255,0.96); border-radius: 2rem; box-shadow: 0 25px 45px -12px rgba(0,0,0,0.1); transition: all 0.2s; }
-        .luxury-card:hover { transform: translateY(-3px); }
-        .gradient-orange { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
-        .glass-nav { background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(249,115,22,0.2); }
-        .btn-luxury { background: linear-gradient(105deg, #f97316, #ea580c); box-shadow: 0 8px 18px rgba(249,115,22,0.25); transition: all 0.2s; }
-        .btn-luxury:hover { transform: scale(1.02); }
-        .transition-fast { transition: all 0.15s ease; }
-        input, select, textarea { transition: all 0.2s; }
-        .loading-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        body { background: #0f172a; font-family: 'Inter', system-ui; }
+        .bg-dark-card { background-color: #1e293b; }
+        .task-resolved { border-left: 4px solid #10b981; background: #064e3b; color: #d1fae5; }
+        .task-pending { border-left: 4px solid #f97316; background: #451a03; color: #fed7aa; }
+        .toast-msg { position: fixed; bottom: 20px; right: 20px; background: #1e293b; padding: 12px 24px; border-radius: 40px; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .loading-spinner { border: 3px solid #334155; border-top: 3px solid #f97316; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        input, select, textarea { background-color: #0f172a; border-color: #334155; color: #f1f5f9; }
+        input:focus, select:focus { border-color: #f97316; outline: none; ring: 2px solid #f97316; }
+        .modal-content { background-color: #1e293b; border: 1px solid #334155; }
     </style>
 </head>
-<body>
+<body class="bg-gray-900">
 
-<div id="app">
     <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100 px-4">
-        <div class="max-w-md w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-orange-100">
-            <div class="text-center">
-                <div class="mx-auto w-24 h-24 gradient-orange rounded-3xl flex items-center justify-center shadow-xl">
-                    <i class="fas fa-truck-fast text-white text-4xl"></i>
-                </div>
-                <h2 class="text-3xl font-extrabold mt-5 text-gray-800">M&P Express</h2>
-                <p class="text-orange-600 font-medium text-sm">IT Complaint Portal — Firebase</p>
+    <div id="authContainer" class="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-gray-900 to-gray-800">
+        <div class="bg-dark-card rounded-2xl shadow-2xl max-w-md w-full p-8 border border-gray-700">
+            <div class="text-center mb-6">
+                <i class="fas fa-truck-fast text-5xl text-orange-500"></i>
+                <h2 class="text-2xl font-bold text-white mt-2">M&P Express Logistics</h2>
+                <p class="text-gray-400 text-sm">Task & Performance Portal</p>
+                <div id="adminStatusMsg" class="mt-3 text-xs text-gray-400 bg-gray-800 p-2 rounded-lg"></div>
             </div>
-            <form id="loginForm" class="mt-8">
+            <form id="loginForm">
                 <div class="mb-4">
-                    <label class="block text-gray-700 font-semibold mb-2">Email</label>
-                    <input type="email" id="loginEmail" required class="w-full border border-gray-200 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-orange-400 outline-none bg-gray-50">
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Email</label>
+                    <input type="email" id="loginEmail" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-orange-500 text-white" required>
                 </div>
                 <div class="mb-6">
-                    <label class="block text-gray-700 font-semibold mb-2">Password</label>
-                    <input type="password" id="loginPassword" required class="w-full border border-gray-200 rounded-2xl px-5 py-3 focus:ring-2 focus:ring-orange-400 outline-none bg-gray-50">
+                    <label class="block text-gray-300 text-sm font-semibold mb-2">Password</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg focus:ring-orange-500 text-white" required>
                 </div>
-                <button type="submit" class="w-full btn-luxury text-white font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2"><i class="fas fa-sign-in-alt"></i> Access Portal</button>
+                <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2.5 rounded-lg transition"><i class="fas fa-sign-in-alt mr-2"></i>Login</button>
             </form>
-            <p class="text-center text-xs text-gray-500 mt-4">Default Admin: <span class="font-mono">admin@mpexpress.com</span> / <span class="font-mono">543210</span></p>
-            <p class="text-center text-xs text-gray-400 mt-6">Developed by Faraz Sheikh | Powered by Firebase</p>
+            <div class="text-center mt-4">
+                <button id="manualAdminBtn" class="text-sm text-orange-400 underline">⚠️ Create Admin Manually</button>
+            </div>
+            <div class="mt-6 pt-4 border-t border-gray-700 text-center text-xs text-gray-500">
+                Developed by <span class="font-semibold text-orange-500">Fraaz Sheikh</span> & Team
+            </div>
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD -->
-    <div id="dashboardScreen" class="hidden">
-        <nav class="glass-nav sticky top-0 z-30 shadow-sm">
-            <div class="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-truck-fast text-orange-500 text-2xl"></i>
-                    <h1 class="text-xl font-black text-gray-800">M&P Logistics IT</h1>
-                    <span id="roleBadge" class="text-xs bg-orange-100 text-orange-800 px-3 py-1 rounded-full"></span>
-                </div>
-                <div class="flex items-center gap-5">
-                    <div class="text-right hidden sm:block">
-                        <p id="userFullname" class="text-sm font-bold text-gray-700"></p>
-                        <p id="userRoleText" class="text-xs text-gray-500"></p>
-                    </div>
-                    <button id="logoutBtn" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-medium hover:bg-red-100 transition flex gap-2"><i class="fas fa-sign-out-alt"></i> Exit</button>
+    <!-- MAIN APP DASHBOARD -->
+    <div id="appContainer" class="hidden min-h-screen bg-gray-900 flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 shadow-xl flex flex-col fixed inset-y-0 left-0 z-20 border-r border-gray-700">
+            <div class="p-5 border-b border-gray-700">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-truck-fast text-2xl text-orange-500"></i>
+                    <span class="font-bold text-xl text-white">M&P Express</span>
                 </div>
             </div>
-        </nav>
-        <main class="max-w-7xl mx-auto px-5 sm:px-8 py-10"><div id="dynamicView"></div></main>
-        <footer class="text-center text-gray-400 text-xs py-6 border-t border-orange-100">© 2026 M&P Express Logistics – Data on Firebase | Developed by Faraz Sheikh</footer>
-    </div>
-</div>
+            <nav class="flex-1 p-4 space-y-2">
+                <div id="navAdminItems" class="space-y-2 hidden">
+                    <a href="#" data-view="team" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-users w-5"></i><span>Team Management</span></a>
+                    <a href="#" data-view="analytics" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-chart-line w-5"></i><span>Analytics</span></a>
+                    <a href="#" data-view="report" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-file-pdf w-5"></i><span>Monthly Report</span></a>
+                </div>
+                <div id="navUserItems" class="space-y-2 hidden">
+                    <a href="#" data-view="mytasks" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-tasks w-5"></i><span>My Tasks</span></a>
+                    <a href="#" data-view="mystats" class="sidebar-link flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-orange-600"><i class="fas fa-chart-pie w-5"></i><span>My Performance</span></a>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-gray-700 text-xs text-gray-400">
+                <div class="flex justify-between items-center">
+                    <span><i class="fas fa-user-circle mr-1"></i> <span id="sidebarUserName">User</span></span>
+                    <button id="sidebarLogout" class="text-red-400 hover:text-red-300"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        </aside>
 
-<script type="module">
-    // ----- FIREBASE IMPORTS -----
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
-    
-    const firebaseConfig = {
-        apiKey: "AIzaSyDUWw4CWZbL35zpQn4FA1m_fsJj95FpOec",
-        authDomain: "itcomplaint-4ec8e.firebaseapp.com",
-        projectId: "itcomplaint-4ec8e",
-        storageBucket: "itcomplaint-4ec8e.firebasestorage.app",
-        messagingSenderId: "718572872389",
-        appId: "1:718572872389:web:653b63ac93d07be9f2c6ac",
-        measurementId: "G-PS1HC2MH6G"
-    };
-    
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    
-    // ----- GLOBAL STATE -----
-    let currentUser = null;        // will hold { uid, email, fullName, role, designation }
-    let complaintsUnsubscribe = null;
-    let hodInterval = null;
-    
-    // Helper: show/hide loading (simple)
-    function showLoading(show) {
-        let overlay = document.getElementById("loadingOverlay");
-        if(show) {
-            if(!overlay) {
-                overlay = document.createElement("div");
-                overlay.id = "loadingOverlay";
-                overlay.className = "loading-overlay";
-                overlay.innerHTML = '<div class="bg-white rounded-2xl p-4 shadow-xl"><i class="fas fa-spinner fa-pulse text-orange-500 text-2xl"></i><p class="mt-2">Loading...</p></div>';
-                document.body.appendChild(overlay);
-            }
-            overlay.classList.remove("hidden");
-        } else {
-            if(overlay) overlay.classList.add("hidden");
-        }
-    }
-    
-    // ----- FIREBASE HELPER FUNCTIONS -----
-    async function ensureDefaultAdmin() {
-        // Check if admin user exists in Firestore 'users' collection
-        const adminEmail = "admin@mpexpress.com";
-        const usersRef = collection(db, "users");
-        const q = query(usersRef, where("email", "==", adminEmail));
-        const snapshot = await getDocs(q);
-        if(snapshot.empty) {
-            // Create admin user document (password is handled by Firebase Auth separately)
-            // But we need to also create Auth user? For default, we assume admin already exists in Auth.
-            // To make it seamless, we'll try to sign in with provided credentials; if not, we'll create auth user programmatically? 
-            // Actually, the user must be created in Firebase Auth manually or via signup. For demo, we'll just create Firestore record.
-            // But the login will fail if auth user missing. So we'll attempt to create auth user using admin SDK? Can't from client.
-            // Instead, we'll rely on the fact that the admin already exists in Auth (the project should have that user).
-            // We'll just create Firestore doc.
-            await setDoc(doc(db, "users", "admin_default"), {
-                uid: "admin_default",
-                email: adminEmail,
-                fullName: "Admin",
-                role: "admin",
-                designation: "Admin",
-                createdAt: new Date().toISOString()
-            });
-            console.log("Default admin Firestore record created.");
-        }
-    }
-    
-    async function loadUserData(uid) {
-        const userDoc = await getDoc(doc(db, "users", uid));
-        if(userDoc.exists()) {
-            return userDoc.data();
-        }
-        return null;
-    }
-    
-    async function loginUser(email, password) {
-        try {
-            showLoading(true);
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            const firebaseUser = userCredential.user;
-            // fetch additional user data from Firestore
-            const userData = await loadUserData(firebaseUser.uid);
-            if(!userData) {
-                throw new Error("User profile not found. Please contact admin.");
-            }
-            currentUser = {
-                uid: firebaseUser.uid,
-                email: firebaseUser.email,
-                fullName: userData.fullName,
-                role: userData.role,
-                designation: userData.designation
-            };
-            localStorage.setItem("mp_current_user", JSON.stringify({ uid: currentUser.uid }));
-            return true;
-        } catch(error) {
-            console.error("Login error:", error);
-            let msg = "Login failed. ";
-            if(error.code === "auth/user-not-found") msg += "User not found.";
-            else if(error.code === "auth/wrong-password") msg += "Wrong password.";
-            else msg += error.message;
-            alert(msg);
-            return false;
-        } finally {
-            showLoading(false);
-        }
-    }
-    
-    async function logoutUser() {
-        if(complaintsUnsubscribe) complaintsUnsubscribe();
-        if(hodInterval) clearInterval(hodInterval);
-        await signOut(auth);
-        currentUser = null;
-        localStorage.removeItem("mp_current_user");
-    }
-    
-    // Listen to auth state (for persistence)
-    onAuthStateChanged(auth, async (user) => {
-        if(user && !currentUser) {
-            // restore session from localStorage or fetch from Firestore
-            const saved = localStorage.getItem("mp_current_user");
-            if(saved) {
-                const { uid } = JSON.parse(saved);
-                if(uid === user.uid) {
-                    const userData = await loadUserData(uid);
-                    if(userData) {
-                        currentUser = {
-                            uid: user.uid,
-                            email: user.email,
-                            fullName: userData.fullName,
-                            role: userData.role,
-                            designation: userData.designation
-                        };
-                        // if dashboard is visible but not rendered
-                        const dashboard = document.getElementById("dashboardScreen");
-                        if(dashboard && !dashboard.classList.contains("hidden")) {
-                            document.getElementById("userFullname").innerText = currentUser.fullName;
-                            document.getElementById("userRoleText").innerHTML = currentUser.designation;
-                            document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
-                            renderCurrentView();
-                        }
-                    }
-                }
-            }
-        }
-    });
-    
-    // ----- CRUD for complaints (Firestore) -----
-    async function fetchComplaints() {
-        const q = query(collection(db, "complaints"), orderBy("createdDate", "desc"));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    }
-    
-    async function addComplaint(complaintData) {
-        const newComplaint = {
-            ...complaintData,
-            createdDate: complaintData.createdDate || new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+        <!-- Main Content -->
+        <main class="flex-1 ml-64">
+            <header class="bg-gray-800 shadow-sm sticky top-0 z-10 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+                <h1 class="text-xl font-semibold text-white" id="pageTitle">Dashboard</h1>
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm text-gray-300" id="topUserName"></span>
+                    <span id="roleBadgeHeader" class="px-2 py-1 text-xs rounded-full bg-orange-600 text-white"></span>
+                </div>
+            </header>
+            <div class="p-6" id="dashboardContent">
+                <div class="flex justify-center items-center h-64"><div class="loading-spinner"></div></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDUWw4CWZbL35zpQn4FA1m_fsJj95FpOec",
+            authDomain: "itcomplaint-4ec8e.firebaseapp.com",
+            projectId: "itcomplaint-4ec8e",
+            storageBucket: "itcomplaint-4ec8e.firebasestorage.app",
+            messagingSenderId: "718572872389",
+            appId: "1:718572872389:web:653b63ac93d07be9f2c6ac",
+            measurementId: "G-PS1HC2MH6G"
         };
-        const docRef = await addDoc(collection(db, "complaints"), newComplaint);
-        return { id: docRef.id, ...newComplaint };
-    }
-    
-    async function updateComplaint(complaintId, data) {
-        const ref = doc(db, "complaints", complaintId);
-        await updateDoc(ref, { ...data, updatedAt: new Date().toISOString() });
-    }
-    
-    async function deleteComplaint(complaintId) {
-        await deleteDoc(doc(db, "complaints", complaintId));
-    }
-    
-    // Users management (admin)
-    async function fetchAllUsers() {
-        const snapshot = await getDocs(collection(db, "users"));
-        return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-    }
-    
-    async function createUserInFirestore(uid, email, fullName, role, designation, password) {
-        // First, we need to create Auth user? Actually for security, admin should create users via Firebase Console or using Firebase Admin SDK.
-        // Since client-side cannot create Auth users, we'll assume users are created manually in Auth. But to make the demo functional,
-        // we'll only store user profile in Firestore and expect that the Auth user already exists with same email.
-        // For better UX, we'll show a message that the user must exist in Authentication.
-        // Alternatively, we can use Firebase Functions, but for simplicity we'll just store profile and alert.
-        await setDoc(doc(db, "users", uid), {
-            uid, email, fullName, role, designation,
-            createdAt: new Date().toISOString()
-        });
-        return { uid, email, fullName, role, designation };
-    }
-    
-    async function deleteUserFromFirestore(uid) {
-        // reassign complaints to admin before deleting
-        const adminUser = (await fetchAllUsers()).find(u => u.role === "admin");
-        if(adminUser) {
-            const complaintsRef = collection(db, "complaints");
-            const q = query(complaintsRef, where("assignedTo", "==", uid));
-            const snapshot = await getDocs(q);
-            for(const docSnap of snapshot.docs) {
-                await updateDoc(docSnap.ref, { assignedTo: adminUser.uid });
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let currentRole = null;
+
+        // DOM Elements
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        const loginForm = document.getElementById('loginForm');
+        const adminStatusMsg = document.getElementById('adminStatusMsg');
+        const sidebarUserName = document.getElementById('sidebarUserName');
+        const topUserName = document.getElementById('topUserName');
+        const roleBadgeHeader = document.getElementById('roleBadgeHeader');
+        const pageTitle = document.getElementById('pageTitle');
+        const dashboardContent = document.getElementById('dashboardContent');
+        const navAdminItems = document.getElementById('navAdminItems');
+        const navUserItems = document.getElementById('navUserItems');
+
+        function showToast(msg, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${isError ? 'bg-red-800' : 'bg-gray-700'}`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // ---------- CREATE ADMIN (only if none exists) ----------
+        async function ensureAdminAccount() {
+            adminStatusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Checking system...';
+            try {
+                const adminQuery = query(collection(db, "users"), where("role", "==", "admin"));
+                const adminSnap = await getDocs(adminQuery);
+                if (!adminSnap.empty) {
+                    adminStatusMsg.innerHTML = '✅ System ready.';
+                    return true;
+                }
+                const adminEmail = "admin@mulphilog.com";
+                const adminPassword = "090078601";
+                let uid = null;
+                try {
+                    const userCred = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
+                    uid = userCred.user.uid;
+                } catch (err) {
+                    if (err.code === 'auth/email-already-in-use') {
+                        const cred = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+                        uid = cred.user.uid;
+                        await auth.signOut();
+                    } else throw err;
+                }
+                if (uid) {
+                    await setDoc(doc(db, "users", uid), {
+                        email: adminEmail, name: "System Admin", role: "admin", createdAt: Timestamp.now()
+                    }, { merge: true });
+                    adminStatusMsg.innerHTML = '✅ Admin ready.';
+                    showToast('Admin account created!');
+                }
+                return true;
+            } catch (err) {
+                console.error("Admin creation error:", err);
+                let msg = err.message;
+                if (err.code === 'auth/operation-not-allowed') msg = "Enable Email/Password in Firebase Console → Authentication.";
+                else if (err.code === 'permission-denied') msg = "Set Firestore rules to allow read/write (see instructions).";
+                adminStatusMsg.innerHTML = `⚠️ ${msg}`;
+                return false;
             }
         }
-        await deleteDoc(doc(db, "users", uid));
-    }
-    
-    // ----- RENDER LOGIC (similar to before but async data) -----
-    async function renderCurrentView() {
-        const container = document.getElementById("dynamicView");
-        if(!container) return;
-        if(currentUser.role === "admin") await renderAdminDashboard(container);
-        else if(currentUser.role === "hod") await renderHODDashboard(container);
-        else await renderSSEDashboard(container);
-    }
-    
-    // Helper badges
-    function statusBadge(status) {
-        const colors = { open: "bg-amber-100 text-amber-800", "in-progress": "bg-blue-100 text-blue-800", resolved: "bg-emerald-100 text-emerald-800", closed: "bg-gray-100 text-gray-800" };
-        return `<span class="px-2 py-0.5 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100'}">${status}</span>`;
-    }
-    function priorityBadge(priority) {
-        const colors = { low: "bg-gray-200 text-gray-800", medium: "bg-orange-100 text-orange-700", high: "bg-red-100 text-red-700", critical: "bg-rose-200 text-rose-800" };
-        return `<span class="px-2 py-0.5 rounded-full text-xs font-semibold ${colors[priority] || 'bg-gray-200'}">${priority}</span>`;
-    }
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
-    
-    // Admin Dashboard (with Firestore)
-    async function renderAdminDashboard(container) {
-        let complaintsData = await fetchComplaints();
-        let usersData = await fetchAllUsers();
-        let selectedYear = new Date().getFullYear();
-        let selectedMonth = new Date().getMonth() + 1;
-        
-        function getFilteredComplaints() {
-            return complaintsData.filter(c => {
-                const d = new Date(c.createdDate);
-                return d.getFullYear() === selectedYear && (d.getMonth()+1) === selectedMonth;
+
+        document.getElementById('manualAdminBtn')?.addEventListener('click', async () => {
+            adminStatusMsg.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Retrying...';
+            await ensureAdminAccount();
+        });
+
+        async function getUserData(uid) {
+            const snap = await getDoc(doc(db, "users", uid));
+            return snap.exists() ? snap.data() : null;
+        }
+
+        // Navigation setup
+        function setupNavigation() {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.removeEventListener('click', link._listener);
+                const handler = (e) => {
+                    e.preventDefault();
+                    const view = link.dataset.view;
+                    if (currentRole === 'admin') {
+                        if (view === 'team') renderTeamManagement();
+                        else if (view === 'analytics') renderAdminAnalytics();
+                        else if (view === 'report') renderReportPanel();
+                    } else {
+                        if (view === 'mytasks') renderUserTasksView();
+                        else if (view === 'mystats') renderUserStatsView();
+                    }
+                };
+                link.addEventListener('click', handler);
+                link._listener = handler;
             });
         }
-        
-        function generateReportHTML() {
-            const filtered = getFilteredComplaints();
-            const total = filtered.length;
-            const statusCount = { open:0, "in-progress":0, resolved:0, closed:0 };
-            const priorityCount = { low:0, medium:0, high:0, critical:0 };
-            filtered.forEach(c => { statusCount[c.status]++; priorityCount[c.priority]++; });
-            return `<div class="luxury-card p-6 mb-8">
-                <div class="flex flex-wrap justify-between items-center border-b pb-4 mb-4"><h3 class="text-2xl font-bold"><i class="fas fa-chart-line text-orange-500 mr-2"></i>📅 Monthly Report</h3>
-                <div class="flex gap-3"><select id="reportMonth" class="border rounded-xl px-3 py-2">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${selectedMonth===i+1?'selected':''}>${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`).join('')}</select>
-                <select id="reportYear" class="border rounded-xl px-3 py-2">${[2024,2025,2026].map(y=>`<option value="${y}" ${selectedYear===y?'selected':''}>${y}</option>`).join('')}</select>
-                <button id="refreshReport" class="bg-orange-100 hover:bg-orange-200 text-orange-700 px-4 py-2 rounded-xl"><i class="fas fa-sync-alt"></i></button>
-                <button id="exportCSV" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-2 rounded-xl"><i class="fas fa-download"></i> CSV</button></div></div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"><div class="bg-orange-50 p-4 rounded-2xl"><p class="text-xs">Total</p><p class="text-2xl font-black text-orange-700">${total}</p></div>
-                <div class="bg-amber-50 p-4 rounded-2xl"><p class="text-xs">Open/Progress</p><p class="text-2xl font-black">${(statusCount.open||0)+(statusCount["in-progress"]||0)}</p></div>
-                <div class="bg-green-50 p-4 rounded-2xl"><p class="text-xs">Resolved/Closed</p><p class="text-2xl font-black">${(statusCount.resolved||0)+(statusCount.closed||0)}</p></div>
-                <div class="bg-rose-50 p-4 rounded-2xl"><p class="text-xs">Critical</p><p class="text-2xl font-black">${priorityCount.critical||0}</p></div></div>
-                <div class="overflow-auto"><table class="min-w-full text-sm"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>
-                ${filtered.map(c => `<tr class="border-b"><td class="py-2 font-mono text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(c.assignedToName || c.assignedTo)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td>${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}
-                ${filtered.length===0?'<tr><td colspan="6" class="text-center py-4 text-gray-400">No data</td></tr>':''}</tbody></table></div></div>`;
-        }
-        
-        function renderComplaintTable() {
-            if(complaintsData.length === 0) return '<div class="luxury-card p-10 text-center text-gray-400">No complaints</div>';
-            return `<div class="luxury-card overflow-hidden"><table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4 text-left">ID</th><th>Title</th><th>Assigned</th><th>Priority</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>
-            ${complaintsData.map(c => `<tr class="border-b hover:bg-orange-50"><td class="p-4 font-mono text-xs">${c.id.slice(0,6)}</td><td class="font-medium">${escapeHtml(c.title)}<div class="text-xs text-gray-400">${escapeHtml((c.description||'').substring(0,45))}</div></td><td>${escapeHtml(c.assignedToName || c.assignedTo)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td>
-            <td class="flex gap-2"><button data-id="${c.id}" class="editBtn text-orange-600"><i class="fas fa-edit"></i></button><button data-id="${c.id}" class="deleteBtn text-red-500"><i class="fas fa-trash-alt"></i></button></td></tr>`).join('')}</tbody></table></div>`;
-        }
-        
-        function renderUserManagement() {
-            const teamUsers = usersData.filter(u => u.role === "sse" || u.role === "hod");
-            return `<div class="luxury-card p-6 mb-8"><h3 class="text-xl font-bold mb-4"><i class="fas fa-users text-orange-500"></i> Manage Users (SSE / HOD)</h3>
-            <form id="createUserForm" class="grid md:grid-cols-5 gap-3 mb-6"><input type="text" id="newFullName" placeholder="Full Name" class="border rounded-xl p-2"><input type="email" id="newEmail" placeholder="Email" class="border rounded-xl p-2"><input type="text" id="newPassword" placeholder="Password (for Auth)" class="border rounded-xl p-2">
-            <select id="newRole" class="border rounded-xl p-2"><option value="sse">SSE</option><option value="hod">HOD</option></select><select id="newDesignation" class="border rounded-xl p-2"><option value="SSE">SSE</option><option value="Sr. SSE">Sr. SSE</option><option value="HOD">HOD</option></select>
-            <button type="submit" class="bg-orange-500 text-white rounded-xl px-4 py-2"><i class="fas fa-user-plus"></i> Create</button></form>
-            <div class="text-xs text-gray-500 mb-2">Note: User must also be created in Firebase Authentication (console). This adds Firestore profile.</div>
-            <div class="overflow-auto"><table class="min-w-full"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Designation</th><th></th></tr></thead><tbody>
-            ${teamUsers.map(u => `<tr><td>${escapeHtml(u.fullName)}</td><td>${escapeHtml(u.email)}</td><td>${u.role}</td><td>${escapeHtml(u.designation)}</td><td><button data-uid="${u.uid}" class="deleteUserBtn text-red-500"><i class="fas fa-trash"></i></button></td></tr>`).join('')}
-            ${teamUsers.length===0?'<tr><td colspan="5" class="text-center py-4">No users</td></tr>':''}</tbody></table></div></div>`;
-        }
-        
-        function refreshUI() {
-            container.innerHTML = `<div class="space-y-8"><div class="flex justify-between"><h2 class="text-3xl font-black">Complaints</h2><button id="newComplaintBtn" class="btn-luxury text-white px-6 py-2 rounded-2xl"><i class="fas fa-plus"></i> New</button></div>
-            <div id="reportArea"></div><div id="complaintTableArea"></div><div id="userManagementArea"></div></div>`;
-            document.getElementById("reportArea").innerHTML = generateReportHTML();
-            document.getElementById("complaintTableArea").innerHTML = renderComplaintTable();
-            document.getElementById("userManagementArea").innerHTML = renderUserManagement();
-            document.getElementById("refreshReport")?.addEventListener("click", () => { selectedMonth = parseInt(document.getElementById("reportMonth").value); selectedYear = parseInt(document.getElementById("reportYear").value); document.getElementById("reportArea").innerHTML = generateReportHTML(); });
-            document.getElementById("exportCSV")?.addEventListener("click", () => exportCSV());
-            document.getElementById("newComplaintBtn")?.addEventListener("click", () => openComplaintModal());
-            document.querySelectorAll(".editBtn").forEach(btn => btn.addEventListener("click", async () => { const comp = complaintsData.find(c=>c.id === btn.dataset.id); if(comp) openComplaintModal(comp); }));
-            document.querySelectorAll(".deleteBtn").forEach(btn => btn.addEventListener("click", async () => { if(confirm("Delete?")) { await deleteComplaint(btn.dataset.id); await refreshData(); refreshUI(); } }));
-            document.getElementById("createUserForm")?.addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const fullName = document.getElementById("newFullName").value.trim(), email = document.getElementById("newEmail").value.trim(), password = document.getElementById("newPassword").value.trim(), role = document.getElementById("newRole").value, designation = document.getElementById("newDesignation").value;
-                if(!fullName||!email||!password) return alert("Fill all fields");
-                // generate a random UID (since we cannot create Auth user client-side, we'll just store profile and warn)
-                const tempUid = "user_"+Date.now()+"_"+Math.random().toString(36).substr(2,6);
-                await createUserInFirestore(tempUid, email, fullName, role, designation, password);
-                alert(`User profile created. IMPORTANT: Also create this user in Firebase Authentication (Console) with email ${email} and password ${password} for login.`);
-                await refreshData();
-                refreshUI();
-                document.getElementById("createUserForm").reset();
-            });
-            document.querySelectorAll(".deleteUserBtn").forEach(btn => btn.addEventListener("click", async () => { if(confirm("Delete user?")) { await deleteUserFromFirestore(btn.dataset.uid); await refreshData(); refreshUI(); } }));
-        }
-        
-        async function refreshData() {
-            complaintsData = await fetchComplaints();
-            usersData = await fetchAllUsers();
-            // enrich complaints with assignee names
-            for(let c of complaintsData) {
-                const user = usersData.find(u => u.uid === c.assignedTo);
-                c.assignedToName = user ? user.fullName : c.assignedTo;
+
+        // Auth state
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userData = await getUserData(user.uid);
+                if (!userData || !userData.role) {
+                    await signOut(auth);
+                    showToast("Unauthorized. Please login with valid account.", true);
+                    return;
+                }
+                currentUser = user;
+                currentRole = userData.role;
+                sidebarUserName.innerText = userData.name || userData.email;
+                topUserName.innerText = userData.name || userData.email;
+                roleBadgeHeader.innerText = currentRole === 'admin' ? 'Admin' : 'Member';
+                roleBadgeHeader.className = `px-2 py-1 text-xs rounded-full ${currentRole === 'admin' ? 'bg-orange-600' : 'bg-green-600'} text-white`;
+                authContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                if (currentRole === 'admin') {
+                    navAdminItems.classList.remove('hidden');
+                    navUserItems.classList.add('hidden');
+                    pageTitle.innerText = "Admin Dashboard";
+                    renderTeamManagement();
+                } else {
+                    navUserItems.classList.remove('hidden');
+                    navAdminItems.classList.add('hidden');
+                    pageTitle.innerText = "My Workspace";
+                    renderUserTasksView();
+                }
+                setupNavigation();
+            } else {
+                authContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+                ensureAdminAccount();
             }
-        }
-        async function exportCSV() {
-            const filtered = getFilteredComplaints();
-            if(!filtered.length) return alert("No data");
-            let csvRows = [["ID","Title","Description","Assignee","Priority","Status","Created"]];
-            filtered.forEach(c => csvRows.push([c.id, c.title, c.description, c.assignedToName, c.priority, c.status, new Date(c.createdDate).toLocaleString()]));
-            const blob = new Blob([csvRows.map(row=>row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\n")], {type:"text/csv"});
-            const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `report_${selectedYear}_${selectedMonth}.csv`; a.click();
-        }
-        await refreshData();
-        refreshUI();
-    }
-    
-    // HOD and SSE dashboards simplified (similar pattern using real-time listeners)
-    async function renderHODDashboard(container) {
-        // Real-time listener for complaints
-        let chartTrend, chartPriority;
-        const q = query(collection(db, "complaints"), orderBy("createdDate", "desc"));
-        if(complaintsUnsubscribe) complaintsUnsubscribe();
-        complaintsUnsubscribe = onSnapshot(q, async (snapshot) => {
-            const complaintsArr = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const usersArr = await fetchAllUsers();
-            for(let c of complaintsArr) {
-                const u = usersArr.find(uu => uu.uid === c.assignedTo);
-                c.assignedToName = u ? u.fullName : c.assignedTo;
-            }
-            updateDashboardUI(complaintsArr);
         });
-        
-        function updateDashboardUI(complaintsArr) {
-            const total = complaintsArr.length;
-            const openCount = complaintsArr.filter(c => c.status === "open" || c.status === "in-progress").length;
-            const resolved = complaintsArr.filter(c => c.status === "resolved" || c.status === "closed").length;
-            const highCritical = complaintsArr.filter(c => c.priority === "high" || c.priority === "critical").length;
-            const statsDiv = document.getElementById("hodStats");
-            const trendCanvas = document.getElementById("trendChart");
-            const priorityCanvas = document.getElementById("priorityChart");
-            const recentDiv = document.getElementById("recentTable");
-            if(statsDiv) statsDiv.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8"><div class="luxury-card p-5"><p class="text-gray-500 text-sm">Total Complaints</p><p class="text-3xl font-black text-orange-600">${total}</p></div><div class="luxury-card p-5"><p class="text-gray-500 text-sm">Open / In Progress</p><p class="text-3xl font-black text-amber-600">${openCount}</p></div><div class="luxury-card p-5"><p class="text-gray-500 text-sm">Resolved / Closed</p><p class="text-3xl font-black text-emerald-600">${resolved}</p></div><div class="luxury-card p-5"><p class="text-gray-500 text-sm">High + Critical</p><p class="text-3xl font-black text-rose-600">${highCritical}</p></div></div>`;
-            if(trendCanvas) {
-                const last7 = [...Array(7)].map((_,i)=>{const d=new Date(); d.setDate(d.getDate()-i); return d.toISOString().slice(0,10);}).reverse();
-                const counts = last7.map(date=> complaintsArr.filter(c=>c.createdDate?.slice(0,10)===date).length);
-                if(chartTrend) chartTrend.destroy();
-                chartTrend = new Chart(trendCanvas.getContext("2d"), { type:"line", data:{ labels:last7.map(d=>d.slice(5)), datasets:[{ label:"Complaints per day", data:counts, borderColor:"#f97316", backgroundColor:"rgba(249,115,22,0.1)", tension:0.3, fill:true }] }, options:{ responsive:true, maintainAspectRatio:false } });
-            }
-            if(priorityCanvas) {
-                const priorityLabels = ["low","medium","high","critical"];
-                const priorityData = priorityLabels.map(p=> complaintsArr.filter(c=>c.priority===p).length);
-                if(chartPriority) chartPriority.destroy();
-                chartPriority = new Chart(priorityCanvas.getContext("2d"), { type:"doughnut", data:{ labels:priorityLabels, datasets:[{ data:priorityData, backgroundColor:["#9ca3af","#f97316","#ef4444","#be123c"] }] }, options:{ responsive:true } });
-            }
-            if(recentDiv) {
-                const recent = complaintsArr.slice(0,8);
-                recentDiv.innerHTML = `<div class="overflow-auto"><table class="min-w-full"><thead class="bg-orange-50"><tr><th>ID</th><th>Title</th><th>Assignee</th><th>Priority</th><th>Status</th><th>Date</th></tr></thead><tbody>${recent.map(c=>`<tr class="border-b"><td class="p-2 text-xs">${c.id.slice(0,6)}</td><td>${escapeHtml(c.title)}</td><td>${escapeHtml(c.assignedToName)}</td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td></tr>`).join('')}${recent.length===0?'<tr><td colspan="6" class="text-center py-4">No complaints</td></tr>':''}</tbody></table></div>`;
-            }
-        }
-        
-        container.innerHTML = `<div class="space-y-8"><div class="flex justify-between items-center"><h2 class="text-3xl font-black"><i class="fas fa-chart-pie text-orange-500"></i> HOD Analytics Dashboard</h2><button id="exportAllBtn" class="bg-emerald-500 text-white px-5 py-2 rounded-2xl shadow"><i class="fas fa-download"></i> Export All Complaints</button></div><div id="hodStats"></div><div class="grid md:grid-cols-2 gap-6"><div class="luxury-card p-5"><h3 class="font-bold mb-3">📈 Complaint Trend (Last 7 Days)</h3><canvas id="trendChart" height="200"></canvas></div><div class="luxury-card p-5"><h3 class="font-bold mb-3">🥧 Priority Distribution</h3><canvas id="priorityChart" height="200"></canvas></div></div><div class="luxury-card p-5"><h3 class="font-bold mb-3">📋 Recent Complaints</h3><div id="recentTable"></div></div></div>`;
-        document.getElementById("exportAllBtn")?.addEventListener("click", async () => { const all = (await fetchComplaints()); if(!all.length) return alert("No complaints"); let csv = [["ID","Title","Description","Assignee","Priority","Status","Created"]]; all.forEach(c => csv.push([c.id, c.title, c.description, c.assignedTo, c.priority, c.status, c.createdDate])); const blob = new Blob([csv.map(row=>row.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\n")], {type:"text/csv"}); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `all_complaints.csv`; a.click(); });
-    }
-    
-    async function renderSSEDashboard(container) {
-        let myComplaints = [];
-        const q = query(collection(db, "complaints"), where("assignedTo", "==", currentUser.uid));
-        const unsubscribe = onSnapshot(q, async (snapshot) => {
-            myComplaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderSSEUI();
-        });
-        function renderSSEUI() {
-            container.innerHTML = `<div class="space-y-6"><div class="flex flex-wrap justify-between items-center"><h2 class="text-2xl font-black"><i class="fas fa-tasks text-orange-500"></i> My Assigned Tickets</h2><button id="sseNewComplaintBtn" class="btn-luxury text-white px-5 py-2 rounded-2xl"><i class="fas fa-plus-circle"></i> Create & Assign</button></div><div class="luxury-card overflow-hidden">${myComplaints.length === 0 ? '<div class="p-10 text-center text-gray-400">No complaints assigned yet.</div>' : `<table class="min-w-full"><thead class="bg-orange-50"><tr><th class="p-4">ID</th><th>Title</th><th>Priority</th><th>Status</th><th>Created</th><th>Update</th></tr></thead><tbody>${myComplaints.map(c => `<tr class="border-b"><td class="p-4 text-xs">${c.id.slice(0,6)}</td><td><div class="font-medium">${escapeHtml(c.title)}</div><div class="text-xs text-gray-400">${escapeHtml((c.description||'').substring(0,50))}</div></td><td>${priorityBadge(c.priority)}</td><td>${statusBadge(c.status)}</td><td class="text-xs">${new Date(c.createdDate).toLocaleDateString()}</td><td><select data-id="${c.id}" class="statusSelect border rounded-lg p-1"><option ${c.status==='open'?'selected':''}>open</option><option ${c.status==='in-progress'?'selected':''}>in-progress</option><option ${c.status==='resolved'?'selected':''}>resolved</option><option ${c.status==='closed'?'selected':''}>closed</option></select></td></tr>`).join('')}</tbody></table>`}</div></div>`;
-            document.querySelectorAll(".statusSelect").forEach(sel => sel.addEventListener("change", async (e) => { await updateComplaint(sel.dataset.id, { status: sel.value }); }));
-            document.getElementById("sseNewComplaintBtn")?.addEventListener("click", () => openComplaintModal());
-        }
-        renderSSEUI();
-    }
-    
-    // Complaint Modal (Firestore)
-    async function openComplaintModal(complaint = null) {
-        const isEdit = !!complaint;
-        const usersData = await fetchAllUsers();
-        const sseList = usersData.filter(u => u.role === "sse" || u.role === "hod");
-        const modalDiv = document.createElement("div");
-        modalDiv.className = "fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm";
-        modalDiv.innerHTML = `<div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl"><div class="flex justify-between border-b pb-3 mb-4"><h3 class="text-xl font-bold">${isEdit ? 'Edit Complaint' : 'New Complaint'}</h3><button id="closeModalBtn"><i class="fas fa-times text-gray-400"></i></button></div><form id="modalComplaintForm"><input type="hidden" id="compId" value="${complaint?.id || ''}"><div class="mb-3"><label>Title *</label><input type="text" id="compTitle" required class="w-full border rounded-xl p-2" value="${escapeHtml(complaint?.title || '')}"></div><div class="mb-3"><label>Description</label><textarea id="compDesc" rows="2" class="w-full border rounded-xl p-2">${escapeHtml(complaint?.description || '')}</textarea></div><div class="mb-3"><label>Assign to (SSE/HOD)</label><select id="compAssignedTo" class="w-full border rounded-xl p-2">${sseList.map(s => `<option value="${s.uid}" ${complaint && complaint.assignedTo === s.uid ? 'selected':''}>${escapeHtml(s.fullName)} (${escapeHtml(s.designation)})</option>`).join('')}</select></div><div class="mb-3"><label>Priority</label><select id="compPriority" class="w-full border rounded-xl p-2"><option ${complaint?.priority==='low'?'selected':''}>low</option><option ${complaint?.priority==='medium'?'selected':''}>medium</option><option ${complaint?.priority==='high'?'selected':''}>high</option><option ${complaint?.priority==='critical'?'selected':''}>critical</option></select></div><div class="mb-3"><label>Status</label><select id="compStatus" class="w-full border rounded-xl p-2"><option ${complaint?.status==='open'?'selected':''}>open</option><option ${complaint?.status==='in-progress'?'selected':''}>in-progress</option><option ${complaint?.status==='resolved'?'selected':''}>resolved</option><option ${complaint?.status==='closed'?'selected':''}>closed</option></select></div><div class="mb-4"><label>Due Date</label><input type="date" id="compDueDate" class="w-full border rounded-xl p-2" value="${complaint?.dueDate?.split('T')[0] || ''}"></div><div class="flex justify-end gap-3"><button type="button" id="cancelModal" class="px-4 py-2 border rounded-xl">Cancel</button><button type="submit" class="bg-orange-500 text-white px-5 py-2 rounded-xl">${isEdit ? 'Update' : 'Create'}</button></div></form></div>`;
-        document.body.appendChild(modalDiv);
-        const close = () => modalDiv.remove();
-        modalDiv.querySelector("#closeModalBtn")?.addEventListener("click", close);
-        modalDiv.querySelector("#cancelModal")?.addEventListener("click", close);
-        modalDiv.querySelector("#modalComplaintForm")?.addEventListener("submit", async (e) => {
+
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = modalDiv.querySelector("#compId").value;
-            const data = { title: modalDiv.querySelector("#compTitle").value, description: modalDiv.querySelector("#compDesc").value, assignedTo: modalDiv.querySelector("#compAssignedTo").value, priority: modalDiv.querySelector("#compPriority").value, status: modalDiv.querySelector("#compStatus").value, dueDate: modalDiv.querySelector("#compDueDate").value || null, createdDate: complaint?.createdDate || new Date().toISOString() };
-            if(id) await updateComplaint(id, data);
-            else await addComplaint(data);
-            close();
-            renderCurrentView();
+            const email = document.getElementById('loginEmail').value;
+            const pwd = document.getElementById('loginPassword').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pwd);
+                showToast("Login successful!");
+            } catch (err) {
+                alert("Login failed: Invalid email or password");
+            }
         });
-    }
-    
-    // Initialize default admin profile on Firestore
-    await ensureDefaultAdmin();
-    
-    // Login event
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = document.getElementById("loginEmail").value.trim();
-        const password = document.getElementById("loginPassword").value;
-        const success = await loginUser(email, password);
-        if(success) {
-            document.getElementById("loginScreen").classList.add("hidden");
-            document.getElementById("dashboardScreen").classList.remove("hidden");
-            document.getElementById("userFullname").innerText = currentUser.fullName;
-            document.getElementById("userRoleText").innerHTML = currentUser.designation;
-            document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
-            renderCurrentView();
+
+        document.getElementById('sidebarLogout')?.addEventListener('click', async () => {
+            await signOut(auth);
+            showToast("Logged out");
+        });
+
+        // ========== ADMIN FUNCTIONS ==========
+        async function renderTeamManagement() {
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
+                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-users text-orange-500 mr-2"></i>Team Management</h2>
+                <button id="openCreateUserModal" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg mb-6"><i class="fas fa-plus mr-1"></i>Add User</button>
+                <div id="usersList" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+            </div>`;
+            const usersSnap = await getDocs(collection(db, "users"));
+            const users = [];
+            usersSnap.forEach(d => users.push({ id: d.id, ...d.data() }));
+            const container = document.getElementById('usersList');
+            if (users.length === 0) container.innerHTML = '<div class="col-span-full text-gray-400 text-center py-8">No users yet.</div>';
+            else {
+                container.innerHTML = users.map(u => `<div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <div><i class="fas fa-user-circle text-2xl text-gray-400"></i><h3 class="font-bold text-white">${u.name || u.email}</h3><p class="text-sm text-gray-400">${u.email}</p><span class="text-xs ${u.role === 'admin' ? 'text-orange-400' : 'text-green-400'}">${u.role === 'admin' ? 'Admin' : 'Team Member'}</span></div>
+                    </div>
+                </div>`).join('');
+            }
+            document.getElementById('openCreateUserModal')?.addEventListener('click', showCreateUserModal);
         }
-    });
-    
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await logoutUser();
-        document.getElementById("dashboardScreen").classList.add("hidden");
-        document.getElementById("loginScreen").classList.remove("hidden");
-        if(complaintsUnsubscribe) complaintsUnsubscribe();
-        if(hodInterval) clearInterval(hodInterval);
-    });
-    
-    // Restore session if already logged in
-    const saved = localStorage.getItem("mp_current_user");
-    if(saved && auth.currentUser) {
-        const { uid } = JSON.parse(saved);
-        const userData = await loadUserData(uid);
-        if(userData) {
-            currentUser = { uid, email: auth.currentUser.email, fullName: userData.fullName, role: userData.role, designation: userData.designation };
-            document.getElementById("loginScreen").classList.add("hidden");
-            document.getElementById("dashboardScreen").classList.remove("hidden");
-            document.getElementById("userFullname").innerText = currentUser.fullName;
-            document.getElementById("userRoleText").innerHTML = currentUser.designation;
-            document.getElementById("roleBadge").innerHTML = currentUser.role === "admin" ? '<i class="fas fa-crown"></i> Admin' : (currentUser.role === "hod" ? '<i class="fas fa-chart-line"></i> HOD' : `<i class="fas fa-microchip"></i> ${currentUser.designation}`);
-            renderCurrentView();
+
+        function showCreateUserModal() {
+            const modalHtml = `<div id="userModal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+                <div class="modal-content rounded-xl p-6 w-96 max-w-md">
+                    <h3 class="text-xl font-bold text-white mb-4">Create New User</h3>
+                    <input type="text" id="modalName" placeholder="Full Name" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white">
+                    <input type="email" id="modalEmail" placeholder="Email" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white">
+                    <input type="password" id="modalPassword" placeholder="Password" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-3 text-white">
+                    <select id="modalRole" class="w-full bg-gray-800 border border-gray-600 p-2 rounded mb-4 text-white">
+                        <option value="user">Team Member</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                    <div class="flex justify-end space-x-2">
+                        <button id="modalCancel" class="px-4 py-2 bg-gray-600 rounded text-white">Cancel</button>
+                        <button id="modalConfirm" class="px-4 py-2 bg-orange-600 text-white rounded">Create</button>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            document.getElementById('modalConfirm').addEventListener('click', async () => {
+                const name = document.getElementById('modalName').value.trim();
+                const email = document.getElementById('modalEmail').value.trim();
+                const pwd = document.getElementById('modalPassword').value;
+                const role = document.getElementById('modalRole').value;
+                if (!name || !email || !pwd) { alert("All fields required"); return; }
+                try {
+                    const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+                    await setDoc(doc(db, "users", cred.user.uid), { email, name, role, createdAt: Timestamp.now() });
+                    showToast(`User ${name} (${role}) created`);
+                    document.getElementById('userModal')?.remove();
+                    renderTeamManagement();
+                } catch (err) { alert("Error: " + err.message); }
+            });
+            document.getElementById('modalCancel').addEventListener('click', () => document.getElementById('userModal')?.remove());
         }
-    }
-</script>
+
+        async function renderAdminAnalytics() {
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
+                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-chart-line text-orange-500 mr-2"></i>Performance Analytics</h2>
+                <div class="mb-4"><label class="block text-gray-300">Select Team Member</label><select id="analyticsUserSelect" class="bg-gray-800 border border-gray-600 p-2 rounded w-full md:w-64 text-white"></select></div>
+                <canvas id="perfChart" class="max-h-80 w-full"></canvas>
+                <div id="kpiStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div>
+            </div>`;
+            const usersSnap = await getDocs(query(collection(db, "users"), where("role", "==", "user")));
+            const users = []; usersSnap.forEach(d => users.push({ uid: d.id, ...d.data() }));
+            const select = document.getElementById('analyticsUserSelect');
+            if(users.length === 0) { select.innerHTML = '<option>No team members</option>'; return; }
+            users.forEach(u => { let opt = document.createElement('option'); opt.value = u.uid; opt.textContent = u.name || u.email; select.appendChild(opt); });
+            async function updateAnalytics(uid) {
+                const tasksSnap = await getDocs(collection(db, "tasks"));
+                const userTasks = []; tasksSnap.forEach(d => { if(d.data().userId === uid) userTasks.push(d.data()); });
+                const resolved = userTasks.filter(t => t.status === true).length;
+                const pending = userTasks.filter(t => t.status === false).length;
+                const rate = (resolved + pending) ? ((resolved/(resolved+pending))*100).toFixed(1) : 0;
+                const ctx = document.getElementById('perfChart').getContext('2d');
+                if(window.chartInstance) window.chartInstance.destroy();
+                window.chartInstance = new Chart(ctx, { type: 'bar', data: { labels: ['Resolved', 'Pending'], datasets: [{ label: 'Tasks', data: [resolved, pending], backgroundColor: ['#10b981', '#f97316'] }] } });
+                document.getElementById('kpiStats').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-check-circle text-green-500 text-2xl"></i><p class="font-bold text-2xl text-white">${resolved}</p><p class="text-gray-300">Resolved</p></div><div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-clock text-orange-500 text-2xl"></i><p class="font-bold text-2xl text-white">${pending}</p><p class="text-gray-300">Pending</p></div><div class="bg-gray-800 p-4 rounded text-center"><i class="fas fa-percent text-blue-400 text-2xl"></i><p class="font-bold text-2xl text-white">${rate}%</p><p class="text-gray-300">Completion</p></div>`;
+            }
+            select.addEventListener('change', (e) => updateAnalytics(e.target.value));
+            if(users.length) updateAnalytics(select.value);
+        }
+
+        async function renderReportPanel() {
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
+                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-file-pdf text-red-500 mr-2"></i>Monthly Report</h2>
+                <div class="grid md:grid-cols-2 gap-6"><div><label class="block text-gray-300">Month</label><input type="month" id="reportMonth" class="bg-gray-800 border border-gray-600 p-2 rounded w-full text-white"></div><div><label class="block text-gray-300">Team Member</label><select id="pdfUserSelect" class="bg-gray-800 border border-gray-600 p-2 rounded w-full text-white"><option value="all">All Members</option></select></div></div>
+                <button id="genReportBtn" class="mt-6 bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"><i class="fas fa-download mr-2"></i>Generate PDF</button>
+                <div id="reportMsg" class="mt-4 text-sm"></div>
+            </div>`;
+            const usersSnap = await getDocs(query(collection(db, "users"), where("role", "==", "user")));
+            const users = []; usersSnap.forEach(d => users.push({ uid: d.id, name: d.data().name || d.data().email }));
+            const userSelect = document.getElementById('pdfUserSelect');
+            users.forEach(u => { let opt = document.createElement('option'); opt.value = u.uid; opt.textContent = u.name; userSelect.appendChild(opt); });
+            document.getElementById('genReportBtn').addEventListener('click', async () => {
+                const monthYear = document.getElementById('reportMonth').value;
+                if(!monthYear) { alert("Select month"); return; }
+                const [year, month] = monthYear.split('-');
+                const start = `${year}-${month}-01`;
+                const lastDay = new Date(year, month, 0).getDate();
+                const end = `${year}-${month}-${lastDay}`;
+                const selectedUid = document.getElementById('pdfUserSelect').value;
+                let q = collection(db, "tasks");
+                if(selectedUid !== "all") q = query(q, where("userId", "==", selectedUid));
+                const snap = await getDocs(q);
+                const tasks = [];
+                snap.forEach(d => { const task = d.data(); if(task.date >= start && task.date <= end) tasks.push(task); });
+                if(tasks.length === 0) { document.getElementById('reportMsg').innerHTML = '<span class="text-red-400">No tasks found.</span>'; return; }
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('landscape');
+                pdf.setFillColor(249, 115, 22); pdf.rect(0, 0, 297, 20, 'F');
+                pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.text("M&P Express Logistics - Monthly Report", 14, 15);
+                pdf.setTextColor(0,0,0); pdf.setFontSize(10); pdf.text(`Month: ${monthYear} | Generated: ${new Date().toLocaleString()}`, 14, 30);
+                let y = 40;
+                const grouped = {};
+                tasks.forEach(t => { if(!grouped[t.userId]) grouped[t.userId] = []; grouped[t.userId].push(t); });
+                for(const [uid, userTasks] of Object.entries(grouped)) {
+                    let userName = users.find(u => u.uid === uid)?.name || uid;
+                    const resolved = userTasks.filter(t => t.status).length;
+                    const pending = userTasks.length - resolved;
+                    pdf.setFontSize(12); pdf.text(`${userName} - Resolved: ${resolved} | Pending: ${pending} | Rate: ${((resolved/(resolved+pending||1))*100).toFixed(1)}%`, 14, y);
+                    y += 8;
+                    pdf.autoTable({ startY: y, head: [['Date','Task','Status','Notes']], body: userTasks.map(t => [t.date, t.taskDescription, t.status ? 'Resolved' : 'Pending', t.notes||'']), margin: {left:14}, theme: 'striped', headStyles: { fillColor: [249,115,22] } });
+                    y = pdf.lastAutoTable.finalY + 10;
+                    if(y > 200) { pdf.addPage(); y = 20; }
+                }
+                pdf.save(`M&P_Report_${monthYear}.pdf`);
+                document.getElementById('reportMsg').innerHTML = '<span class="text-green-400">PDF generated!</span>';
+            });
+        }
+
+        // ========== USER FUNCTIONS (TASK ADDING FIXED) ==========
+        async function renderUserTasksView() {
+            dashboardContent.innerHTML = `<div class="grid lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1 bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
+                    <h3 class="font-bold text-lg text-white mb-3"><i class="fas fa-plus-circle text-orange-500 mr-1"></i>Log Daily Task</h3>
+                    <input type="date" id="taskDate" class="bg-gray-800 border border-gray-600 p-2 rounded w-full mb-2 text-white" value="${new Date().toISOString().slice(0,10)}">
+                    <input type="text" id="taskDesc" placeholder="Task description" class="bg-gray-800 border border-gray-600 p-2 rounded w-full mb-2 text-white">
+                    <select id="taskStatus" class="bg-gray-800 border border-gray-600 p-2 rounded w-full mb-2 text-white">
+                        <option value="true">✅ Resolved / Completed</option>
+                        <option value="false">⏳ Not Resolved / Pending</option>
+                    </select>
+                    <input type="text" id="taskNotes" placeholder="Notes (optional)" class="bg-gray-800 border border-gray-600 p-2 rounded w-full mb-3 text-white">
+                    <button id="submitTaskBtn" class="bg-orange-600 w-full text-white py-2 rounded-lg hover:bg-orange-700">+ Add Task</button>
+                </div>
+                <div class="lg:col-span-2 bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
+                    <h3 class="font-bold text-lg text-white mb-3"><i class="fas fa-history"></i> My Recent Tasks</h3>
+                    <div id="userTasksList" class="space-y-3 max-h-[500px] overflow-y-auto"></div>
+                </div>
+            </div>`;
+            await loadUserTasks();
+            // Attach event listener for add task button
+            const submitBtn = document.getElementById('submitTaskBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', addNewTask);
+            }
+        }
+
+        async function addNewTask() {
+            const date = document.getElementById('taskDate').value;
+            const description = document.getElementById('taskDesc').value.trim();
+            const status = document.getElementById('taskStatus').value === 'true';
+            const notes = document.getElementById('taskNotes').value;
+            if (!description) {
+                alert("Please enter task description");
+                return;
+            }
+            try {
+                await addDoc(collection(db, "tasks"), {
+                    userId: currentUser.uid,
+                    date: date,
+                    taskDescription: description,
+                    status: status,
+                    notes: notes,
+                    createdAt: Timestamp.now()
+                });
+                showToast("Task added successfully!");
+                document.getElementById('taskDesc').value = "";
+                document.getElementById('taskNotes').value = "";
+                await loadUserTasks(); // refresh list
+            } catch (error) {
+                console.error("Error adding task:", error);
+                alert("Failed to add task. Check console for details.\nError: " + error.message);
+            }
+        }
+
+        async function loadUserTasks() {
+            const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid), orderBy("date", "desc"));
+            const querySnap = await getDocs(q);
+            const tasks = [];
+            querySnap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+            const container = document.getElementById('userTasksList');
+            if (!container) return;
+            if (tasks.length === 0) {
+                container.innerHTML = '<div class="text-gray-400 text-center py-8">No tasks yet. Add your first task!</div>';
+            } else {
+                container.innerHTML = tasks.map(task => `
+                    <div class="p-3 rounded-lg border ${task.status ? 'task-resolved' : 'task-pending'} shadow-sm flex justify-between items-start">
+                        <div><span class="text-xs text-gray-400">${task.date}</span><p class="font-medium text-white">${task.taskDescription}</p><p class="text-xs text-gray-400">${task.notes || ''}</p></div>
+                        <div><span class="px-2 py-1 text-xs rounded-full ${task.status ? 'bg-green-800 text-green-200' : 'bg-orange-800 text-orange-200'}">${task.status ? 'Resolved' : 'Pending'}</span></div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function renderUserStatsView() {
+            dashboardContent.innerHTML = `<div class="bg-dark-card rounded-xl shadow-md p-6 border border-gray-700">
+                <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-chart-pie text-orange-500 mr-2"></i>My Performance Summary</h2>
+                <canvas id="userPerfChart" class="max-h-72 w-full"></canvas>
+                <div id="userKpi" class="grid grid-cols-2 gap-4 mt-6"></div>
+            </div>`;
+            const q = query(collection(db, "tasks"), where("userId", "==", currentUser.uid));
+            const snap = await getDocs(q);
+            const tasks = []; snap.forEach(d => tasks.push(d.data()));
+            const resolved = tasks.filter(t => t.status).length;
+            const pending = tasks.length - resolved;
+            const ctx = document.getElementById('userPerfChart').getContext('2d');
+            if(window.userChart) window.userChart.destroy();
+            window.userChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Resolved', 'Pending'], datasets: [{ data: [resolved, pending], backgroundColor: ['#10b981', '#f97316'] }] }, options: { responsive: true, plugins: { legend: { labels: { color: 'white' } } } } });
+            document.getElementById('userKpi').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-green-400">${resolved}</p><p class="text-gray-300">Completed</p></div><div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-orange-400">${pending}</p><p class="text-gray-300">Pending</p></div>`;
+        }
+    </script>
 </body>
 </html>
