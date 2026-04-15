@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express | Intelligent Task Hub</title>
-    <!-- Tailwind + Font Awesome + Google Fonts + Chart.js + jsPDF -->
+    <title>M&P Express | Advanced Task Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -15,43 +14,27 @@
         * { font-family: 'Inter', sans-serif; }
         body { background: #0B1120; }
         .glass-card {
-            background: rgba(30, 41, 59, 0.75);
+            background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(249, 115, 22, 0.25);
+            border: 1px solid rgba(249, 115, 22, 0.2);
             border-radius: 1.5rem;
-            transition: all 0.2s ease;
-        }
-        .glass-card:hover {
-            border-color: rgba(249, 115, 22, 0.5);
-            box-shadow: 0 8px 20px -6px rgba(0,0,0,0.4);
         }
         .sidebar-link {
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 0.75rem;
-            position: relative;
-            overflow: hidden;
         }
         .sidebar-link:hover {
             background: linear-gradient(135deg, #f97316, #ea580c);
             color: white;
             transform: translateX(4px);
         }
-        .sidebar-link.active {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            color: white;
-            box-shadow: 0 4px 12px rgba(249,115,22,0.3);
-        }
         .task-card {
             transition: transform 0.2s, box-shadow 0.2s;
             border-left: 4px solid;
-            cursor: pointer;
         }
         .task-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 25px -12px rgba(0,0,0,0.5);
-        }
-        .btn-glow {
-            box-shadow: 0 0 8px rgba(249,115,22,0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -12px rgba(0,0,0,0.4);
         }
         .toast-notify {
             position: fixed;
@@ -59,18 +42,13 @@
             right: 24px;
             background: #1e293b;
             backdrop-filter: blur(8px);
-            padding: 12px 24px;
+            padding: 12px 20px;
             border-radius: 40px;
             color: white;
             font-size: 0.875rem;
             z-index: 9999;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
             border-left: 3px solid #f97316;
-            animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
         }
         .loading-spinner {
             border: 3px solid #334155;
@@ -96,36 +74,8 @@
             box-shadow: 0 0 0 2px rgba(249,115,22,0.3);
         }
         .modal-backdrop {
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
-            animation: fadeIn 0.2s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .priority-high { border-left-color: #ef4444; }
-        .priority-medium { border-left-color: #f97316; }
-        .priority-low { border-left-color: #22c55e; }
-        .status-badge {
-            transition: all 0.2s;
-        }
-        .filter-chip {
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .filter-chip.active {
-            background: #f97316;
-            color: white;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            border-radius: 1rem;
-            padding: 1rem;
-            transition: transform 0.2s;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
         }
     </style>
 </head>
@@ -135,11 +85,11 @@
     <div id="authPanel" class="min-h-screen flex items-center justify-center px-4">
         <div class="glass-card w-full max-w-md p-8 shadow-2xl">
             <div class="text-center mb-8">
-                <div class="inline-flex p-4 bg-orange-500/20 rounded-full mb-4">
-                    <i class="fas fa-truck-fast text-5xl text-orange-500"></i>
+                <div class="inline-flex p-3 bg-orange-500/20 rounded-full mb-3">
+                    <i class="fas fa-truck-fast text-4xl text-orange-500"></i>
                 </div>
                 <h2 class="text-3xl font-bold text-white tracking-tight">M&P Express</h2>
-                <p class="text-gray-400 text-sm mt-1">Intelligent Task & Complaint Hub</p>
+                <p class="text-gray-400 text-sm mt-1">Intelligent Task Management</p>
                 <div id="initStatus" class="mt-3 text-xs text-gray-400 bg-gray-800/50 p-2 rounded-xl"></div>
             </div>
             <form id="loginForm">
@@ -151,7 +101,7 @@
                     <label class="block text-gray-300 text-sm font-medium mb-1">Password</label>
                     <input type="password" id="loginPassword" class="w-full px-4 py-2.5 text-white" placeholder="••••••">
                 </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white font-semibold py-2.5 rounded-xl transition-all shadow-lg">Sign In</button>
+                <button type="submit" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-semibold py-2.5 rounded-xl transition-all shadow-lg">Sign In</button>
             </form>
             <div class="text-center mt-5">
                 <button id="manualCreateAdmin" class="text-orange-400 text-sm underline hover:text-orange-300">⟳ Initialize System</button>
@@ -164,56 +114,45 @@
 
     <!-- MAIN APP -->
     <div id="appRoot" class="hidden flex min-h-screen">
-        <!-- SIDEBAR -->
-        <aside class="fixed inset-y-0 left-0 w-72 bg-gray-900/95 backdrop-blur-md border-r border-gray-800 shadow-2xl z-30 flex flex-col">
+        <aside class="fixed inset-y-0 left-0 w-72 bg-gray-900/90 backdrop-blur-md border-r border-gray-800 shadow-2xl z-30 flex flex-col">
             <div class="p-6 border-b border-gray-800">
                 <div class="flex items-center space-x-3">
-                    <div class="p-2 bg-orange-500/20 rounded-xl">
-                        <i class="fas fa-truck-fast text-2xl text-orange-500"></i>
-                    </div>
-                    <div>
-                        <span class="text-xl font-bold text-white">M&P Express</span>
-                        <p class="text-xs text-gray-400">v2.0 Intelligent Suite</p>
-                    </div>
+                    <i class="fas fa-truck-fast text-2xl text-orange-500"></i>
+                    <span class="text-xl font-bold text-white">M&P Express</span>
                 </div>
+                <p class="text-xs text-gray-400 mt-1">Task Hub</p>
             </div>
-            <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+            <nav class="flex-1 p-4 space-y-1.5">
                 <div id="adminNavGroup" class="space-y-1.5 hidden">
-                    <a href="#" data-view="dashboard" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-chart-pie w-5"></i><span>Dashboard</span></a>
                     <a href="#" data-view="team" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-users w-5"></i><span>Team Management</span></a>
-                    <a href="#" data-view="allTasksAdmin" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-list-check w-5"></i><span>All Tasks</span></a>
+                    <a href="#" data-view="allTasksAdmin" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-list-check w-5"></i><span>All Tasks (Admin)</span></a>
                     <a href="#" data-view="analytics" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-chart-line w-5"></i><span>Analytics</span></a>
                     <a href="#" data-view="report" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-file-pdf w-5"></i><span>Monthly Report</span></a>
                 </div>
                 <div id="userNavGroup" class="space-y-1.5 hidden">
-                    <a href="#" data-view="userDashboard" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-chart-pie w-5"></i><span>My Dashboard</span></a>
+                    <a href="#" data-view="allTasksUser" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-globe w-5"></i><span>All Tasks</span></a>
                     <a href="#" data-view="myAssigned" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-tasks w-5"></i><span>My Tasks</span></a>
-                    <a href="#" data-view="myStats" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-chart-simple w-5"></i><span>Performance</span></a>
+                    <a href="#" data-view="myStats" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-chart-simple w-5"></i><span>My Performance</span></a>
                 </div>
                 <div class="pt-4"><hr class="border-gray-800"></div>
-                <a href="#" data-view="addTask" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-orange-300 bg-orange-500/10 hover:bg-orange-500/20"><i class="fas fa-plus-circle w-5"></i><span>+ Create New Task</span></a>
+                <a href="#" data-view="addTask" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-orange-300 bg-orange-500/10"><i class="fas fa-plus-circle w-5"></i><span>+ Create Task</span></a>
             </nav>
             <div class="p-5 border-t border-gray-800">
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 flex items-center justify-center">
-                            <i class="fas fa-user text-white text-sm"></i>
-                        </div>
-                        <div>
-                            <span id="sidebarUserName" class="text-sm text-gray-300 font-medium block"></span>
-                            <span id="sidebarRole" class="text-xs text-gray-500"></span>
-                        </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-user-circle text-gray-400 text-xl"></i>
+                        <span id="sidebarUserName" class="text-sm text-gray-300 font-medium"></span>
                     </div>
-                    <button id="logoutBtn" class="text-red-400 hover:text-red-300 transition"><i class="fas fa-sign-out-alt"></i></button>
+                    <button id="logoutBtn" class="text-red-400 hover:text-red-300"><i class="fas fa-sign-out-alt"></i></button>
                 </div>
+                <div class="mt-2 text-xs text-gray-500">© 2025 M&P Express</div>
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="flex-1 ml-72">
             <header class="sticky top-0 z-20 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 px-8 py-4 flex justify-between items-center">
                 <h1 id="pageTitle" class="text-xl font-bold text-white">Dashboard</h1>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
                     <span id="topUserName" class="text-sm text-gray-300"></span>
                     <span id="roleBadge" class="px-3 py-1 text-xs rounded-full bg-orange-500/20 text-orange-400 font-medium"></span>
                 </div>
@@ -224,17 +163,10 @@
         </main>
     </div>
 
-    <!-- Task Detail Modal -->
-    <div id="taskDetailModal" class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
-        <div class="bg-gray-900 rounded-2xl w-full max-w-lg mx-4 border border-gray-700 shadow-2xl transform transition-all">
-            <div class="p-6" id="modalContent"></div>
-        </div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, addDoc, updateDoc, deleteDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, addDoc, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDUWw4CWZbL35zpQn4FA1m_fsJj95FpOec",
@@ -257,7 +189,6 @@
         const loginForm = document.getElementById('loginForm');
         const initStatus = document.getElementById('initStatus');
         const sidebarUserName = document.getElementById('sidebarUserName');
-        const sidebarRole = document.getElementById('sidebarRole');
         const topUserName = document.getElementById('topUserName');
         const roleBadge = document.getElementById('roleBadge');
         const pageTitle = document.getElementById('pageTitle');
@@ -265,7 +196,6 @@
         const adminNavGroup = document.getElementById('adminNavGroup');
         const userNavGroup = document.getElementById('userNavGroup');
         const logoutBtn = document.getElementById('logoutBtn');
-        const taskDetailModal = document.getElementById('taskDetailModal');
 
         function showToast(msg, isError = false) {
             const toast = document.createElement('div');
@@ -282,7 +212,7 @@
         }
 
         async function ensureAdmin() {
-            initStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Initializing system...';
+            initStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Initializing...';
             try {
                 const adminQuery = query(collection(db, "users"), where("role", "==", "admin"));
                 const existing = await getDocs(adminQuery);
@@ -308,7 +238,7 @@
                         email: adminEmail, name: "System Admin", role: "admin", createdAt: Timestamp.now()
                     });
                     initStatus.innerHTML = '✅ Admin ready.';
-                    showToast("Default admin created: admin@mulphilog.com / 090078601");
+                    showToast("Default admin ready");
                 }
                 return true;
             } catch (err) {
@@ -323,30 +253,21 @@
             return snap.exists() ? snap.data().role : null;
         }
 
-        function setActiveNav(view) {
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                if (link.dataset.view === view) link.classList.add('active');
-                else link.classList.remove('active');
-            });
-        }
-
         function bindNavigation() {
             document.querySelectorAll('.sidebar-link').forEach(link => {
                 link.removeEventListener('click', link._handler);
                 const handler = (e) => {
                     e.preventDefault();
                     const view = link.dataset.view;
-                    setActiveNav(view);
                     if (view === 'addTask') renderCreateTask();
-                    else if (view === 'dashboard' && currentRole === 'admin') renderAdminDashboard();
-                    else if (view === 'userDashboard' && currentRole === 'user') renderUserDashboard();
                     else if (currentRole === 'admin') {
                         if (view === 'team') renderTeamManagement();
                         else if (view === 'allTasksAdmin') renderAdminAllTasks();
                         else if (view === 'analytics') renderAdminAnalytics();
                         else if (view === 'report') renderMonthlyReport();
                     } else {
-                        if (view === 'myAssigned') renderMyAssignedTasks();
+                        if (view === 'allTasksUser') renderUserAllTasksReadonly();
+                        else if (view === 'myAssigned') renderMyAssignedTasks();
                         else if (view === 'myStats') renderUserStats();
                     }
                 };
@@ -365,7 +286,6 @@
                 const userData = allUsersCache.find(u => u.uid === user.uid);
                 const displayName = userData?.name || userData?.email || "User";
                 sidebarUserName.innerText = displayName;
-                sidebarRole.innerText = role === 'admin' ? 'Administrator' : 'Team Member';
                 topUserName.innerText = displayName;
                 roleBadge.innerText = role === 'admin' ? 'Administrator' : 'Team Member';
                 authPanel.classList.add('hidden');
@@ -373,13 +293,13 @@
                 if (role === 'admin') {
                     adminNavGroup.classList.remove('hidden');
                     userNavGroup.classList.add('hidden');
-                    pageTitle.innerText = "Admin Dashboard";
-                    renderAdminDashboard();
+                    pageTitle.innerText = "Admin Control";
+                    renderAdminAllTasks();
                 } else {
                     userNavGroup.classList.remove('hidden');
                     adminNavGroup.classList.add('hidden');
-                    pageTitle.innerText = "My Workspace";
-                    renderUserDashboard();
+                    pageTitle.innerText = "Team Workspace";
+                    renderMyAssignedTasks(); // default show their own tasks
                 }
                 bindNavigation();
             } else {
@@ -395,203 +315,156 @@
             const pwd = document.getElementById('loginPassword').value;
             try {
                 await signInWithEmailAndPassword(auth, email, pwd);
-                showToast("Welcome back!");
+                showToast("Welcome!");
             } catch (err) { alert("Invalid credentials"); }
         });
 
         logoutBtn.addEventListener('click', () => signOut(auth));
 
-        function showTaskDetail(task, isAdmin = false, canResolve = false) {
-            const modal = document.getElementById('taskDetailModal');
-            const content = document.getElementById('modalContent');
-            const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
-            content.innerHTML = `
-                <div class="flex justify-between items-start mb-4">
-                    <h3 class="text-xl font-bold text-white">Task Details</h3>
-                    <button id="closeModalBtn" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-                </div>
-                <div class="space-y-3">
-                    <p class="text-white font-medium">${escapeHtml(task.description)}</p>
-                    <div class="grid grid-cols-2 gap-2 text-sm">
-                        <span class="text-gray-400">Assigned to:</span><span class="text-white">${userMap[task.assignedTo] || 'Unknown'}</span>
-                        <span class="text-gray-400">Due Date:</span><span class="text-white">${task.date || 'Not set'}</span>
-                        <span class="text-gray-400">Status:</span><span class="px-2 py-0.5 rounded-full text-xs ${task.status ? 'bg-green-600' : 'bg-orange-600'} w-fit">${task.status ? 'RESOLVED' : 'PENDING'}</span>
-                        <span class="text-gray-400">Notes:</span><span class="text-white col-span-1">${task.notes || 'No notes'}</span>
-                    </div>
-                    ${!task.status && canResolve ? `<button id="resolveFromModal" class="mt-4 w-full bg-green-600 hover:bg-green-500 py-2 rounded-lg font-semibold"><i class="fas fa-check mr-2"></i>Mark as Resolved</button>` : ''}
-                    ${isAdmin ? `<button id="deleteFromModal" class="mt-2 w-full bg-red-600/80 hover:bg-red-600 py-2 rounded-lg font-semibold"><i class="fas fa-trash mr-2"></i>Delete Task</button>` : ''}
-                </div>
-            `;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.getElementById('closeModalBtn').onclick = () => modal.classList.add('hidden');
-            if (!task.status && canResolve) {
-                document.getElementById('resolveFromModal')?.addEventListener('click', async () => {
-                    await updateDoc(doc(db, "tasks", task.id), { status: true });
-                    showToast("Task resolved!");
-                    modal.classList.add('hidden');
-                    if (currentRole === 'admin') renderAdminAllTasks();
-                    else renderMyAssignedTasks();
-                });
-            }
-            if (isAdmin) {
-                document.getElementById('deleteFromModal')?.addEventListener('click', async () => {
-                    if (confirm("Delete this task permanently?")) {
-                        await deleteDoc(doc(db, "tasks", task.id));
-                        showToast("Task deleted");
-                        modal.classList.add('hidden');
-                        renderAdminAllTasks();
-                    }
-                });
-            }
-        }
-
-        // Admin Dashboard with stats
-        async function renderAdminDashboard() {
-            const snap = await getDocs(collection(db, "tasks"));
-            const tasks = []; snap.forEach(d => tasks.push(d.data()));
-            const total = tasks.length;
-            const resolved = tasks.filter(t => t.status).length;
-            const pending = total - resolved;
-            const completionRate = total ? ((resolved/total)*100).toFixed(1) : 0;
-            dynamicContent.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
-                    <div class="stat-card"><div class="flex items-center justify-between"><i class="fas fa-tasks text-3xl text-orange-500"></i><span class="text-3xl font-bold text-white">${total}</span></div><p class="text-gray-400 mt-2">Total Tasks</p></div>
-                    <div class="stat-card"><div class="flex items-center justify-between"><i class="fas fa-check-circle text-3xl text-green-500"></i><span class="text-3xl font-bold text-green-400">${resolved}</span></div><p class="text-gray-400 mt-2">Resolved</p></div>
-                    <div class="stat-card"><div class="flex items-center justify-between"><i class="fas fa-clock text-3xl text-orange-500"></i><span class="text-3xl font-bold text-orange-400">${pending}</span></div><p class="text-gray-400 mt-2">Pending</p></div>
-                    <div class="stat-card"><div class="flex items-center justify-between"><i class="fas fa-chart-line text-3xl text-blue-500"></i><span class="text-3xl font-bold text-blue-400">${completionRate}%</span></div><p class="text-gray-400 mt-2">Completion Rate</p></div>
-                </div>
-                <div class="glass-card p-6"><h3 class="text-lg font-bold text-white mb-3"><i class="fas fa-clock text-orange-500 mr-2"></i>Recent Tasks</h3><div id="recentTasksList" class="space-y-2 max-h-96 overflow-y-auto"></div></div>
-            `;
-            const recentTasks = []; snap.forEach(d => recentTasks.push({ id: d.id, ...d.data() }));
-            recentTasks.sort((a,b) => b.createdAt?.seconds - a.createdAt?.seconds).slice(0,5);
-            const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
-            const container = document.getElementById('recentTasksList');
-            if (!recentTasks.length) container.innerHTML = '<div class="text-gray-400 text-center py-8">No tasks yet</div>';
-            else container.innerHTML = recentTasks.map(t => `
-                <div class="task-card p-3 rounded-lg bg-gray-800/50 border-l-4 ${t.status ? 'border-green-500' : 'border-orange-500'} cursor-pointer" data-id="${t.id}">
-                    <div class="flex justify-between items-center">
-                        <div><p class="text-white font-medium">${escapeHtml(t.description.substring(0, 60))}</p><p class="text-xs text-gray-400">Assigned to: ${userMap[t.assignedTo] || '?'} | Due: ${t.date}</p></div>
-                        <span class="px-2 py-1 rounded-full text-xs ${t.status ? 'bg-green-600' : 'bg-orange-600'}">${t.status ? 'Done' : 'Pending'}</span>
-                    </div>
-                </div>
-            `).join('');
-            document.querySelectorAll('#recentTasksList .task-card').forEach(card => {
-                const taskId = card.dataset.id;
-                const task = recentTasks.find(t => t.id === taskId);
-                if(task) card.addEventListener('click', () => showTaskDetail(task, true, false));
-            });
-        }
-
-        async function renderUserDashboard() {
-            const q = query(collection(db, "tasks"), where("assignedTo", "==", currentUser.uid));
-            const snap = await getDocs(q);
-            const tasks = []; snap.forEach(d => tasks.push(d.data()));
-            const resolved = tasks.filter(t => t.status).length;
-            const pending = tasks.length - resolved;
-            dynamicContent.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-                    <div class="stat-card"><div class="flex items-center justify-between"><i class="fas fa-tasks text-3xl text-orange-500"></i><span class="text-3xl font-bold text-white">${tasks.length}</span></div><p class="text-gray-400 mt-2">Assigned to Me</p></div>
-                    <div class="stat-card"><div class="flex items-center justify-between"><i class="fas fa-check-circle text-3xl text-green-500"></i><span class="text-3xl font-bold text-green-400">${resolved}</span></div><p class="text-gray-400 mt-2">Completed</p></div>
-                    <div class="stat-card"><div class="flex items-center justify-between"><i class="fas fa-hourglass-half text-3xl text-orange-500"></i><span class="text-3xl font-bold text-orange-400">${pending}</span></div><p class="text-gray-400 mt-2">In Progress</p></div>
-                </div>
-                <div class="glass-card p-6"><h3 class="text-lg font-bold text-white mb-3"><i class="fas fa-list-ul text-orange-500 mr-2"></i>My Active Tasks</h3><div id="userActiveTasks" class="space-y-2"></div></div>
-            `;
-            const pendingTasks = tasks.filter(t => !t.status).slice(0,5);
-            const container = document.getElementById('userActiveTasks');
-            if (!pendingTasks.length) container.innerHTML = '<div class="text-gray-400 text-center py-8">No pending tasks! Great job!</div>';
-            else container.innerHTML = pendingTasks.map(t => `
-                <div class="task-card p-3 rounded-lg bg-gray-800/50 border-l-4 border-orange-500 cursor-pointer" data-id="${t.id}">
-                    <div class="flex justify-between items-center"><p class="text-white">${escapeHtml(t.description.substring(0, 50))}</p><span class="text-xs text-gray-400">Due: ${t.date}</span></div>
-                </div>
-            `).join('');
-        }
-
+        // ========== CREATE TASK ==========
         async function renderCreateTask() {
             await refreshUsers();
             const userOptions = allUsersCache.map(u => `<option value="${u.uid}">${u.name || u.email} (${u.role})</option>`).join('');
             dynamicContent.innerHTML = `
                 <div class="max-w-3xl mx-auto glass-card p-8">
-                    <h2 class="text-2xl font-bold text-white mb-6 flex items-center"><i class="fas fa-plus-circle text-orange-500 mr-3"></i>Create New Task</h2>
+                    <h2 class="text-2xl font-bold text-white mb-6"><i class="fas fa-plus-circle text-orange-500 mr-3"></i>New Task</h2>
                     <div class="space-y-5">
-                        <div><label class="text-gray-300 text-sm font-medium">Task Description *</label><input id="taskDesc" class="w-full p-3 text-white" placeholder="Describe the task / complaint"></div>
-                        <div><label class="text-gray-300 text-sm font-medium">Assign To</label><select id="assignedTo" class="w-full p-3 text-white">${userOptions}</select></div>
-                        <div><label class="text-gray-300 text-sm font-medium">Due Date</label><input type="date" id="taskDate" class="w-full p-3 text-white" value="${new Date().toISOString().slice(0,10)}"></div>
-                        <div><label class="text-gray-300 text-sm font-medium">Priority</label><select id="taskPriority" class="w-full p-3 text-white"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
-                        <div><label class="text-gray-300 text-sm font-medium">Notes</label><textarea id="taskNotes" rows="3" class="w-full p-3 text-white" placeholder="Additional details..."></textarea></div>
-                        <button id="saveTaskBtn" class="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-600 py-3 rounded-xl font-semibold transition"><i class="fas fa-save mr-2"></i>Create Task</button>
+                        <div><label class="text-gray-300 text-sm">Description *</label><input id="taskDesc" class="w-full p-3 text-white" placeholder="Describe the task / complaint"></div>
+                        <div><label class="text-gray-300 text-sm">Assign To</label><select id="assignedTo" class="w-full p-3 text-white">${userOptions}</select></div>
+                        <div><label class="text-gray-300 text-sm">Due Date</label><input type="date" id="taskDate" class="w-full p-3 text-white" value="${new Date().toISOString().slice(0,10)}"></div>
+                        <div><label class="text-gray-300 text-sm">Initial Status</label><select id="taskStatus" class="w-full p-3 text-white"><option value="false">Pending</option><option value="true">Resolved</option></select></div>
+                        <div><label class="text-gray-300 text-sm">Notes</label><textarea id="taskNotes" rows="3" class="w-full p-3 text-white"></textarea></div>
+                        <button id="saveTaskBtn" class="w-full bg-orange-600 hover:bg-orange-500 py-3 rounded-xl font-semibold">Create Task</button>
+                        <div id="taskFeedback" class="text-sm"></div>
                     </div>
                 </div>`;
             document.getElementById('saveTaskBtn').addEventListener('click', async () => {
                 const desc = document.getElementById('taskDesc').value.trim();
-                if (!desc) { showToast("Description required", true); return; }
+                if (!desc) { document.getElementById('taskFeedback').innerHTML = '<span class="text-red-400">Description required</span>'; return; }
                 try {
                     await addDoc(collection(db, "tasks"), {
                         description: desc,
                         assignedTo: document.getElementById('assignedTo').value,
                         assignedBy: currentUser.uid,
                         date: document.getElementById('taskDate').value,
-                        priority: document.getElementById('taskPriority').value,
-                        status: false,
+                        status: document.getElementById('taskStatus').value === 'true',
                         notes: document.getElementById('taskNotes').value,
                         createdAt: Timestamp.now()
                     });
-                    showToast("Task created successfully!");
+                    showToast("Task created");
+                    document.getElementById('taskDesc').value = "";
+                    document.getElementById('taskFeedback').innerHTML = '<span class="text-green-400">✓ Task added</span>';
                     if (currentRole === 'admin') renderAdminAllTasks();
-                    else renderUserDashboard();
-                } catch (err) { showToast(err.message, true); }
+                    else renderMyAssignedTasks();
+                } catch (err) { document.getElementById('taskFeedback').innerHTML = `<span class="text-red-400">${err.message}</span>`; }
             });
         }
 
+        // ========== ADMIN: ALL TASKS (with toggle) ==========
         async function renderAdminAllTasks() {
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>All Tasks</h2><div id="adminTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto pr-2"></div></div>`;
+            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>All Tasks (Admin)</h2><div id="adminTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
+            await loadAdminTasks();
+        }
+        async function loadAdminTasks() {
             const snap = await getDocs(query(collection(db, "tasks"), orderBy("date", "desc")));
             const tasks = []; snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
-            const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
             const container = document.getElementById('adminTasksContainer');
-            if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks yet. Create one.</div>'; return; }
+            if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks yet.</div>'; return; }
+            const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
             container.innerHTML = tasks.map(t => `
-                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'} cursor-pointer" data-id="${t.id}">
+                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'}">
                     <div class="flex flex-wrap justify-between gap-3">
-                        <div class="flex-1"><p class="font-bold text-white text-lg">${escapeHtml(t.description)}</p>
-                        <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-400"><span><i class="fas fa-user-check mr-1"></i>${userMap[t.assignedTo] || '?'}</span><span><i class="fas fa-calendar-alt mr-1"></i>${t.date}</span><span><i class="fas fa-flag mr-1"></i>${t.priority || 'medium'}</span></div></div>
-                        <div class="flex items-center gap-3"><span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'}">${t.status ? 'RESOLVED' : 'PENDING'}</span></div>
+                        <div class="flex-1">
+                            <p class="font-bold text-white text-lg">${escapeHtml(t.description)}</p>
+                            <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
+                                <span><i class="fas fa-user-check"></i> Assigned: ${userMap[t.assignedTo] || '?'}</span>
+                                <span><i class="fas fa-calendar-alt"></i> Due: ${t.date}</span>
+                                <span><i class="fas fa-sticky-note"></i> ${t.notes || '-'}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
+                            <button data-id="${t.id}" data-status="${!t.status}" class="adminToggleBtn bg-blue-600/80 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs text-white"><i class="fas fa-sync-alt mr-1"></i>Toggle</button>
+                        </div>
                     </div>
                 </div>`).join('');
-            document.querySelectorAll('#adminTasksContainer .task-card').forEach(card => {
-                const task = tasks.find(t => t.id === card.dataset.id);
-                if(task) card.addEventListener('click', () => showTaskDetail(task, true, false));
+            document.querySelectorAll('.adminToggleBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    await updateDoc(doc(db, "tasks", btn.dataset.id), { status: btn.dataset.status === 'true' });
+                    showToast("Status updated");
+                    loadAdminTasks();
+                });
             });
         }
 
+        // ========== USER: VIEW ALL TASKS (READ ONLY) ==========
+        async function renderUserAllTasksReadonly() {
+            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-globe text-orange-500 mr-2"></i>All Team Tasks</h2><div id="userAllTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
+            const snap = await getDocs(query(collection(db, "tasks"), orderBy("date", "desc")));
+            const tasks = []; snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
+            const container = document.getElementById('userAllTasksContainer');
+            if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks yet.</div>'; return; }
+            const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
+            container.innerHTML = tasks.map(t => `
+                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'}">
+                    <div class="flex flex-wrap justify-between gap-3">
+                        <div>
+                            <p class="font-bold text-white">${escapeHtml(t.description)}</p>
+                            <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
+                                <span><i class="fas fa-user-check"></i> ${userMap[t.assignedTo] || '?'}</span>
+                                <span><i class="fas fa-calendar-alt"></i> ${t.date}</span>
+                                <span><i class="fas fa-comment"></i> ${t.notes || '-'}</span>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
+                    </div>
+                </div>`).join('');
+        }
+
+        // ========== USER: MY ASSIGNED TASKS (CAN RESOLVE) ==========
         async function renderMyAssignedTasks() {
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>My Assigned Tasks</h2><div id="myTasksList" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
+            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>Tasks Assigned to Me</h2><div id="myTasksList" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
+            await loadMyAssignedTasks();
+        }
+        async function loadMyAssignedTasks() {
             const q = query(collection(db, "tasks"), where("assignedTo", "==", currentUser.uid), orderBy("date", "desc"));
             const snap = await getDocs(q);
             const tasks = []; snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
             const container = document.getElementById('myTasksList');
             if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks assigned to you.</div>'; return; }
             container.innerHTML = tasks.map(t => `
-                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'} cursor-pointer" data-id="${t.id}">
-                    <div class="flex flex-wrap justify-between gap-3">
-                        <div class="flex-1"><p class="font-bold text-white">${escapeHtml(t.description)}</p><div class="text-xs text-gray-400 mt-1">Due: ${t.date} | ${t.notes ? '📝 ' + t.notes.substring(0, 50) : 'No notes'}</div></div>
-                        <div class="flex items-center gap-3"><span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'}">${t.status ? 'RESOLVED' : 'PENDING'}</span></div>
+                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'}">
+                    <div class="flex flex-wrap justify-between gap-3 items-center">
+                        <div class="flex-1">
+                            <p class="font-bold text-white">${escapeHtml(t.description)}</p>
+                            <div class="text-xs text-gray-400 mt-1">Due: ${t.date} | Notes: ${t.notes || '-'}</div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'}">${t.status ? 'RESOLVED' : 'PENDING'}</span>
+                            ${!t.status ? `<button data-id="${t.id}" class="resolveMyBtn bg-green-600/80 hover:bg-green-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-check"></i> Mark Resolved</button>` : ''}
+                        </div>
                     </div>
                 </div>`).join('');
-            document.querySelectorAll('#myTasksList .task-card').forEach(card => {
-                const task = tasks.find(t => t.id === card.dataset.id);
-                if(task) card.addEventListener('click', () => showTaskDetail(task, false, !task.status));
+            document.querySelectorAll('.resolveMyBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    await updateDoc(doc(db, "tasks", btn.dataset.id), { status: true });
+                    showToast("Task resolved!");
+                    loadMyAssignedTasks();     // refresh my tasks
+                    renderUserAllTasksReadonly(); // update global view
+                });
             });
         }
 
+        // ========== ADMIN: TEAM MANAGEMENT ==========
         async function renderTeamManagement() {
             await refreshUsers();
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-users text-orange-500 mr-2"></i>Team Roster</h2><button id="openUserModalBtn" class="bg-orange-600 hover:bg-orange-500 px-5 py-2 rounded-xl mb-6"><i class="fas fa-user-plus mr-2"></i>Add Member</button><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="usersGrid"></div></div>`;
+            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-users text-orange-500 mr-2"></i>Team Members</h2><button id="openUserModalBtn" class="bg-orange-600 hover:bg-orange-500 px-5 py-2 rounded-xl mb-6"><i class="fas fa-user-plus"></i> Add Member</button><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="usersGrid"></div></div>`;
+            const users = allUsersCache;
             const grid = document.getElementById('usersGrid');
-            grid.innerHTML = allUsersCache.map(u => `<div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700 hover:border-orange-500/50 transition"><i class="fas fa-user-circle text-3xl text-orange-400"></i><h3 class="font-bold text-white mt-2">${u.name || u.email}</h3><p class="text-xs text-gray-400">${u.email}</p><span class="inline-block mt-2 text-xs px-2 py-1 rounded-full ${u.role === 'admin' ? 'bg-orange-500/30 text-orange-300' : 'bg-green-500/30 text-green-300'}">${u.role}</span></div>`).join('');
+            if (!users.length) grid.innerHTML = '<div class="text-gray-400">No users</div>';
+            else grid.innerHTML = users.map(u => `<div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700"><i class="fas fa-user-circle text-2xl text-orange-400"></i><h3 class="font-bold text-white mt-1">${u.name || u.email}</h3><p class="text-xs text-gray-400">${u.email}</p><span class="inline-block mt-2 text-xs px-2 py-1 rounded-full ${u.role === 'admin' ? 'bg-orange-500/30 text-orange-300' : 'bg-green-500/30 text-green-300'}">${u.role}</span></div>`).join('');
             document.getElementById('openUserModalBtn').addEventListener('click', () => showCreateUserModal());
         }
-
         function showCreateUserModal() {
             const modalHtml = `<div id="userModal" class="fixed inset-0 flex items-center justify-center z-50 modal-backdrop"><div class="bg-gray-900 rounded-2xl p-6 w-96 border border-gray-700"><h3 class="text-xl font-bold text-white mb-4">Create User</h3><input id="userName" placeholder="Full Name" class="w-full p-2 mb-3 bg-gray-800 text-white rounded"><input id="userEmail" placeholder="Email" class="w-full p-2 mb-3 bg-gray-800 text-white rounded"><input id="userPass" type="password" placeholder="Password" class="w-full p-2 mb-3 bg-gray-800 text-white rounded"><select id="userRole" class="w-full p-2 mb-4 bg-gray-800 text-white rounded"><option value="user">Team Member</option><option value="admin">Administrator</option></select><div class="flex justify-end gap-3"><button id="closeModal" class="px-4 py-2 bg-gray-700 rounded">Cancel</button><button id="confirmCreate" class="px-4 py-2 bg-orange-600 rounded">Create</button></div></div></div>`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
@@ -612,12 +485,13 @@
             document.getElementById('closeModal').onclick = () => document.getElementById('userModal')?.remove();
         }
 
+        // ========== ADMIN ANALYTICS ==========
         async function renderAdminAnalytics() {
             await refreshUsers();
             const users = allUsersCache.filter(u => u.role === 'user');
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4">Performance Analytics</h2><select id="analyticsSelect" class="p-2 rounded w-64 mb-4">${users.map(u => `<option value="${u.uid}">${u.name || u.email}</option>`).join('')}</select><canvas id="analyticsChart" class="mt-2 h-64"></canvas><div id="analyticsStats" class="grid grid-cols-3 gap-4 mt-6"></div></div>`;
+            if (!users.length) { dynamicContent.innerHTML = '<div class="glass-card p-6 text-gray-400">No team members yet.</div>'; return; }
+            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4">Performance Analytics</h2><select id="analyticsSelect" class="p-2 rounded w-64">${users.map(u => `<option value="${u.uid}">${u.name || u.email}</option>`).join('')}</select><canvas id="analyticsChart" class="mt-6 h-64"></canvas><div id="analyticsStats" class="grid grid-cols-3 gap-4 mt-6"></div></div>`;
             const select = document.getElementById('analyticsSelect');
-            if (!users.length) { dynamicContent.innerHTML += '<div class="text-gray-400">No team members</div>'; return; }
             async function update(uid) {
                 const tasksSnap = await getDocs(query(collection(db, "tasks"), where("assignedTo", "==", uid)));
                 const tasks = []; tasksSnap.forEach(d => tasks.push(d.data()));
@@ -625,13 +499,52 @@
                 const rate = tasks.length ? ((resolved/tasks.length)*100).toFixed(1) : 0;
                 const ctx = document.getElementById('analyticsChart').getContext('2d');
                 if(window.anaChart) window.anaChart.destroy();
-                window.anaChart = new Chart(ctx, { type: 'bar', data: { labels: ['Resolved', 'Pending'], datasets: [{ label: 'Tasks', data: [resolved, pending], backgroundColor: ['#22c55e', '#f97316'], borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: true } });
-                document.getElementById('analyticsStats').innerHTML = `<div class="stat-card text-center"><p class="text-2xl font-bold text-green-400">${resolved}</p><p class="text-gray-400 text-sm">Resolved</p></div><div class="stat-card text-center"><p class="text-2xl font-bold text-orange-400">${pending}</p><p class="text-gray-400 text-sm">Pending</p></div><div class="stat-card text-center"><p class="text-2xl font-bold text-blue-400">${rate}%</p><p class="text-gray-400 text-sm">Completion</p></div>`;
+                window.anaChart = new Chart(ctx, { type: 'bar', data: { labels: ['Resolved', 'Pending'], datasets: [{ label: 'Tasks', data: [resolved, pending], backgroundColor: ['#22c55e', '#f97316'] }] } });
+                document.getElementById('analyticsStats').innerHTML = `<div class="bg-gray-800 p-3 rounded text-center"><p class="text-2xl font-bold text-green-400">${resolved}</p><p>Resolved</p></div><div class="bg-gray-800 p-3 rounded text-center"><p class="text-2xl font-bold text-orange-400">${pending}</p><p>Pending</p></div><div class="bg-gray-800 p-3 rounded text-center"><p class="text-2xl font-bold text-blue-400">${rate}%</p><p>Completion</p></div>`;
             }
             select.onchange = () => update(select.value);
             update(select.value);
         }
 
+        // ========== MONTHLY PDF REPORT ==========
+        async function renderMonthlyReport() {
+            await refreshUsers();
+            dynamicContent.innerHTML = `<div class="glass-card p-6 max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-file-pdf text-red-500"></i> Monthly Report</h2><div class="mb-4"><label>Select Month</label><input type="month" id="reportMonth" class="w-full p-2 rounded"></div><div class="mb-6"><label>Team Member</label><select id="reportUser" class="w-full p-2 rounded"><option value="all">All Members</option>${allUsersCache.filter(u=>u.role==='user').map(u=>`<option value="${u.uid}">${u.name||u.email}</option>`)}</select></div><button id="generatePdfBtn" class="bg-red-600 w-full py-2 rounded-xl font-semibold">Generate PDF</button><div id="pdfMsg" class="mt-3 text-sm"></div></div>`;
+            document.getElementById('generatePdfBtn').onclick = async () => {
+                const monthYear = document.getElementById('reportMonth').value;
+                if (!monthYear) { alert("Select month"); return; }
+                const [year, month] = monthYear.split('-');
+                const start = `${year}-${month}-01`, end = `${year}-${month}-${new Date(year, month, 0).getDate()}`;
+                const selected = document.getElementById('reportUser').value;
+                let q = collection(db, "tasks");
+                if (selected !== "all") q = query(q, where("assignedTo", "==", selected));
+                const snap = await getDocs(q);
+                const tasks = []; snap.forEach(d => { const t = d.data(); if (t.date >= start && t.date <= end) tasks.push(t); });
+                if (!tasks.length) { document.getElementById('pdfMsg').innerHTML = '<span class="text-red-400">No tasks in this period</span>'; return; }
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('landscape');
+                pdf.setFillColor(249, 115, 22); pdf.rect(0, 0, 297, 20, 'F');
+                pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.text("M&P Express - Monthly Report", 14, 15);
+                pdf.setTextColor(0,0,0); pdf.setFontSize(10); pdf.text(`Period: ${monthYear} | Generated: ${new Date().toLocaleString()}`, 14, 30);
+                let y = 40;
+                const grouped = {};
+                tasks.forEach(t => { if (!grouped[t.assignedTo]) grouped[t.assignedTo] = []; grouped[t.assignedTo].push(t); });
+                for (const [uid, userTasks] of Object.entries(grouped)) {
+                    let userName = allUsersCache.find(u=>u.uid===uid)?.name || uid;
+                    const resolved = userTasks.filter(t=>t.status).length;
+                    const pending = userTasks.length - resolved;
+                    pdf.setFontSize(12); pdf.text(`${userName} - Resolved: ${resolved} | Pending: ${pending} | Rate: ${((resolved/(resolved+pending||1))*100).toFixed(1)}%`, 14, y);
+                    y += 8;
+                    pdf.autoTable({ startY: y, head: [['Date','Task','Status','Notes']], body: userTasks.map(t=>[t.date, t.description, t.status?'Resolved':'Pending', t.notes||'']), margin: {left:14}, headStyles: { fillColor: [249,115,22] } });
+                    y = pdf.lastAutoTable.finalY + 10;
+                    if (y > 200) { pdf.addPage(); y = 20; }
+                }
+                pdf.save(`M&P_Report_${monthYear}.pdf`);
+                document.getElementById('pdfMsg').innerHTML = '<span class="text-green-400">✓ PDF downloaded</span>';
+            };
+        }
+
+        // ========== USER PERFORMANCE STATS ==========
         async function renderUserStats() {
             dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4">My Performance</h2><canvas id="userStatsChart" class="h-64"></canvas><div class="grid grid-cols-2 gap-4 mt-6" id="userStatsKpi"></div></div>`;
             const q = query(collection(db, "tasks"), where("assignedTo", "==", currentUser.uid));
@@ -640,33 +553,8 @@
             const resolved = tasks.filter(t=>t.status).length, pending = tasks.length - resolved;
             const ctx = document.getElementById('userStatsChart').getContext('2d');
             if(window.userStatChart) window.userStatChart.destroy();
-            window.userStatChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Resolved', 'Pending'], datasets: [{ data: [resolved, pending], backgroundColor: ['#22c55e', '#f97316'], borderWidth: 0 }] }, options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } } });
-            document.getElementById('userStatsKpi').innerHTML = `<div class="stat-card text-center"><p class="text-3xl font-bold text-green-400">${resolved}</p><p>Completed</p></div><div class="stat-card text-center"><p class="text-3xl font-bold text-orange-400">${pending}</p><p>Pending</p></div>`;
-        }
-
-        async function renderMonthlyReport() {
-            await refreshUsers();
-            dynamicContent.innerHTML = `<div class="glass-card p-6 max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-file-pdf text-red-500"></i> Monthly Report</h2><div class="mb-4"><label class="text-gray-300">Select Month</label><input type="month" id="reportMonth" class="w-full p-2 rounded mt-1"></div><div class="mb-6"><label class="text-gray-300">Team Member</label><select id="reportUser" class="w-full p-2 rounded mt-1"><option value="all">All Members</option>${allUsersCache.filter(u=>u.role==='user').map(u=>`<option value="${u.uid}">${u.name||u.email}</option>`)}</select></div><button id="generatePdfBtn" class="bg-red-600 w-full py-2 rounded-xl font-semibold hover:bg-red-500 transition"><i class="fas fa-download mr-2"></i>Generate PDF</button></div>`;
-            document.getElementById('generatePdfBtn').onclick = async () => {
-                const monthYear = document.getElementById('reportMonth').value;
-                if (!monthYear) { alert("Select month"); return; }
-                const [year, month] = monthYear.split('-');
-                const start = `${year}-${month}-01`, end = `${year}-${month}-${new Date(year, month, 0).getDate()}`;
-                const selected = document.getElementById('reportUser').value;
-                let qRef = collection(db, "tasks");
-                const snap = await getDocs(qRef);
-                const tasks = []; snap.forEach(d => { const t = d.data(); if (t.date >= start && t.date <= end && (selected === "all" || t.assignedTo === selected)) tasks.push({ id: d.id, ...t }); });
-                if (!tasks.length) { alert("No tasks in this period"); return; }
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('landscape');
-                pdf.setFillColor(249, 115, 22); pdf.rect(0, 0, 297, 20, 'F');
-                pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.text("M&P Express - Monthly Performance Report", 14, 15);
-                pdf.setTextColor(0,0,0); pdf.setFontSize(10); pdf.text(`Period: ${monthYear} | Generated: ${new Date().toLocaleString()}`, 14, 30);
-                const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
-                pdf.autoTable({ startY: 40, head: [['Assigned To', 'Task', 'Due Date', 'Status', 'Notes']], body: tasks.map(t => [userMap[t.assignedTo] || 'Unknown', t.description, t.date, t.status ? 'Resolved' : 'Pending', t.notes || '']), headStyles: { fillColor: [249,115,22] }, styles: { fontSize: 8, cellPadding: 2 }, alternateRowStyles: { fillColor: [30,41,59] } });
-                pdf.save(`M&P_Report_${monthYear}.pdf`);
-                showToast("PDF Downloaded!");
-            };
+            window.userStatChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Resolved', 'Pending'], datasets: [{ data: [resolved, pending], backgroundColor: ['#22c55e', '#f97316'] }] } });
+            document.getElementById('userStatsKpi').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-green-400">${resolved}</p><p>Completed</p></div><div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-orange-400">${pending}</p><p>Pending</p></div>`;
         }
 
         function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
