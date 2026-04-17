@@ -3,598 +3,1028 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express | Ultimate Task Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>M&P Express Logistics | IT Approval Workflow</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <!-- PDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: #0B1120; }
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(249, 115, 22, 0.2);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f5f7fb;
+            min-height: 100vh;
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fff5eb 0%, #ffe4cc 100%);
+            padding: 1.5rem;
+        }
+
+        .auth-card {
+            background: white;
             border-radius: 1.5rem;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-top: 4px solid #f97316;
         }
-        .sidebar-link {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 0.75rem;
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
         }
-        .sidebar-link:hover {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            color: white;
-            transform: translateX(4px);
+
+        .auth-header h1 {
+            font-size: 1.6rem;
+            color: #f97316;
         }
-        .task-card {
-            transition: transform 0.2s, box-shadow 0.2s;
-            border-left: 4px solid;
+
+        .auth-header p {
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
         }
-        .task-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -12px rgba(0,0,0,0.4);
+
+        .input-group {
+            margin-bottom: 1.2rem;
         }
-        .toast-notify {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #1e293b;
-            backdrop-filter: blur(8px);
-            padding: 12px 20px;
-            border-radius: 40px;
-            color: white;
-            font-size: 0.875rem;
-            z-index: 9999;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            border-left: 3px solid #f97316;
+
+        .input-group label {
+            display: block;
+            color: #374151;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
         }
-        .loading-spinner {
-            border: 3px solid #334155;
-            border-top: 3px solid #f97316;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 10px; }
-        input, select, textarea {
-            background-color: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.8rem;
+            font-size: 0.9rem;
             transition: all 0.2s;
         }
-        input:focus, select:focus, textarea:focus {
-            border-color: #f97316;
+
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
             outline: none;
-            box-shadow: 0 0 0 2px rgba(249,115,22,0.3);
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
         }
-        .modal-backdrop {
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: #f97316;
+            border: none;
+            border-radius: 0.8rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .auth-btn:hover {
+            background: #ea580c;
+            transform: translateY(-1px);
+        }
+
+        .error-msg {
+            color: #ef4444;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        .app-container {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        .navbar {
+            background: white;
+            border-radius: 1rem;
+            padding: 0.9rem 2rem;
+            margin-bottom: 1.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-bottom: 2px solid #f97316;
+        }
+
+        .logo h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #f97316;
+        }
+
+        .logo p {
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #f3f4f6;
+            padding: 0.3rem 1rem 0.3rem 1.2rem;
+            border-radius: 2rem;
+        }
+
+        .role-badge {
+            background: #f97316;
+            color: white;
+            padding: 0.2rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+            border: none;
+            padding: 0.4rem 1.2rem;
+            border-radius: 2rem;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+            transition: 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05);}
+        .stat-card i { font-size: 1.8rem; margin-bottom: 0.3rem; color: #f97316; }
+        .stat-value { font-size: 1.7rem; font-weight: 700; color: #1f2937; }
+        .stat-label { font-size: 0.7rem; color: #6b7280; }
+
+        .admin-panel {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.3rem;
+            margin-bottom: 1.8rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-left: 4px solid #f97316;
+        }
+
+        .admin-panel h3 { color: #f97316; margin-bottom: 1rem; }
+
+        .add-user-form {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            align-items: flex-end;
+        }
+
+        .add-user-form .input-group {
+            margin-bottom: 0;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .add-user-btn, .export-btn {
+            background: #f97316;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.8rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .export-btn { background: #10b981; }
+        .add-user-btn:hover { background: #ea580c; }
+        .export-btn:hover { background: #059669; }
+
+        .users-table { overflow-x: auto; margin-top: 1rem; }
+        .users-table table { width: 100%; border-collapse: collapse; }
+        .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem; }
+        .delete-user-btn { background: #ef4444; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
+
+        .flow-timeline {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+            padding: 0.7rem 0.2rem;
+            border-radius: 0.8rem;
+            background: #f3f4f6;
+        }
+
+        .timeline-step .step-icon { font-size: 1.3rem; margin-bottom: 0.2rem; }
+        .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; }
+        .timeline-step.active { background: #f97316; color: white; }
+        .timeline-step.completed { background: #10b981; color: white; }
+        .timeline-step.pending { background: #f3f4f6; color: #9ca3af; }
+        .timeline-arrow { color: #f97316; font-size: 1.2rem; font-weight: bold; }
+
+        .request-form-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .form-title {
+            color: #f97316;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #f97316;
+            display: inline-block;
+            padding-bottom: 0.3rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            background: white;
+            border-radius: 1rem;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .section-title h3 { color: #f97316; font-size: 1rem; }
+
+        .requests-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .request-item {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+            border-left: 4px solid #f97316;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .request-item:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .request-item.completed { border-left-color: #10b981; }
+
+        .request-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .request-id { font-weight: 700; color: #f97316; }
+        .request-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 2rem; }
+        .status-badge-pending { background: #fed7aa; color: #9a3412; }
+        .status-badge-completed { background: #d1fae5; color: #065f46; }
+        .priority-high { background: #fee2e2; color: #dc2626; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
+        .priority-medium { background: #fed7aa; color: #ea580c; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
+        .priority-low { background: #d1fae5; color: #059669; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
+        .request-desc { font-size: 0.85rem; color: #4b5563; margin-top: 0.3rem; }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.8rem;
+            margin: 1rem 0;
+        }
+
+        .detail-item {
+            background: #f9fafb;
+            padding: 0.6rem 0.9rem;
+            border-radius: 0.8rem;
+            font-size: 0.85rem;
+            word-break: break-word;
+        }
+
+        .detail-item strong { color: #f97316; }
+
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 1.2rem;
+            margin: 1rem 0;
+        }
+
+        .workflow-card {
+            background: #f9fafb;
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+
+        .workflow-card.disabled-card {
+            opacity: 0.6;
+            background: #f3f4f6;
+        }
+
+        .card-header h3 { color: #f97316; font-size: 1rem; }
+
+        textarea {
+            width: 100%;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.8rem;
+            padding: 0.6rem;
+            font-size: 0.8rem;
+            resize: vertical;
+            margin: 0.5rem 0;
+        }
+
+        textarea:disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .action-btn {
+            background: #f97316;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 0.8rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.2s;
+        }
+        .action-btn:hover:not(:disabled) { background: #ea580c; transform: translateY(-1px);}
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
+
+        .events-log {
+            background: #1f2937;
+            border-radius: 0.8rem;
+            padding: 0.8rem;
+            max-height: 140px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #fcd34d;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .footer p {
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .footer span {
+            color: #f97316;
+            font-weight: 600;
+        }
+
+        .role-access-info {
+            background: #fef3c7;
+            border-left: 4px solid #f97316;
+            padding: 0.5rem 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            color: #92400e;
+        }
+
+        @media (max-width: 700px) {
+            .app-container { padding: 1rem; }
+            .timeline-steps { flex-direction: column; }
+            .timeline-arrow { display: none; }
+        }
+
+        .file-info {
+            font-size: 0.7rem;
+            color: #f97316;
+            margin-top: 0.3rem;
+            padding: 0.3rem;
+        }
+        
+        .upload-success { color: #10b981; }
+        .upload-error { color: #ef4444; }
+        .upload-loading { color: #f97316; }
+        
+        .attachment-link {
+            color: #f97316;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .attachment-link:hover { text-decoration: underline; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 to-gray-950">
+<body>
 
-    <!-- LOGIN PANEL -->
-    <div id="authPanel" class="min-h-screen flex items-center justify-center px-4">
-        <div class="glass-card w-full max-w-md p-8 shadow-2xl">
-            <div class="text-center mb-8">
-                <div class="inline-flex p-3 bg-orange-500/20 rounded-full mb-3">
-                    <i class="fas fa-truck-fast text-4xl text-orange-500"></i>
-                </div>
-                <h2 class="text-3xl font-bold text-white tracking-tight">M&P Express</h2>
-                <p class="text-gray-400 text-sm mt-1">Task & Complaint Intelligence</p>
-                <div id="initStatus" class="mt-3 text-xs text-gray-400 bg-gray-800/50 p-2 rounded-xl"></div>
+<div class="auth-container" id="authContainer">
+    <div class="auth-card">
+        <div class="auth-header">
+            <i class="fas fa-truck-fast" style="font-size: 2.5rem; color: #f97316;"></i>
+            <h1>M&P Express Logistics</h1>
+            <p>IT Approval Workflow System</p>
+        </div>
+        <div id="loginForm">
+            <div class="input-group">
+                <label><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="loginEmail" placeholder="sse@mpexpress.com">
             </div>
-            <form id="loginForm">
-                <div class="mb-4">
-                    <label class="block text-gray-300 text-sm font-medium mb-1">Email</label>
-                    <input type="email" id="loginEmail" class="w-full px-4 py-2.5 text-white" placeholder="admin@mulphilog.com">
-                </div>
-                <div class="mb-6">
-                    <label class="block text-gray-300 text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="loginPassword" class="w-full px-4 py-2.5 text-white" placeholder="••••••">
-                </div>
-                <button type="submit" class="w-full bg-orange-600 hover:bg-orange-500 text-white font-semibold py-2.5 rounded-xl transition-all shadow-lg">Sign In</button>
-            </form>
-            <div class="text-center mt-5">
-                <button id="manualCreateAdmin" class="text-orange-400 text-sm underline hover:text-orange-300">⟳ Initialize System</button>
+            <div class="input-group">
+                <label><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••">
             </div>
-            <div class="mt-8 pt-4 border-t border-gray-700 text-center text-xs text-gray-500">
-                Developed by <span class="text-orange-500 font-semibold">Fraaz Sheikh</span> & Team
-            </div>
+            <button class="auth-btn" onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login to Portal</button>
+            <div id="loginError" class="error-msg"></div>
+        </div>
+    </div>
+</div>
+
+<div class="app-container" id="appContainer">
+    <div class="navbar">
+        <div class="logo">
+            <h2><i class="fas fa-truck"></i> M&P Express Logistics</h2>
+            <p>IT Request Management System</p>
+        </div>
+        <div class="user-badge">
+            <span><i class="fas fa-user-circle"></i> <span id="userName"></span></span>
+            <span class="role-badge" id="userRole"></span>
+            <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
     </div>
 
-    <!-- MAIN APP -->
-    <div id="appRoot" class="hidden flex min-h-screen">
-        <aside class="fixed inset-y-0 left-0 w-72 bg-gray-900/90 backdrop-blur-md border-r border-gray-800 shadow-2xl z-30 flex flex-col">
-            <div class="p-6 border-b border-gray-800">
-                <div class="flex items-center space-x-3">
-                    <i class="fas fa-truck-fast text-2xl text-orange-500"></i>
-                    <span class="text-xl font-bold text-white">M&P Express</span>
-                </div>
-                <p class="text-xs text-gray-400 mt-1">Task Hub</p>
-            </div>
-            <nav class="flex-1 p-4 space-y-1.5">
-                <div id="adminNavGroup" class="space-y-1.5 hidden">
-                    <a href="#" data-view="team" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-users w-5"></i><span>Team Management</span></a>
-                    <a href="#" data-view="allTasksAdmin" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-list-check w-5"></i><span>All Tasks (Admin)</span></a>
-                    <a href="#" data-view="analytics" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-chart-line w-5"></i><span>Analytics</span></a>
-                    <a href="#" data-view="report" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-file-pdf w-5"></i><span>Monthly Report</span></a>
-                </div>
-                <div id="userNavGroup" class="space-y-1.5 hidden">
-                    <a href="#" data-view="allTasksUser" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-globe w-5"></i><span>All Tasks</span></a>
-                    <a href="#" data-view="myAssigned" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-tasks w-5"></i><span>My Tasks</span></a>
-                    <a href="#" data-view="myStats" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-gray-300"><i class="fas fa-chart-simple w-5"></i><span>My Performance</span></a>
-                </div>
-                <div class="pt-4"><hr class="border-gray-800"></div>
-                <a href="#" data-view="addTask" class="sidebar-link flex items-center space-x-3 px-4 py-2.5 text-orange-300 bg-orange-500/10"><i class="fas fa-plus-circle w-5"></i><span>+ Create Task</span></a>
-            </nav>
-            <div class="p-5 border-t border-gray-800">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <i class="fas fa-user-circle text-gray-400 text-xl"></i>
-                        <span id="sidebarUserName" class="text-sm text-gray-300 font-medium"></span>
-                    </div>
-                    <button id="logoutBtn" class="text-red-400 hover:text-red-300"><i class="fas fa-sign-out-alt"></i></button>
-                </div>
-                <div class="mt-2 text-xs text-gray-500">© 2025 M&P Express</div>
-            </div>
-        </aside>
-
-        <main class="flex-1 ml-72">
-            <header class="sticky top-0 z-20 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 px-8 py-4 flex justify-between items-center">
-                <h1 id="pageTitle" class="text-xl font-bold text-white">Dashboard</h1>
-                <div class="flex items-center space-x-3">
-                    <span id="topUserName" class="text-sm text-gray-300"></span>
-                    <span id="roleBadge" class="px-3 py-1 text-xs rounded-full bg-orange-500/20 text-orange-400 font-medium"></span>
-                </div>
-            </header>
-            <div class="p-6 md:p-8" id="dynamicContent">
-                <div class="flex justify-center items-center h-64"><div class="loading-spinner"></div></div>
-            </div>
-        </main>
+    <div class="stats-grid">
+        <div class="stat-card"><i class="fas fa-hourglass-half"></i><div class="stat-value" id="pendingCount">0</div><div class="stat-label">In Progress</div></div>
+        <div class="stat-card"><i class="fas fa-check-double"></i><div class="stat-value" id="completedCount">0</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><i class="fas fa-receipt"></i><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total Requests</div></div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, addDoc, updateDoc, Timestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+    <div class="admin-panel" id="adminPanel" style="display: none;">
+        <h3><i class="fas fa-shield-alt"></i> Admin Dashboard - User Management</h3>
+        <div class="add-user-form">
+            <div class="input-group"><label>Full Name</label><input type="text" id="newUserName" placeholder="Name"></div>
+            <div class="input-group"><label>Email</label><input type="email" id="newUserEmail" placeholder="email@mpexpress.com"></div>
+            <div class="input-group"><label>Password</label><input type="text" id="newUserPassword" placeholder="temp123"></div>
+            <div class="input-group"><label>Role</label>
+                <select id="newUserRole">
+                    <option value="sse">SSE IT</option>
+                    <option value="am">AM IT</option>
+                    <option value="area_manager">Area Manager</option>
+                    <option value="hod">HOD IT</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <button class="add-user-btn" onclick="addNewUser()"><i class="fas fa-user-plus"></i> Add User</button>
+            <button class="export-btn" onclick="exportAllToPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        </div>
+        <div class="users-table" id="usersTable"></div>
+    </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDUWw4CWZbL35zpQn4FA1m_fsJj95FpOec",
-            authDomain: "itcomplaint-4ec8e.firebaseapp.com",
-            projectId: "itcomplaint-4ec8e",
-            storageBucket: "itcomplaint-4ec8e.firebasestorage.app",
-            messagingSenderId: "718572872389",
-            appId: "1:718572872389:web:653b63ac93d07be9f2c6ac",
-            measurementId: "G-PS1HC2MH6G"
-        };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <div class="flow-timeline">
+        <div class="timeline-steps" id="timelineSteps">
+            <div class="timeline-step pending" id="stepSSE"><div class="step-icon">💻</div><div class="step-name">SSE IT</div></div>
+            <div class="timeline-arrow">→</div>
+            <div class="timeline-step pending" id="stepAM"><div class="step-icon">📊</div><div class="step-name">AM IT</div></div>
+            <div class="timeline-arrow">→</div>
+            <div class="timeline-step pending" id="stepArea"><div class="step-icon">🌍</div><div class="step-name">Area Manager</div></div>
+            <div class="timeline-arrow">→</div>
+            <div class="timeline-step pending" id="stepHOD"><div class="step-icon">🏛️</div><div class="step-name">HOD IT</div></div>
+        </div>
+    </div>
 
-        let currentUser = null, currentRole = null;
-        let allUsersCache = [];
+    <div class="request-form-card" id="createRequestCard">
+        <h3 class="form-title"><i class="fas fa-plus-circle"></i> Create New IT Request (SSE Only)</h3>
+        <div class="form-row">
+            <div class="input-group"><label><i class="fas fa-envelope"></i> User Email *</label><input type="email" id="requestUserEmail" placeholder="employee@mpexpress.com"></div>
+            <div class="input-group"><label><i class="fas fa-heading"></i> Request Title *</label><input type="text" id="requestTitle" placeholder="e.g., Laptop Issue, Software Access"></div>
+        </div>
+        <div class="form-row">
+            <div class="input-group"><label><i class="fas fa-building"></i> Department</label><input type="text" id="requestDepartment" placeholder="e.g., Operations, HR, Finance"></div>
+            <div class="input-group"><label><i class="fas fa-flag"></i> Priority</label>
+                <select id="requestPriority">
+                    <option value="High">🔴 High</option>
+                    <option value="Medium">🟠 Medium</option>
+                    <option value="Low">🟢 Low</option>
+                </select>
+            </div>
+        </div>
+        <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue *</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
+        <div class="input-group">
+            <label><i class="fas fa-paperclip"></i> Attachment (Image, PDF, DOC - Max 5MB)</label>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt">
+            <div id="fileUploadStatus" class="file-info"></div>
+        </div>
+        <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem; margin-top: 0.5rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
+    </div>
 
-        const authPanel = document.getElementById('authPanel');
-        const appRoot = document.getElementById('appRoot');
-        const loginForm = document.getElementById('loginForm');
-        const initStatus = document.getElementById('initStatus');
-        const sidebarUserName = document.getElementById('sidebarUserName');
-        const topUserName = document.getElementById('topUserName');
-        const roleBadge = document.getElementById('roleBadge');
-        const pageTitle = document.getElementById('pageTitle');
-        const dynamicContent = document.getElementById('dynamicContent');
-        const adminNavGroup = document.getElementById('adminNavGroup');
-        const userNavGroup = document.getElementById('userNavGroup');
-        const logoutBtn = document.getElementById('logoutBtn');
+    <div class="section-title">
+        <h3><i class="fas fa-list"></i> All IT Requests / Complaints</h3>
+        <button class="export-btn" onclick="exportAllToPDF()" style="background: #f97316;"><i class="fas fa-file-pdf"></i> Export PDF</button>
+    </div>
+    <div class="requests-container" id="allRequestsList"></div>
 
-        function showToast(msg, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = `toast-notify ${isError ? 'border-red-500' : 'border-orange-500'}`;
-            toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'} mr-2"></i>${msg}`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
+    <div class="request-form-card" id="selectedRequestCard" style="display: none;">
+        <h3 class="form-title"><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3>
+        <div class="role-access-info" id="accessInfoMsg"></div>
+        <div class="detail-grid" id="selectedReqDetails"></div>
+        <div class="workflow-grid" id="workflowGrid"></div>
+    </div>
+
+    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal | Attachment upload FIXED ✅</div></div>
+    
+    <div class="footer">
+        <p>M&P Express Logistics - IT Request Management Portal | Developed by <span>FARAZ SHEIKH</span></p>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBNFuH14JA0RCrkMhl-37ysgla46QpSJyM",
+        authDomain: "faraze-a0339.firebaseapp.com",
+        projectId: "faraze-a0339",
+        storageBucket: "faraze-a0339.firebasestorage.app",
+        messagingSenderId: "463612751566",
+        appId: "1:463612751566:web:0e6b1e8367321c4ffbaa9f"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+    const auth = firebase.auth();
+    
+    let currentUser = null;
+    let selectedRequest = null;
+    let allRequests = [];
+
+    function addLog(msg) {
+        const logDiv = document.getElementById('eventsLog');
+        const div = document.createElement('div');
+        div.innerHTML = `<i class="fas fa-clock"></i> [${new Date().toLocaleTimeString()}] ${msg}`;
+        logDiv.prepend(div);
+        if(logDiv.children.length > 20) logDiv.removeChild(logDiv.lastChild);
+    }
+
+    async function handleLogin() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        if(!email || !password) { document.getElementById('loginError').innerText = 'Enter email & password'; return; }
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+        } catch(e) {
+            document.getElementById('loginError').innerText = 'Invalid credentials. Contact admin.';
         }
+    }
 
-        async function refreshUsers() {
-            const snap = await getDocs(collection(db, "users"));
-            allUsersCache = [];
-            snap.forEach(d => allUsersCache.push({ uid: d.id, ...d.data() }));
+    async function handleLogout() { await auth.signOut(); location.reload(); }
+
+    window.addNewUser = async () => {
+        const name = document.getElementById('newUserName').value;
+        const email = document.getElementById('newUserEmail').value;
+        const password = document.getElementById('newUserPassword').value;
+        const role = document.getElementById('newUserRole').value;
+        if(!name || !email || !password) { alert('Fill all fields'); return; }
+        if(password.length < 6) { alert('Password 6+ chars'); return; }
+        try {
+            const userCred = await auth.createUserWithEmailAndPassword(email, password);
+            await db.collection('users').doc(userCred.user.uid).set({ name, email, role, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            addLog(`✅ User created: ${name} (${role})`);
+            document.getElementById('newUserName').value = '';
+            document.getElementById('newUserEmail').value = '';
+            document.getElementById('newUserPassword').value = '';
+            loadAllUsers();
+        } catch(e) { alert('Error: ' + e.message); }
+    };
+
+    window.deleteUser = async (userId) => {
+        if(confirm('Delete user?')) {
+            await db.collection('users').doc(userId).delete();
+            loadAllUsers();
         }
+    };
 
-        async function ensureAdmin() {
-            initStatus.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Initializing...';
-            try {
-                const adminQuery = query(collection(db, "users"), where("role", "==", "admin"));
-                const existing = await getDocs(adminQuery);
-                if (!existing.empty) {
-                    initStatus.innerHTML = '✅ System ready.';
-                    return true;
-                }
-                const adminEmail = "admin@mulphilog.com";
-                const adminPass = "090078601";
-                let uid = null;
-                try {
-                    const cred = await createUserWithEmailAndPassword(auth, adminEmail, adminPass);
-                    uid = cred.user.uid;
-                } catch (err) {
-                    if (err.code === 'auth/email-already-in-use') {
-                        const sign = await signInWithEmailAndPassword(auth, adminEmail, adminPass);
-                        uid = sign.user.uid;
-                        await auth.signOut();
-                    } else throw err;
-                }
-                if (uid) {
-                    await setDoc(doc(db, "users", uid), {
-                        email: adminEmail, name: "System Admin", role: "admin", createdAt: Timestamp.now()
-                    });
-                    initStatus.innerHTML = '✅ Admin ready.';
-                    showToast("Default admin ready");
-                }
-                return true;
-            } catch (err) {
-                initStatus.innerHTML = `⚠️ ${err.message.substring(0, 80)}`;
-                return false;
-            }
-        }
-        document.getElementById('manualCreateAdmin')?.addEventListener('click', () => ensureAdmin());
-
-        async function getUserRole(uid) {
-            const snap = await getDoc(doc(db, "users", uid));
-            return snap.exists() ? snap.data().role : null;
-        }
-
-        function bindNavigation() {
-            document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.removeEventListener('click', link._handler);
-                const handler = (e) => {
-                    e.preventDefault();
-                    const view = link.dataset.view;
-                    if (view === 'addTask') renderCreateTask();
-                    else if (currentRole === 'admin') {
-                        if (view === 'team') renderTeamManagement();
-                        else if (view === 'allTasksAdmin') renderAdminAllTasks();
-                        else if (view === 'analytics') renderAdminAnalytics();
-                        else if (view === 'report') renderMonthlyReport();
-                    } else {
-                        if (view === 'allTasksUser') renderUserAllTasksReadonly();
-                        else if (view === 'myAssigned') renderMyAssignedTasks();
-                        else if (view === 'myStats') renderUserStats();
-                    }
-                };
-                link.addEventListener('click', handler);
-                link._handler = handler;
-            });
-        }
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const role = await getUserRole(user.uid);
-                if (!role) { await signOut(auth); showToast("Invalid account", true); return; }
-                currentUser = user;
-                currentRole = role;
-                await refreshUsers();
-                const userData = allUsersCache.find(u => u.uid === user.uid);
-                const displayName = userData?.name || userData?.email || "User";
-                sidebarUserName.innerText = displayName;
-                topUserName.innerText = displayName;
-                roleBadge.innerText = role === 'admin' ? 'Administrator' : 'Team Member';
-                authPanel.classList.add('hidden');
-                appRoot.classList.remove('hidden');
-                if (role === 'admin') {
-                    adminNavGroup.classList.remove('hidden');
-                    userNavGroup.classList.add('hidden');
-                    pageTitle.innerText = "Admin Control";
-                    renderAdminAllTasks();
-                } else {
-                    userNavGroup.classList.remove('hidden');
-                    adminNavGroup.classList.add('hidden');
-                    pageTitle.innerText = "My Tasks";
-                    renderMyAssignedTasks();
-                }
-                bindNavigation();
-            } else {
-                authPanel.classList.remove('hidden');
-                appRoot.classList.add('hidden');
-                ensureAdmin();
-            }
+    async function loadAllUsers() {
+        const snapshot = await db.collection('users').get();
+        let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
         });
+        html += '</tbody></tr>';
+        document.getElementById('usersTable').innerHTML = html;
+    }
 
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const pwd = document.getElementById('loginPassword').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, pwd);
-                showToast("Welcome!");
-            } catch (err) { alert("Invalid credentials"); }
+    async function loadStats() {
+        const snapshot = await db.collection('requests').get();
+        let pending = 0, completed = 0;
+        snapshot.forEach(doc => {
+            if(doc.data().stage === 'COMPLETED') completed++;
+            else pending++;
         });
+        document.getElementById('pendingCount').innerText = pending;
+        document.getElementById('completedCount').innerText = completed;
+        document.getElementById('totalCount').innerText = snapshot.size;
+    }
 
-        logoutBtn.addEventListener('click', () => signOut(auth));
+    async function loadAllRequests() {
+        const snapshot = await db.collection('requests').orderBy('createdAt', 'desc').get();
+        allRequests = [];
+        snapshot.forEach(doc => {
+            allRequests.push({ id: doc.id, ...doc.data() });
+        });
+        displayAllRequests();
+    }
 
-        // ========== CREATE TASK (assign to anyone) ==========
-        async function renderCreateTask() {
-            await refreshUsers();
-            const userOptions = allUsersCache.map(u => `<option value="${u.uid}">${u.name || u.email} (${u.role})</option>`).join('');
-            dynamicContent.innerHTML = `
-                <div class="max-w-3xl mx-auto glass-card p-8">
-                    <h2 class="text-2xl font-bold text-white mb-6"><i class="fas fa-plus-circle text-orange-500 mr-3"></i>Create New Task</h2>
-                    <div class="space-y-5">
-                        <div><label class="text-gray-300 text-sm">Task Description *</label><input id="taskDesc" class="w-full p-3 text-white" placeholder="Describe the task / complaint"></div>
-                        <div><label class="text-gray-300 text-sm">Assign To</label><select id="assignedTo" class="w-full p-3 text-white">${userOptions}</select></div>
-                        <div><label class="text-gray-300 text-sm">Due Date</label><input type="date" id="taskDate" class="w-full p-3 text-white" value="${new Date().toISOString().slice(0,10)}"></div>
-                        <div><label class="text-gray-300 text-sm">Initial Status</label><select id="taskStatus" class="w-full p-3 text-white"><option value="false">Pending</option><option value="true">Resolved</option></select></div>
-                        <div><label class="text-gray-300 text-sm">Notes / Comments</label><textarea id="taskNotes" rows="3" class="w-full p-3 text-white" placeholder="Add any initial comments"></textarea></div>
-                        <button id="saveTaskBtn" class="w-full bg-orange-600 hover:bg-orange-500 py-3 rounded-xl font-semibold">Create Task</button>
-                        <div id="taskFeedback" class="text-sm"></div>
+    function getPriorityClass(priority) {
+        if(priority === 'High') return 'priority-high';
+        if(priority === 'Medium') return 'priority-medium';
+        return 'priority-low';
+    }
+
+    function displayAllRequests() {
+        const container = document.getElementById('allRequestsList');
+        if(!container) return;
+        let html = '';
+        allRequests.forEach(req => {
+            const isCompleted = req.stage === 'COMPLETED';
+            const statusClass = isCompleted ? 'status-badge-completed' : 'status-badge-pending';
+            const statusText = isCompleted ? '✅ Completed' : `🔄 ${req.stage}`;
+            const priorityClass = getPriorityClass(req.priority);
+            html += `
+                <div class="request-item ${isCompleted ? 'completed' : ''}" onclick="selectRequest('${req.id}')">
+                    <div class="request-header-row">
+                        <span class="request-id"><i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}</span>
+                        <span class="request-status ${statusClass}">${statusText}</span>
+                        <span class="${priorityClass}"><i class="fas fa-flag"></i> ${req.priority || 'Medium'}</span>
                     </div>
-                </div>`;
-            document.getElementById('saveTaskBtn').addEventListener('click', async () => {
-                const desc = document.getElementById('taskDesc').value.trim();
-                if (!desc) { document.getElementById('taskFeedback').innerHTML = '<span class="text-red-400">Description required</span>'; return; }
-                try {
-                    await addDoc(collection(db, "tasks"), {
-                        description: desc,
-                        assignedTo: document.getElementById('assignedTo').value,
-                        assignedBy: currentUser.uid,
-                        date: document.getElementById('taskDate').value,
-                        status: document.getElementById('taskStatus').value === 'true',
-                        notes: document.getElementById('taskNotes').value,
-                        createdAt: Timestamp.now()
-                    });
-                    showToast("Task created");
-                    document.getElementById('taskDesc').value = "";
-                    document.getElementById('taskFeedback').innerHTML = '<span class="text-green-400">✓ Task added</span>';
-                    if (currentRole === 'admin') renderAdminAllTasks();
-                    else renderMyAssignedTasks();
-                } catch (err) { document.getElementById('taskFeedback').innerHTML = `<span class="text-red-400">${err.message}</span>`; }
-            });
-        }
-
-        // ========== ADMIN: VIEW ALL TASKS (with edit) ==========
-        async function renderAdminAllTasks() {
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>All Tasks (Admin)</h2><div id="adminTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
-            await loadAdminTasks();
-        }
-        async function loadAdminTasks() {
-            const snap = await getDocs(query(collection(db, "tasks"), orderBy("date", "desc")));
-            const tasks = []; snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
-            const container = document.getElementById('adminTasksContainer');
-            if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks yet.</div>'; return; }
-            const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
-            container.innerHTML = tasks.map(t => `
-                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'}">
-                    <div class="flex flex-wrap justify-between gap-3">
-                        <div class="flex-1">
-                            <p class="font-bold text-white text-lg">${escapeHtml(t.description)}</p>
-                            <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
-                                <span><i class="fas fa-user-check"></i> Assigned: ${userMap[t.assignedTo] || '?'}</span>
-                                <span><i class="fas fa-calendar-alt"></i> Due: ${t.date}</span>
-                                <span><i class="fas fa-sticky-note"></i> Notes: ${t.notes || '-'}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
-                            <button data-id="${t.id}" data-status="${!t.status}" class="adminToggleBtn bg-blue-600/80 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-sync-alt mr-1"></i>Toggle</button>
-                            <button data-id="${t.id}" data-notes="${t.notes || ''}" class="adminCommentBtn bg-purple-600/80 hover:bg-purple-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-comment"></i> Add Comment</button>
-                        </div>
+                    <div class="request-header-row">
+                        <span style="font-size:0.8rem; color:#6b7280;"><i class="fas fa-user"></i> ${req.userEmail} | <i class="fas fa-building"></i> ${req.department || 'N/A'}</span>
+                        <span style="font-size:0.7rem; color:#6b7280;"><i class="fas fa-calendar"></i> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</span>
                     </div>
-                </div>`).join('');
-            // Toggle status
-            document.querySelectorAll('.adminToggleBtn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    await updateDoc(doc(db, "tasks", btn.dataset.id), { status: btn.dataset.status === 'true' });
-                    showToast("Status updated");
-                    loadAdminTasks();
-                });
-            });
-            // Add comment modal for admin
-            document.querySelectorAll('.adminCommentBtn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const taskId = btn.dataset.id;
-                    const currentNotes = btn.dataset.notes;
-                    const newNote = prompt("Add your comment:", currentNotes);
-                    if (newNote !== null) {
-                        updateDoc(doc(db, "tasks", taskId), { notes: newNote }).then(() => {
-                            showToast("Comment added");
-                            loadAdminTasks();
-                        }).catch(err => alert(err.message));
-                    }
-                });
-            });
-        }
-
-        // ========== USER: VIEW ALL TASKS (read-only) ==========
-        async function renderUserAllTasksReadonly() {
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-globe text-orange-500 mr-2"></i>All Team Tasks (Read Only)</h2><div id="userAllTasksContainer" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
-            const snap = await getDocs(query(collection(db, "tasks"), orderBy("date", "desc")));
-            const tasks = []; snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
-            const container = document.getElementById('userAllTasksContainer');
-            if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks yet.</div>'; return; }
-            const userMap = Object.fromEntries(allUsersCache.map(u => [u.uid, u.name || u.email]));
-            container.innerHTML = tasks.map(t => `
-                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'}">
-                    <div class="flex flex-wrap justify-between gap-3">
-                        <div>
-                            <p class="font-bold text-white">${escapeHtml(t.description)}</p>
-                            <div class="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
-                                <span><i class="fas fa-user-check"></i> Assigned: ${userMap[t.assignedTo] || '?'}</span>
-                                <span><i class="fas fa-calendar-alt"></i> Due: ${t.date}</span>
-                                <span><i class="fas fa-comment"></i> Comments: ${t.notes || '-'}</span>
-                            </div>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
+                    <div class="request-header-row">
+                        <span style="font-size:0.85rem; color:#f97316;"><i class="fas fa-tag"></i> ${req.title || 'IT Request'}</span>
                     </div>
-                </div>`).join('');
-        }
+                    <div class="request-desc"><i class="fas fa-file-alt"></i> ${req.description?.substring(0,100) || ''}${req.description?.length > 100 ? '...' : ''}</div>
+                    ${req.attachmentUrl ? `<div class="request-desc" style="color:#10b981;"><i class="fas fa-paperclip"></i> 📎 Attachment available</div>` : ''}
+                </div>
+            `;
+        });
+        if(allRequests.length === 0) html = '<div style="background:white; border-radius:1rem; padding:2rem; text-align:center; color:#6b7280;">No requests found. SSE can create new requests.</div>';
+        container.innerHTML = html;
+    }
 
-        // ========== USER: MY ASSIGNED TASKS (can add comment & resolve) ==========
-        async function renderMyAssignedTasks() {
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-tasks text-orange-500 mr-2"></i>Tasks Assigned to Me</h2><div id="myTasksList" class="space-y-3 max-h-[70vh] overflow-y-auto"></div></div>`;
-            await loadMyAssignedTasks();
+    window.selectRequest = async (requestId) => {
+        const doc = await db.collection('requests').doc(requestId).get();
+        if(doc.exists) {
+            selectedRequest = { id: doc.id, ...doc.data() };
+            displaySelectedRequest();
         }
-        async function loadMyAssignedTasks() {
-            const q = query(collection(db, "tasks"), where("assignedTo", "==", currentUser.uid), orderBy("date", "desc"));
-            const snap = await getDocs(q);
-            const tasks = []; snap.forEach(d => tasks.push({ id: d.id, ...d.data() }));
-            const container = document.getElementById('myTasksList');
-            if (!tasks.length) { container.innerHTML = '<div class="text-gray-400 text-center py-12">No tasks assigned to you.</div>'; return; }
-            container.innerHTML = tasks.map(t => `
-                <div class="task-card p-4 rounded-xl ${t.status ? 'border-green-500/30 bg-green-950/20' : 'border-orange-500/30 bg-orange-950/10'}">
-                    <div class="flex flex-wrap justify-between gap-3 items-start">
-                        <div class="flex-1">
-                            <p class="font-bold text-white text-lg">${escapeHtml(t.description)}</p>
-                            <div class="text-xs text-gray-400 mt-1">Due: ${t.date}</div>
-                            <div class="mt-2 bg-gray-800/50 p-2 rounded-lg">
-                                <p class="text-xs text-gray-300"><i class="fas fa-comment-dots mr-1"></i> Comments:</p>
-                                <p class="text-sm text-white">${escapeHtml(t.notes) || 'No comments yet.'}</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <span class="px-3 py-1 rounded-full text-xs font-medium ${t.status ? 'bg-green-600' : 'bg-orange-600'} text-white">${t.status ? 'RESOLVED' : 'PENDING'}</span>
-                            ${!t.status ? `<button data-id="${t.id}" class="resolveMyBtn bg-green-600/80 hover:bg-green-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-check"></i> Mark Resolved</button>` : ''}
-                            <button data-id="${t.id}" data-notes="${t.notes || ''}" class="addCommentBtn bg-purple-600/80 hover:bg-purple-500 px-3 py-1.5 rounded-lg text-xs"><i class="fas fa-plus-circle"></i> Add Comment</button>
-                        </div>
-                    </div>
-                </div>`).join('');
-            // Resolve button
-            document.querySelectorAll('.resolveMyBtn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    await updateDoc(doc(db, "tasks", btn.dataset.id), { status: true });
-                    showToast("Task marked resolved!");
-                    loadMyAssignedTasks();
-                    renderUserAllTasksReadonly(); // update global view
-                });
-            });
-            // Add comment button (update notes)
-            document.querySelectorAll('.addCommentBtn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const taskId = btn.dataset.id;
-                    const currentNotes = btn.dataset.notes;
-                    const newComment = prompt("Add your comment:", currentNotes);
-                    if (newComment !== null) {
-                        await updateDoc(doc(db, "tasks", taskId), { notes: newComment });
-                        showToast("Comment added");
-                        loadMyAssignedTasks();
-                        renderUserAllTasksReadonly(); // also update global view
-                    }
-                });
-            });
-        }
+    };
 
-        // ========== ADMIN: TEAM MANAGEMENT ==========
-        async function renderTeamManagement() {
-            await refreshUsers();
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-users text-orange-500 mr-2"></i>Team Members</h2><button id="openUserModalBtn" class="bg-orange-600 hover:bg-orange-500 px-5 py-2 rounded-xl mb-6"><i class="fas fa-user-plus"></i> Add Member</button><div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="usersGrid"></div></div>`;
-            const users = allUsersCache;
-            const grid = document.getElementById('usersGrid');
-            if (!users.length) grid.innerHTML = '<div class="text-gray-400">No users</div>';
-            else grid.innerHTML = users.map(u => `<div class="bg-gray-800/50 rounded-xl p-4 border border-gray-700"><i class="fas fa-user-circle text-2xl text-orange-400"></i><h3 class="font-bold text-white mt-1">${u.name || u.email}</h3><p class="text-xs text-gray-400">${u.email}</p><span class="inline-block mt-2 text-xs px-2 py-1 rounded-full ${u.role === 'admin' ? 'bg-orange-500/30 text-orange-300' : 'bg-green-500/30 text-green-300'}">${u.role}</span></div>`).join('');
-            document.getElementById('openUserModalBtn').addEventListener('click', () => showCreateUserModal());
-        }
-        function showCreateUserModal() {
-            const modalHtml = `<div id="userModal" class="fixed inset-0 flex items-center justify-center z-50 modal-backdrop"><div class="bg-gray-900 rounded-2xl p-6 w-96 border border-gray-700"><h3 class="text-xl font-bold text-white mb-4">Create User</h3><input id="userName" placeholder="Full Name" class="w-full p-2 mb-3 bg-gray-800 text-white rounded"><input id="userEmail" placeholder="Email" class="w-full p-2 mb-3 bg-gray-800 text-white rounded"><input id="userPass" type="password" placeholder="Password" class="w-full p-2 mb-3 bg-gray-800 text-white rounded"><select id="userRole" class="w-full p-2 mb-4 bg-gray-800 text-white rounded"><option value="user">Team Member</option><option value="admin">Administrator</option></select><div class="flex justify-end gap-3"><button id="closeModal" class="px-4 py-2 bg-gray-700 rounded">Cancel</button><button id="confirmCreate" class="px-4 py-2 bg-orange-600 rounded">Create</button></div></div></div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            document.getElementById('confirmCreate').onclick = async () => {
-                const name = document.getElementById('userName').value.trim();
-                const email = document.getElementById('userEmail').value.trim();
-                const pwd = document.getElementById('userPass').value;
-                const role = document.getElementById('userRole').value;
-                if (!name || !email || !pwd) { alert("All fields required"); return; }
-                try {
-                    const cred = await createUserWithEmailAndPassword(auth, email, pwd);
-                    await setDoc(doc(db, "users", cred.user.uid), { email, name, role, createdAt: Timestamp.now() });
-                    showToast(`${name} added as ${role}`);
-                    document.getElementById('userModal')?.remove();
-                    renderTeamManagement();
-                } catch (err) { alert(err.message); }
-            };
-            document.getElementById('closeModal').onclick = () => document.getElementById('userModal')?.remove();
-        }
-
-        // ========== ADMIN ANALYTICS ==========
-        async function renderAdminAnalytics() {
-            await refreshUsers();
-            const users = allUsersCache.filter(u => u.role === 'user');
-            if (!users.length) { dynamicContent.innerHTML = '<div class="glass-card p-6 text-gray-400">No team members yet.</div>'; return; }
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4">Performance Analytics</h2><select id="analyticsSelect" class="p-2 rounded w-64">${users.map(u => `<option value="${u.uid}">${u.name || u.email}</option>`).join('')}</select><canvas id="analyticsChart" class="mt-6 h-64"></canvas><div id="analyticsStats" class="grid grid-cols-3 gap-4 mt-6"></div></div>`;
-            const select = document.getElementById('analyticsSelect');
-            async function update(uid) {
-                const tasksSnap = await getDocs(query(collection(db, "tasks"), where("assignedTo", "==", uid)));
-                const tasks = []; tasksSnap.forEach(d => tasks.push(d.data()));
-                const resolved = tasks.filter(t => t.status).length, pending = tasks.length - resolved;
-                const rate = tasks.length ? ((resolved/tasks.length)*100).toFixed(1) : 0;
-                const ctx = document.getElementById('analyticsChart').getContext('2d');
-                if(window.anaChart) window.anaChart.destroy();
-                window.anaChart = new Chart(ctx, { type: 'bar', data: { labels: ['Resolved', 'Pending'], datasets: [{ label: 'Tasks', data: [resolved, pending], backgroundColor: ['#22c55e', '#f97316'] }] } });
-                document.getElementById('analyticsStats').innerHTML = `<div class="bg-gray-800 p-3 rounded text-center"><p class="text-2xl font-bold text-green-400">${resolved}</p><p>Resolved</p></div><div class="bg-gray-800 p-3 rounded text-center"><p class="text-2xl font-bold text-orange-400">${pending}</p><p>Pending</p></div><div class="bg-gray-800 p-3 rounded text-center"><p class="text-2xl font-bold text-blue-400">${rate}%</p><p>Completion</p></div>`;
+    function updateTimeline(stage) {
+        const order = ['SSE', 'AM', 'AREA', 'HOD'];
+        const stepMap = { SSE:'stepSSE', AM:'stepAM', AREA:'stepArea', HOD:'stepHOD' };
+        let stageIdx = order.indexOf(stage);
+        if(stage === 'COMPLETED') stageIdx = order.length;
+        for(let i=0; i<order.length; i++) {
+            const el = document.getElementById(stepMap[order[i]]);
+            if(el) {
+                if(i < stageIdx) el.className = 'timeline-step completed';
+                else if(i === stageIdx && stage !== 'COMPLETED') el.className = 'timeline-step active';
+                else el.className = 'timeline-step pending';
             }
-            select.onchange = () => update(select.value);
-            update(select.value);
         }
+    }
 
-        // ========== MONTHLY PDF REPORT ==========
-        async function renderMonthlyReport() {
-            await refreshUsers();
-            dynamicContent.innerHTML = `<div class="glass-card p-6 max-w-2xl mx-auto"><h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-file-pdf text-red-500"></i> Monthly Report</h2><div class="mb-4"><label>Select Month</label><input type="month" id="reportMonth" class="w-full p-2 rounded"></div><div class="mb-6"><label>Team Member</label><select id="reportUser" class="w-full p-2 rounded"><option value="all">All Members</option>${allUsersCache.filter(u=>u.role==='user').map(u=>`<option value="${u.uid}">${u.name||u.email}</option>`)}</select></div><button id="generatePdfBtn" class="bg-red-600 w-full py-2 rounded-xl font-semibold">Generate PDF</button><div id="pdfMsg" class="mt-3 text-sm"></div></div>`;
-            document.getElementById('generatePdfBtn').onclick = async () => {
-                const monthYear = document.getElementById('reportMonth').value;
-                if (!monthYear) { alert("Select month"); return; }
-                const [year, month] = monthYear.split('-');
-                const start = `${year}-${month}-01`, end = `${year}-${month}-${new Date(year, month, 0).getDate()}`;
-                const selected = document.getElementById('reportUser').value;
-                let q = collection(db, "tasks");
-                if (selected !== "all") q = query(q, where("assignedTo", "==", selected));
-                const snap = await getDocs(q);
-                const tasks = []; snap.forEach(d => { const t = d.data(); if (t.date >= start && t.date <= end) tasks.push(t); });
-                if (!tasks.length) { document.getElementById('pdfMsg').innerHTML = '<span class="text-red-400">No tasks in this period</span>'; return; }
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('landscape');
-                pdf.setFillColor(249, 115, 22); pdf.rect(0, 0, 297, 20, 'F');
-                pdf.setTextColor(255,255,255); pdf.setFontSize(18); pdf.text("M&P Express - Monthly Report", 14, 15);
-                pdf.setTextColor(0,0,0); pdf.setFontSize(10); pdf.text(`Period: ${monthYear} | Generated: ${new Date().toLocaleString()}`, 14, 30);
-                let y = 40;
-                const grouped = {};
-                tasks.forEach(t => { if (!grouped[t.assignedTo]) grouped[t.assignedTo] = []; grouped[t.assignedTo].push(t); });
-                for (const [uid, userTasks] of Object.entries(grouped)) {
-                    let userName = allUsersCache.find(u=>u.uid===uid)?.name || uid;
-                    const resolved = userTasks.filter(t=>t.status).length;
-                    const pending = userTasks.length - resolved;
-                    pdf.setFontSize(12); pdf.text(`${userName} - Resolved: ${resolved} | Pending: ${pending} | Rate: ${((resolved/(resolved+pending||1))*100).toFixed(1)}%`, 14, y);
-                    y += 8;
-                    pdf.autoTable({ startY: y, head: [['Date','Task','Status','Comments']], body: userTasks.map(t=>[t.date, t.description, t.status?'Resolved':'Pending', t.notes||'']), margin: {left:14}, headStyles: { fillColor: [249,115,22] } });
-                    y = pdf.lastAutoTable.finalY + 10;
-                    if (y > 200) { pdf.addPage(); y = 20; }
-                }
-                pdf.save(`M&P_Report_${monthYear}.pdf`);
-                document.getElementById('pdfMsg').innerHTML = '<span class="text-green-400">✓ PDF downloaded</span>';
-            };
+    function getRoleDisplayName(role) {
+        const roles = { 'sse': 'SSE IT', 'am': 'AM IT', 'area_manager': 'Area Manager', 'hod': 'HOD IT', 'admin': 'Administrator' };
+        return roles[role] || role;
+    }
+
+    function canUserApprove(level, requestStage, isRemarkCompleted) {
+        if(!currentUser) return false;
+        if(currentUser.role === 'admin') return true;
+        if(isRemarkCompleted) return false;
+        if(level === 'sse' && currentUser.role === 'sse' && requestStage === 'SSE') return true;
+        if(level === 'am' && currentUser.role === 'am' && requestStage === 'AM') return true;
+        if(level === 'area' && currentUser.role === 'area_manager' && requestStage === 'AREA') return true;
+        if(level === 'hod' && currentUser.role === 'hod' && requestStage === 'HOD') return true;
+        return false;
+    }
+
+    function displaySelectedRequest() {
+        if(!selectedRequest) return;
+        const req = selectedRequest;
+        document.getElementById('selectedRequestCard').style.display = 'block';
+        document.getElementById('selectedReqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
+        
+        const accessMsg = document.getElementById('accessInfoMsg');
+        if(currentUser?.role !== 'admin') {
+            accessMsg.innerHTML = `<i class="fas fa-info-circle"></i> You are logged in as <strong>${getRoleDisplayName(currentUser?.role)}</strong>. You can only approve requests at the <strong>${getRoleDisplayName(currentUser?.role)}</strong> stage.`;
+            accessMsg.style.display = 'block';
+        } else {
+            accessMsg.innerHTML = `<i class="fas fa-crown"></i> Administrator: You can approve any stage.`;
         }
-
-        // ========== USER PERFORMANCE STATS ==========
-        async function renderUserStats() {
-            dynamicContent.innerHTML = `<div class="glass-card p-6"><h2 class="text-2xl font-bold text-white mb-4">My Performance</h2><canvas id="userStatsChart" class="h-64"></canvas><div class="grid grid-cols-2 gap-4 mt-6" id="userStatsKpi"></div></div>`;
-            const q = query(collection(db, "tasks"), where("assignedTo", "==", currentUser.uid));
-            const snap = await getDocs(q);
-            const tasks = []; snap.forEach(d => tasks.push(d.data()));
-            const resolved = tasks.filter(t=>t.status).length, pending = tasks.length - resolved;
-            const ctx = document.getElementById('userStatsChart').getContext('2d');
-            if(window.userStatChart) window.userStatChart.destroy();
-            window.userStatChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Resolved', 'Pending'], datasets: [{ data: [resolved, pending], backgroundColor: ['#22c55e', '#f97316'] }] } });
-            document.getElementById('userStatsKpi').innerHTML = `<div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-green-400">${resolved}</p><p>Completed</p></div><div class="bg-gray-800 p-4 rounded text-center"><p class="text-3xl font-bold text-orange-400">${pending}</p><p>Pending</p></div>`;
+        
+        const attachmentHtml = req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" class="attachment-link"><i class="fas fa-download"></i> Download Attachment</a>` : '—';
+        
+        document.getElementById('selectedReqDetails').innerHTML = `
+            <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail}</div>
+            <div class="detail-item"><strong>📝 Title:</strong> ${req.title}</div>
+            <div class="detail-item"><strong>🏢 Department:</strong> ${req.department || 'N/A'}</div>
+            <div class="detail-item"><strong>⚠️ Priority:</strong> ${req.priority || 'Medium'}</div>
+            <div class="detail-item"><strong>📅 Date & Time:</strong> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</div>
+            <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
+            <div class="detail-item"><strong>📎 Attachment:</strong> ${attachmentHtml}</div>
+            <div class="detail-item"><strong>💬 SSE Remark:</strong> ${req.sseRemark || '—'}</div>
+            <div class="detail-item"><strong>📊 AM Remark:</strong> ${req.amRemark || '—'}</div>
+            <div class="detail-item"><strong>🌍 Area Mgr Remark:</strong> ${req.areaRemark || '—'}</div>
+            <div class="detail-item"><strong>🏛️ HOD Remark:</strong> ${req.hodRemark || '—'}</div>
+        `;
+        updateTimeline(req.stage);
+        
+        const stagesMeta = [
+            {key:'sse', label:'SSE IT', icon:'💻', stageFlag:'SSE', remarkField:'sseRemark', next:'→ AM IT', roleRequired:'sse'},
+            {key:'am', label:'AM IT', icon:'📊', stageFlag:'AM', remarkField:'amRemark', next:'→ Area Manager', roleRequired:'am'},
+            {key:'area', label:'Area Manager', icon:'🌍', stageFlag:'AREA', remarkField:'areaRemark', next:'→ HOD IT', roleRequired:'area_manager'},
+            {key:'hod', label:'HOD IT', icon:'🏛️', stageFlag:'HOD', remarkField:'hodRemark', next:'Final Approve', roleRequired:'hod'}
+        ];
+        
+        let cardsHtml = '';
+        for(let m of stagesMeta) {
+            const isCompleted = !!req[m.remarkField];
+            const isActive = (req.stage === m.stageFlag) && !isCompleted && req.stage !== 'COMPLETED';
+            const canApprove = canUserApprove(m.key, req.stage, isCompleted);
+            const shouldEnable = isActive && canApprove && req.stage !== 'COMPLETED';
+            const existingRemark = isCompleted ? (req[m.remarkField] || '') : '';
+            
+            let statusText = '', statusClass = '';
+            if(isCompleted) { statusText = '✓ Approved'; statusClass = 'background:#d1fae5; color:#065f46;'; }
+            else if(isActive && canApprove) { statusText = '⏳ Pending Your Action'; statusClass = 'background:#fed7aa; color:#9a3412;'; }
+            else if(isActive && !canApprove) { statusText = '🔒 Waiting for ' + m.label; statusClass = 'background:#f3f4f6; color:#9ca3af;'; }
+            else {
+                const stageOrder = ['SSE', 'AM', 'AREA', 'HOD'];
+                const currentStageIndex = stageOrder.indexOf(req.stage);
+                const thisStageIndex = stageOrder.indexOf(m.stageFlag);
+                if(thisStageIndex < currentStageIndex) { statusText = '✓ Already Completed'; statusClass = 'background:#d1fae5; color:#065f46;'; }
+                else { statusText = '🔒 Locked'; statusClass = 'background:#f3f4f6; color:#9ca3af;'; }
+            }
+            const cardDisabledClass = (!shouldEnable && !isCompleted) ? 'disabled-card' : '';
+            cardsHtml += `
+                <div class="workflow-card ${cardDisabledClass}">
+                    <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3>${m.label}</h3></div>
+                    <div style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${statusClass}">${statusText}</div>
+                    <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${!shouldEnable ? 'disabled' : ''}>${existingRemark}</textarea>
+                    <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${!shouldEnable ? 'disabled' : ''}><i class="fas fa-check-circle"></i> ${m.next}</button>
+                </div>
+            `;
         }
+        document.getElementById('workflowGrid').innerHTML = cardsHtml;
+    }
 
-        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
-    </script>
+    window.submitApprovalForSelected = async (level) => {
+        if(!selectedRequest) { alert('No request selected'); return; }
+        const req = selectedRequest;
+        const remarkElem = document.getElementById(`remark_${level}`);
+        if(!remarkElem) return;
+        const remark = remarkElem.value.trim();
+        if(!remark) { alert('Please enter remarks before approving'); return; }
+        
+        let isAuthorized = false;
+        if(currentUser?.role === 'admin') isAuthorized = true;
+        else {
+            if(level === 'sse' && currentUser?.role === 'sse' && req.stage === 'SSE' && !req.sseRemark) isAuthorized = true;
+            else if(level === 'am' && currentUser?.role === 'am' && req.stage === 'AM' && !req.amRemark) isAuthorized = true;
+            else if(level === 'area' && currentUser?.role === 'area_manager' && req.stage === 'AREA' && !req.areaRemark) isAuthorized = true;
+            else if(level === 'hod' && currentUser?.role === 'hod' && req.stage === 'HOD' && !req.hodRemark) isAuthorized = true;
+        }
+        if(!isAuthorized) { alert(`❌ Not authorized! Only ${level.toUpperCase()} can approve.`); return; }
+        
+        let updates = {};
+        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved by ${currentUser.name} → AM IT`); }
+        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`✅ AM approved by ${currentUser.name} → Area Manager`); }
+        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`✅ Area Manager approved → HOD IT`); }
+        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by ${currentUser.name} → Completed!`); }
+        
+        await db.collection('requests').doc(selectedRequest.id).update(updates);
+        await loadAllRequests();
+        await selectRequest(selectedRequest.id);
+        loadStats();
+        alert(`✓ ${level.toUpperCase()} approval submitted!`);
+    };
+
+    window.createRequest = async () => {
+        if(!currentUser) { alert('Please login'); return; }
+        if(currentUser.role !== 'sse' && currentUser.role !== 'admin') { alert('Only SSE IT or Admin can create requests!'); return; }
+        
+        const userEmail = document.getElementById('requestUserEmail').value.trim();
+        const title = document.getElementById('requestTitle').value.trim();
+        const department = document.getElementById('requestDepartment').value.trim();
+        const priority = document.getElementById('requestPriority').value;
+        const description = document.getElementById('requestDesc').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        const statusDiv = document.getElementById('fileUploadStatus');
+        
+        if(!userEmail) { alert('User Email is required!'); return; }
+        if(!title) { alert('Request Title is required!'); return; }
+        if(!description) { alert('Description is required!'); return; }
+        
+        let attachmentUrl = null;
+        
+        if(file) {
+            if(file.size > 5 * 1024 * 1024) { 
+                alert('File too large! Max 5MB.'); 
+                return;
+            }
+            
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Uploading attachment...';
+            statusDiv.className = 'file-info upload-loading';
+            
+            try {
+                const timestamp = Date.now();
+                const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const filePath = `request_attachments/${timestamp}_${safeFileName}`;
+                const storageRef = storage.ref(filePath);
+                
+                const uploadTask = await storageRef.put(file);
+                attachmentUrl = await storageRef.getDownloadURL();
+                
+                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✓ Attachment uploaded successfully!';
+                statusDiv.className = 'file-info upload-success';
+                addLog(`📎 Attachment uploaded: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
+            } catch(e) {
+                console.error('Upload error:', e);
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Upload failed: ' + (e.message || 'Storage error');
+                statusDiv.className = 'file-info upload-error';
+                alert('Attachment upload failed! Check Firebase Storage rules. Submitting without attachment.');
+                attachmentUrl = null;
+            }
+        } else {
+            statusDiv.innerHTML = '';
+        }
+        
+        const now = new Date();
+        const requestDate = now.toLocaleString();
+        
+        try {
+            await db.collection('requests').add({
+                requesterId: currentUser.uid,
+                requesterName: currentUser.name,
+                requesterEmail: currentUser.email,
+                userEmail: userEmail,
+                title: title,
+                department: department || 'N/A',
+                priority: priority,
+                description: description,
+                attachmentUrl: attachmentUrl,
+                requestDate: requestDate,
+                stage: 'SSE',
+                sseRemark: '',
+                amRemark: '',
+                areaRemark: '',
+                hodRemark: '',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            addLog(`✅ New request created by ${currentUser.name} for ${userEmail}${attachmentUrl ? ' with attachment' : ''}`);
+            
+            document.getElementById('requestUserEmail').value = '';
+            document.getElementById('requestTitle').value = '';
+            document.getElementById('requestDepartment').value = '';
+            document.getElementById('requestDesc').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileUploadStatus').innerHTML = '';
+            document.getElementById('fileUploadStatus').className = 'file-info';
+            
+            await loadAllRequests();
+            loadStats();
+            alert('✓ Request submitted successfully!' + (attachmentUrl ? ' Attachment uploaded.' : ''));
+        } catch(e) {
+            console.error('Firestore error:', e);
+            alert('Error submitting request: ' + e.message);
+        }
+    };
+
+    window.exportAllToPDF = async () => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        let y = 20;
+        doc.setFontSize(18); doc.setTextColor(249,115,22); doc.text('M&P Express Logistics - IT Request Report', 20, y);
+        y += 8; doc.setFontSize(10); doc.setTextColor(107,114,128); doc.text(`Generated: ${new Date().toLocaleString()}`, 20, y); y += 10;
+        for(let i=0; i<allRequests.length; i++) {
+            const req = allRequests[i];
+            if(y > 260) { doc.addPage(); y = 20; }
+            doc.setFontSize(10); doc.setTextColor(249,115,22); doc.setFont(undefined,'bold'); doc.text(`Request #${req.id.slice(0,8)}`,20,y); y+=6;
+            doc.setFont(undefined,'normal'); doc.setTextColor(55,65,81); doc.setFontSize(9);
+            doc.text(`User Email: ${req.userEmail}`,20,y); y+=5;
+            doc.text(`Title: ${req.title || 'IT Request'}`,20,y); y+=5;
+            doc.text(`Dept: ${req.department || 'N/A'} | Priority: ${req.priority || 'Medium'}`,20,y); y+=5;
+            doc.text(`Date: ${req.requestDate || ''}`,20,y); y+=5;
+            doc.text(`Description: ${req.description?.substring(0,80) || ''}`,20,y); y+=5;
+            doc.text(`Status: ${req.stage === 'COMPLETED' ? 'COMPLETED' : req.stage}`,20,y); y+=5;
+            doc.text(`Attachment: ${req.attachmentUrl ? 'Yes' : 'No'}`,20,y); y+=5;
+            doc.text(`SSE: ${req.sseRemark || '—'}`,20,y); y+=4;
+            doc.text(`AM: ${req.amRemark || '—'}`,20,y); y+=4;
+            doc.text(`Area Mgr: ${req.areaRemark || '—'}`,20,y); y+=4;
+            doc.text(`HOD: ${req.hodRemark || '—'}`,20,y); y+=8;
+            doc.setDrawColor(249,115,22); doc.line(20,y-2,190,y-2);
+        }
+        doc.save(`M&P_IT_Requests_${new Date().toISOString().slice(0,19)}.pdf`);
+        addLog(`📄 PDF exported with ${allRequests.length} requests`);
+    };
+
+    auth.onAuthStateChanged(async (user) => {
+        if(user) {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if(!userDoc.exists) { await auth.signOut(); return; }
+            currentUser = { uid: user.uid, ...userDoc.data() };
+            document.getElementById('userName').innerHTML = `<i class="fas fa-user"></i> ${currentUser.name}`;
+            document.getElementById('userRole').innerHTML = `<i class="fas fa-tag"></i> ${currentUser.role.toUpperCase()}`;
+            document.getElementById('authContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            if(currentUser.role === 'admin') { document.getElementById('adminPanel').style.display = 'block'; loadAllUsers(); }
+            if(currentUser.role !== 'sse' && currentUser.role !== 'admin') document.getElementById('createRequestCard').style.display = 'none';
+            await loadAllRequests(); loadStats();
+            addLog(`Welcome ${currentUser.name} (${getRoleDisplayName(currentUser.role)})`);
+            addLog(`📎 Attachment upload feature is now FULLY FIXED! You can upload files up to 5MB.`);
+        } else {
+            document.getElementById('authContainer').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+    });
+</script>
 </body>
 </html>
