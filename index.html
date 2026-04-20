@@ -1,1030 +1,592 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>M&P Express Logistics | IT Approval Workflow</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <!-- PDF Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, 'Poppins', sans-serif;
-        }
-
-        body {
-            background: #f5f7fb;
-            min-height: 100vh;
-        }
-
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #fff5eb 0%, #ffe4cc 100%);
-            padding: 1.5rem;
-        }
-
-        .auth-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            border-top: 4px solid #f97316;
-        }
-
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .auth-header h1 {
-            font-size: 1.6rem;
-            color: #f97316;
-        }
-
-        .auth-header p {
-            color: #6b7280;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-        }
-
-        .input-group {
-            margin-bottom: 1.2rem;
-        }
-
-        .input-group label {
-            display: block;
-            color: #374151;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-        }
-
-        .input-group input, .input-group select, .input-group textarea {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.8rem;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
-            outline: none;
-            border-color: #f97316;
-            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 0.8rem;
-            background: #f97316;
-            border: none;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .auth-btn:hover {
-            background: #ea580c;
-            transform: translateY(-1px);
-        }
-
-        .error-msg {
-            color: #ef4444;
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-            text-align: center;
-        }
-
-        .app-container {
-            display: none;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
-
-        .navbar {
-            background: white;
-            border-radius: 1rem;
-            padding: 0.9rem 2rem;
-            margin-bottom: 1.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-bottom: 2px solid #f97316;
-        }
-
-        .logo h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #f97316;
-        }
-
-        .logo p {
-            font-size: 0.7rem;
-            color: #6b7280;
-        }
-
-        .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background: #f3f4f6;
-            padding: 0.3rem 1rem 0.3rem 1.2rem;
-            border-radius: 2rem;
-        }
-
-        .role-badge {
-            background: #f97316;
-            color: white;
-            padding: 0.2rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-
-        .logout-btn {
-            background: #ef4444;
-            border: none;
-            padding: 0.4rem 1.2rem;
-            border-radius: 2rem;
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: #dc2626;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-            transition: 0.2s;
-        }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05);}
-        .stat-card i { font-size: 1.8rem; margin-bottom: 0.3rem; color: #f97316; }
-        .stat-value { font-size: 1.7rem; font-weight: 700; color: #1f2937; }
-        .stat-label { font-size: 0.7rem; color: #6b7280; }
-
-        .admin-panel {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.3rem;
-            margin-bottom: 1.8rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border-left: 4px solid #f97316;
-        }
-
-        .admin-panel h3 { color: #f97316; margin-bottom: 1rem; }
-
-        .add-user-form {
-            background: #f9fafb;
-            padding: 1rem;
-            border-radius: 1rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            align-items: flex-end;
-        }
-
-        .add-user-form .input-group {
-            margin-bottom: 0;
-            flex: 1;
-            min-width: 140px;
-        }
-
-        .add-user-btn, .export-btn {
-            background: #f97316;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .export-btn { background: #10b981; }
-        .add-user-btn:hover { background: #ea580c; }
-        .export-btn:hover { background: #059669; }
-
-        .users-table { overflow-x: auto; margin-top: 1rem; }
-        .users-table table { width: 100%; border-collapse: collapse; }
-        .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem; }
-        .delete-user-btn { background: #ef4444; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
-
-        .flow-timeline {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .timeline-steps {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .timeline-step {
-            flex: 1;
-            text-align: center;
-            padding: 0.7rem 0.2rem;
-            border-radius: 0.8rem;
-            background: #f3f4f6;
-        }
-
-        .timeline-step .step-icon { font-size: 1.3rem; margin-bottom: 0.2rem; }
-        .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; }
-        .timeline-step.active { background: #f97316; color: white; }
-        .timeline-step.completed { background: #10b981; color: white; }
-        .timeline-step.pending { background: #f3f4f6; color: #9ca3af; }
-        .timeline-arrow { color: #f97316; font-size: 1.2rem; font-weight: bold; }
-
-        .request-form-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-        }
-
-        .form-title {
-            color: #f97316;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            border-bottom: 2px solid #f97316;
-            display: inline-block;
-            padding-bottom: 0.3rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .section-title {
-            background: white;
-            border-radius: 1rem;
-            padding: 0.8rem 1.2rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .section-title h3 { color: #f97316; font-size: 1rem; }
-
-        .requests-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .request-item {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            border-left: 4px solid #f97316;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .request-item:hover { transform: translateX(5px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .request-item.completed { border-left-color: #10b981; }
-
-        .request-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 0.5rem;
-        }
-
-        .request-id { font-weight: 700; color: #f97316; }
-        .request-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 2rem; }
-        .status-badge-pending { background: #fed7aa; color: #9a3412; }
-        .status-badge-completed { background: #d1fae5; color: #065f46; }
-        .priority-high { background: #fee2e2; color: #dc2626; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
-        .priority-medium { background: #fed7aa; color: #ea580c; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
-        .priority-low { background: #d1fae5; color: #059669; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
-        .request-desc { font-size: 0.85rem; color: #4b5563; margin-top: 0.3rem; }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 0.8rem;
-            margin: 1rem 0;
-        }
-
-        .detail-item {
-            background: #f9fafb;
-            padding: 0.6rem 0.9rem;
-            border-radius: 0.8rem;
-            font-size: 0.85rem;
-            word-break: break-word;
-        }
-
-        .detail-item strong { color: #f97316; }
-
-        .workflow-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-            gap: 1.2rem;
-            margin: 1rem 0;
-        }
-
-        .workflow-card {
-            background: #f9fafb;
-            border-radius: 1rem;
-            padding: 1rem;
-            border: 1px solid #e5e7eb;
-            transition: all 0.2s;
-        }
-
-        .workflow-card.disabled-card {
-            opacity: 0.6;
-            background: #f3f4f6;
-        }
-
-        .card-header h3 { color: #f97316; font-size: 1rem; }
-
-        textarea {
-            width: 100%;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.8rem;
-            padding: 0.6rem;
-            font-size: 0.8rem;
-            resize: vertical;
-            margin: 0.5rem 0;
-        }
-
-        textarea:disabled {
-            background: #f3f4f6;
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .action-btn {
-            background: #f97316;
-            border: none;
-            padding: 0.6rem;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: 0.2s;
-        }
-        .action-btn:hover:not(:disabled) { background: #ea580c; transform: translateY(-1px);}
-        .action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #9ca3af;
-        }
-
-        .events-log {
-            background: #1f2937;
-            border-radius: 0.8rem;
-            padding: 0.8rem;
-            max-height: 140px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: #fcd34d;
-        }
-
-        .footer {
-            margin-top: 2rem;
-            text-align: center;
-            padding: 1rem;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .footer p {
-            color: #6b7280;
-            font-size: 0.75rem;
-        }
-
-        .footer span {
-            color: #f97316;
-            font-weight: 600;
-        }
-
-        .role-access-info {
-            background: #fef3c7;
-            border-left: 4px solid #f97316;
-            padding: 0.5rem 1rem;
-            margin-bottom: 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.75rem;
-            color: #92400e;
-        }
-
-        @media (max-width: 700px) {
-            .app-container { padding: 1rem; }
-            .timeline-steps { flex-direction: column; }
-            .timeline-arrow { display: none; }
-        }
-
-        .file-info {
-            font-size: 0.7rem;
-            color: #f97316;
-            margin-top: 0.3rem;
-            padding: 0.3rem;
-        }
-        
-        .upload-success { color: #10b981; }
-        .upload-error { color: #ef4444; }
-        .upload-loading { color: #f97316; }
-        
-        .attachment-link {
-            color: #f97316;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .attachment-link:hover { text-decoration: underline; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>M&P Express Logistics | ComplaintHub Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- html2pdf for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #fff7ed; color: #2c2a29; padding: 24px 20px; }
+    .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .login-card { background: white; max-width: 420px; width: 90%; border-radius: 40px; padding: 32px 28px; box-shadow: 0 25px 45px rgba(0,0,0,0.2); }
+    .login-card h2 { margin-bottom: 24px; font-weight: 700; color: #ea580c; }
+    .app-container { max-width: 1500px; margin: 0 auto; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; background: white; border-radius: 60px; padding: 12px 24px; margin-bottom: 28px; box-shadow: 0 4px 12px rgba(234,88,12,0.1); border: 1px solid #fed7aa; }
+    .logo h2 { font-size: 1.6rem; background: linear-gradient(135deg, #ea580c, #c2410c); background-clip: text; -webkit-background-clip: text; color: transparent; }
+    .logo p { font-size: 0.7rem; color: #f97316; font-weight: 500; }
+    .user-info { display: flex; align-items: center; gap: 20px; }
+    .role-badge { background: #fff1e6; padding: 6px 14px; border-radius: 40px; font-size: 0.75rem; font-weight: 600; color: #c2410c; }
+    .logout-btn { background: #ea580c; color: white; border: none; padding: 6px 16px; border-radius: 30px; cursor: pointer; }
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 28px; }
+    .stat-card { background: white; border-radius: 28px; padding: 18px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid #f97316; }
+    .dashboard { display: flex; flex-wrap: wrap; gap: 28px; }
+    .form-panel { flex: 1.2; min-width: 300px; }
+    .list-panel { flex: 2.8; min-width: 380px; }
+    .card { background: white; border-radius: 32px; padding: 24px; box-shadow: 0 12px 28px rgba(0,0,0,0.05); border: 1px solid #ffedd5; }
+    .card-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 20px; border-left: 5px solid #f97316; padding-left: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .form-group { margin-bottom: 18px; }
+    label { font-weight: 500; font-size: 0.8rem; display: block; margin-bottom: 6px; color: #7c2d12; }
+    input, select, textarea { width: 100%; padding: 10px 14px; border-radius: 20px; border: 1px solid #fed7aa; font-family: inherit; background: #fffaf5; }
+    .btn-primary { background: #f97316; color: white; border: none; width: 100%; padding: 12px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn-primary:hover { background: #ea580c; }
+    .filters-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .complaint-item { background: #ffffff; border-radius: 28px; margin-bottom: 20px; padding: 18px; border: 1px solid #ffedd5; transition: 0.1s; }
+    .complaint-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+    .complaint-title-text { font-weight: 700; font-size: 1rem; color: #7c2d12; margin: 4px 0; }
+    .badge-priority { padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; }
+    .status-badge { padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; }
+    .priority-high { background: #fee2e2; color: #b91c1c; }
+    .priority-medium { background: #fff3e3; color: #b45309; }
+    .priority-low { background: #e0f2fe; color: #0c4a6e; }
+    .status-pending { background: #ffedd5; color: #9a3412; }
+    .status-done { background: #dcfce7; color: #166534; }
+    .comment-section { margin-top: 16px; background: #fffaf5; border-radius: 24px; padding: 14px; }
+    .comment-list { max-height: 200px; overflow-y: auto; margin-bottom: 12px; }
+    .comment { background: white; border-radius: 20px; padding: 10px 12px; margin-bottom: 8px; font-size: 0.8rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .comment-author { font-weight: 700; color: #c2410c; }
+    .comment-text { margin-top: 4px; color: #2c2a29; word-break: break-word; }
+    .add-comment { display: flex; gap: 8px; margin-top: 8px; }
+    .add-comment input { flex: 1; border-radius: 30px; padding: 8px 14px; }
+    .small-btn { background: #f97316; border: none; color: white; border-radius: 30px; padding: 0 16px; cursor: pointer; }
+    .action-btns { display: flex; gap: 12px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
+    .btn-icon { padding: 6px 14px; border-radius: 30px; border: none; font-weight: 500; cursor: pointer; }
+    .btn-done { background: #22c55e; color: white; }
+    .btn-undo { background: #f97316; color: white; }
+    .btn-delete { background: #ef4444; color: white; }
+    .btn-report { background: #f97316; color: white; }
+    .admin-panel { margin-top: 32px; background: #fff7ed; border-radius: 32px; padding: 20px; border: 1px solid #fed7aa; }
+    .user-row { display: flex; justify-content: space-between; background: white; padding: 8px 12px; border-radius: 60px; margin-bottom: 8px; }
+    .btn-secondary { background: #f97316; color: white; border: none; padding: 8px 18px; border-radius: 40px; font-weight: 500; cursor: pointer; }
+    i { margin-right: 6px; }
+    .empty-state { text-align: center; padding: 40px; color: #9a3412; }
+    footer { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.75rem; color: #9a3412; border-top: 1px solid #fed7aa; }
+  </style>
 </head>
 <body>
-
-<div class="auth-container" id="authContainer">
-    <div class="auth-card">
-        <div class="auth-header">
-            <i class="fas fa-truck-fast" style="font-size: 2.5rem; color: #f97316;"></i>
-            <h1>M&P Express Logistics</h1>
-            <p>IT Approval Workflow System</p>
-        </div>
-        <div id="loginForm">
-            <div class="input-group">
-                <label><i class="fas fa-envelope"></i> Email</label>
-                <input type="email" id="loginEmail" placeholder="sse@mpexpress.com">
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-lock"></i> Password</label>
-                <input type="password" id="loginPassword" placeholder="••••••••">
-            </div>
-            <button class="auth-btn" onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login to Portal</button>
-            <div id="loginError" class="error-msg"></div>
-        </div>
-    </div>
-</div>
-
-<div class="app-container" id="appContainer">
-    <div class="navbar">
-        <div class="logo">
-            <h2><i class="fas fa-truck"></i> M&P Express Logistics</h2>
-            <p>IT Request Management System</p>
-        </div>
-        <div class="user-badge">
-            <span><i class="fas fa-user-circle"></i> <span id="userName"></span></span>
-            <span class="role-badge" id="userRole"></span>
-            <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card"><i class="fas fa-hourglass-half"></i><div class="stat-value" id="pendingCount">0</div><div class="stat-label">In Progress</div></div>
-        <div class="stat-card"><i class="fas fa-check-double"></i><div class="stat-value" id="completedCount">0</div><div class="stat-label">Completed</div></div>
-        <div class="stat-card"><i class="fas fa-receipt"></i><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total Requests</div></div>
-    </div>
-
-    <div class="admin-panel" id="adminPanel" style="display: none;">
-        <h3><i class="fas fa-shield-alt"></i> Admin Dashboard - User Management</h3>
-        <div class="add-user-form">
-            <div class="input-group"><label>Full Name</label><input type="text" id="newUserName" placeholder="Name"></div>
-            <div class="input-group"><label>Email</label><input type="email" id="newUserEmail" placeholder="email@mpexpress.com"></div>
-            <div class="input-group"><label>Password</label><input type="text" id="newUserPassword" placeholder="temp123"></div>
-            <div class="input-group"><label>Role</label>
-                <select id="newUserRole">
-                    <option value="sse">SSE IT</option>
-                    <option value="am">AM IT</option>
-                    <option value="area_manager">Area Manager</option>
-                    <option value="hod">HOD IT</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-            <button class="add-user-btn" onclick="addNewUser()"><i class="fas fa-user-plus"></i> Add User</button>
-            <button class="export-btn" onclick="exportAllToPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
-        </div>
-        <div class="users-table" id="usersTable"></div>
-    </div>
-
-    <div class="flow-timeline">
-        <div class="timeline-steps" id="timelineSteps">
-            <div class="timeline-step pending" id="stepSSE"><div class="step-icon">💻</div><div class="step-name">SSE IT</div></div>
-            <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepAM"><div class="step-icon">📊</div><div class="step-name">AM IT</div></div>
-            <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepArea"><div class="step-icon">🌍</div><div class="step-name">Area Manager</div></div>
-            <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepHOD"><div class="step-icon">🏛️</div><div class="step-name">HOD IT</div></div>
-        </div>
-    </div>
-
-    <div class="request-form-card" id="createRequestCard">
-        <h3 class="form-title"><i class="fas fa-plus-circle"></i> Create New IT Request (SSE Only)</h3>
-        <div class="form-row">
-            <div class="input-group"><label><i class="fas fa-envelope"></i> User Email *</label><input type="email" id="requestUserEmail" placeholder="employee@mpexpress.com"></div>
-            <div class="input-group"><label><i class="fas fa-heading"></i> Request Title *</label><input type="text" id="requestTitle" placeholder="e.g., Laptop Issue, Software Access"></div>
-        </div>
-        <div class="form-row">
-            <div class="input-group"><label><i class="fas fa-building"></i> Department</label><input type="text" id="requestDepartment" placeholder="e.g., Operations, HR, Finance"></div>
-            <div class="input-group"><label><i class="fas fa-flag"></i> Priority</label>
-                <select id="requestPriority">
-                    <option value="High">🔴 High</option>
-                    <option value="Medium">🟠 Medium</option>
-                    <option value="Low">🟢 Low</option>
-                </select>
-            </div>
-        </div>
-        <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue *</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
-        <div class="input-group">
-            <label><i class="fas fa-paperclip"></i> Attachment (Image, PDF, DOC - Max 5MB)</label>
-            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt">
-            <div id="fileUploadStatus" class="file-info"></div>
-        </div>
-        <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem; margin-top: 0.5rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
-    </div>
-
-    <div class="section-title">
-        <h3><i class="fas fa-list"></i> All IT Requests / Complaints</h3>
-        <button class="export-btn" onclick="exportAllToPDF()" style="background: #f97316;"><i class="fas fa-file-pdf"></i> Export PDF</button>
-    </div>
-    <div class="requests-container" id="allRequestsList"></div>
-
-    <div class="request-form-card" id="selectedRequestCard" style="display: none;">
-        <h3 class="form-title"><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3>
-        <div class="role-access-info" id="accessInfoMsg"></div>
-        <div class="detail-grid" id="selectedReqDetails"></div>
-        <div class="workflow-grid" id="workflowGrid"></div>
-    </div>
-
-    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - M&P Express Logistics IT Portal | Attachment upload FIXED ✅</div></div>
-    
-    <div class="footer">
-        <p>M&P Express Logistics - IT Request Management Portal | Developed by <span>FARAZ SHEIKH</span></p>
-    </div>
-</div>
+<div id="loginContainer"></div>
+<div id="appContainer" style="display: none;"></div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBNFuH14JA0RCrkMhl-37ysgla46QpSJyM",
-        authDomain: "faraze-a0339.firebaseapp.com",
-        projectId: "faraze-a0339",
-        storageBucket: "faraze-a0339.firebasestorage.app",
-        messagingSenderId: "463612751566",
-        appId: "1:463612751566:web:0e6b1e8367321c4ffbaa9f"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const auth = firebase.auth();
-    
-    let currentUser = null;
-    let selectedRequest = null;
-    let allRequests = [];
+  // -------------------- DATA MODELS --------------------
+  let users = [];
+  let complaints = [];
+  let comments = [];
+  let currentUser = null;
 
-    function addLog(msg) {
-        const logDiv = document.getElementById('eventsLog');
-        const div = document.createElement('div');
-        div.innerHTML = `<i class="fas fa-clock"></i> [${new Date().toLocaleTimeString()}] ${msg}`;
-        logDiv.prepend(div);
-        if(logDiv.children.length > 20) logDiv.removeChild(logDiv.lastChild);
+  function saveAll() {
+    localStorage.setItem('complaintHub_users', JSON.stringify(users));
+    localStorage.setItem('complaintHub_complaints', JSON.stringify(complaints));
+    localStorage.setItem('complaintHub_comments', JSON.stringify(comments));
+  }
+
+  function loadAll() {
+    const storedUsers = localStorage.getItem('complaintHub_users');
+    if (storedUsers) {
+      users = JSON.parse(storedUsers);
+    } else {
+      users = [
+        { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
+        { id: 2, username: 'it_ahmed', password: 'it123', role: 'it' },
+        { id: 3, username: 'sse_ali', password: 'sse123', role: 'sse' },
+        { id: 4, username: 'member_fatima', password: 'member123', role: 'member' }
+      ];
     }
-
-    async function handleLogin() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        if(!email || !password) { document.getElementById('loginError').innerText = 'Enter email & password'; return; }
-        try {
-            await auth.signInWithEmailAndPassword(email, password);
-        } catch(e) {
-            document.getElementById('loginError').innerText = 'Invalid credentials. Contact admin.';
-        }
+    const storedComplaints = localStorage.getItem('complaintHub_complaints');
+    if (storedComplaints) {
+      complaints = JSON.parse(storedComplaints);
+      complaints = complaints.map(c => ({ ...c, title: c.title || `Issue #${c.id}` }));
+    } else {
+      complaints = [
+        { id: 1001, member: 'Ahmed Raza', title: 'Laptop overheating', description: 'Laptop overheating frequently, shuts down randomly', date: new Date().toISOString().slice(0,10), priority: 'high', status: 'pending', createdBy: 'it_ahmed', createdAt: new Date().toISOString(), completedAt: null },
+        { id: 1002, member: 'Sara Tariq', title: 'Slack notification failure', description: 'Slack notifications not working on mobile', date: new Date().toISOString().slice(0,10), priority: 'medium', status: 'done', createdBy: 'sse_ali', createdAt: new Date(Date.now()-86400000).toISOString(), completedAt: new Date().toISOString() }
+      ];
     }
-
-    async function handleLogout() { await auth.signOut(); location.reload(); }
-
-    window.addNewUser = async () => {
-        const name = document.getElementById('newUserName').value;
-        const email = document.getElementById('newUserEmail').value;
-        const password = document.getElementById('newUserPassword').value;
-        const role = document.getElementById('newUserRole').value;
-        if(!name || !email || !password) { alert('Fill all fields'); return; }
-        if(password.length < 6) { alert('Password 6+ chars'); return; }
-        try {
-            const userCred = await auth.createUserWithEmailAndPassword(email, password);
-            await db.collection('users').doc(userCred.user.uid).set({ name, email, role, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            addLog(`✅ User created: ${name} (${role})`);
-            document.getElementById('newUserName').value = '';
-            document.getElementById('newUserEmail').value = '';
-            document.getElementById('newUserPassword').value = '';
-            loadAllUsers();
-        } catch(e) { alert('Error: ' + e.message); }
-    };
-
-    window.deleteUser = async (userId) => {
-        if(confirm('Delete user?')) {
-            await db.collection('users').doc(userId).delete();
-            loadAllUsers();
-        }
-    };
-
-    async function loadAllUsers() {
-        const snapshot = await db.collection('users').get();
-        let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
-        });
-        html += '</tbody></tr>';
-        document.getElementById('usersTable').innerHTML = html;
+    const storedComments = localStorage.getItem('complaintHub_comments');
+    if (storedComments) {
+      comments = JSON.parse(storedComments);
+    } else {
+      comments = [
+        { id: 5001, complaintId: 1001, text: 'Please try updating thermal drivers.', author: 'it_ahmed', timestamp: new Date().toISOString() }
+      ];
     }
+    saveAll();
+  }
 
-    async function loadStats() {
-        const snapshot = await db.collection('requests').get();
-        let pending = 0, completed = 0;
-        snapshot.forEach(doc => {
-            if(doc.data().stage === 'COMPLETED') completed++;
-            else pending++;
-        });
-        document.getElementById('pendingCount').innerText = pending;
-        document.getElementById('completedCount').innerText = completed;
-        document.getElementById('totalCount').innerText = snapshot.size;
-    }
+  function genId() { return Date.now() + Math.random() * 10000; }
 
-    async function loadAllRequests() {
-        const snapshot = await db.collection('requests').orderBy('createdAt', 'desc').get();
-        allRequests = [];
-        snapshot.forEach(doc => {
-            allRequests.push({ id: doc.id, ...doc.data() });
-        });
-        displayAllRequests();
-    }
-
-    function getPriorityClass(priority) {
-        if(priority === 'High') return 'priority-high';
-        if(priority === 'Medium') return 'priority-medium';
-        return 'priority-low';
-    }
-
-    function displayAllRequests() {
-        const container = document.getElementById('allRequestsList');
-        if(!container) return;
-        let html = '';
-        allRequests.forEach(req => {
-            const isCompleted = req.stage === 'COMPLETED';
-            const statusClass = isCompleted ? 'status-badge-completed' : 'status-badge-pending';
-            const statusText = isCompleted ? '✅ Completed' : `🔄 ${req.stage}`;
-            const priorityClass = getPriorityClass(req.priority);
-            html += `
-                <div class="request-item ${isCompleted ? 'completed' : ''}" onclick="selectRequest('${req.id}')">
-                    <div class="request-header-row">
-                        <span class="request-id"><i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}</span>
-                        <span class="request-status ${statusClass}">${statusText}</span>
-                        <span class="${priorityClass}"><i class="fas fa-flag"></i> ${req.priority || 'Medium'}</span>
-                    </div>
-                    <div class="request-header-row">
-                        <span style="font-size:0.8rem; color:#6b7280;"><i class="fas fa-user"></i> ${req.userEmail} | <i class="fas fa-building"></i> ${req.department || 'N/A'}</span>
-                        <span style="font-size:0.7rem; color:#6b7280;"><i class="fas fa-calendar"></i> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</span>
-                    </div>
-                    <div class="request-header-row">
-                        <span style="font-size:0.85rem; color:#f97316;"><i class="fas fa-tag"></i> ${req.title || 'IT Request'}</span>
-                    </div>
-                    <div class="request-desc"><i class="fas fa-file-alt"></i> ${req.description?.substring(0,100) || ''}${req.description?.length > 100 ? '...' : ''}</div>
-                    ${req.attachmentUrl ? `<div class="request-desc" style="color:#10b981;"><i class="fas fa-paperclip"></i> 📎 Attachment available</div>` : ''}
-                </div>
-            `;
-        });
-        if(allRequests.length === 0) html = '<div style="background:white; border-radius:1rem; padding:2rem; text-align:center; color:#6b7280;">No requests found. SSE can create new requests.</div>';
-        container.innerHTML = html;
-    }
-
-    window.selectRequest = async (requestId) => {
-        const doc = await db.collection('requests').doc(requestId).get();
-        if(doc.exists) {
-            selectedRequest = { id: doc.id, ...doc.data() };
-            displaySelectedRequest();
-        }
-    };
-
-    function updateTimeline(stage) {
-        const order = ['SSE', 'AM', 'AREA', 'HOD'];
-        const stepMap = { SSE:'stepSSE', AM:'stepAM', AREA:'stepArea', HOD:'stepHOD' };
-        let stageIdx = order.indexOf(stage);
-        if(stage === 'COMPLETED') stageIdx = order.length;
-        for(let i=0; i<order.length; i++) {
-            const el = document.getElementById(stepMap[order[i]]);
-            if(el) {
-                if(i < stageIdx) el.className = 'timeline-step completed';
-                else if(i === stageIdx && stage !== 'COMPLETED') el.className = 'timeline-step active';
-                else el.className = 'timeline-step pending';
-            }
-        }
-    }
-
-    function getRoleDisplayName(role) {
-        const roles = { 'sse': 'SSE IT', 'am': 'AM IT', 'area_manager': 'Area Manager', 'hod': 'HOD IT', 'admin': 'Administrator' };
-        return roles[role] || role;
-    }
-
-    function canUserApprove(level, requestStage, isRemarkCompleted) {
-        if(!currentUser) return false;
-        if(currentUser.role === 'admin') return true;
-        if(isRemarkCompleted) return false;
-        if(level === 'sse' && currentUser.role === 'sse' && requestStage === 'SSE') return true;
-        if(level === 'am' && currentUser.role === 'am' && requestStage === 'AM') return true;
-        if(level === 'area' && currentUser.role === 'area_manager' && requestStage === 'AREA') return true;
-        if(level === 'hod' && currentUser.role === 'hod' && requestStage === 'HOD') return true;
-        return false;
-    }
-
-    function displaySelectedRequest() {
-        if(!selectedRequest) return;
-        const req = selectedRequest;
-        document.getElementById('selectedRequestCard').style.display = 'block';
-        document.getElementById('selectedReqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
-        
-        const accessMsg = document.getElementById('accessInfoMsg');
-        if(currentUser?.role !== 'admin') {
-            accessMsg.innerHTML = `<i class="fas fa-info-circle"></i> You are logged in as <strong>${getRoleDisplayName(currentUser?.role)}</strong>. You can only approve requests at the <strong>${getRoleDisplayName(currentUser?.role)}</strong> stage.`;
-            accessMsg.style.display = 'block';
-        } else {
-            accessMsg.innerHTML = `<i class="fas fa-crown"></i> Administrator: You can approve any stage.`;
-        }
-        
-        const attachmentHtml = req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" class="attachment-link"><i class="fas fa-download"></i> Download Attachment</a>` : '—';
-        
-        document.getElementById('selectedReqDetails').innerHTML = `
-            <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail}</div>
-            <div class="detail-item"><strong>📝 Title:</strong> ${req.title}</div>
-            <div class="detail-item"><strong>🏢 Department:</strong> ${req.department || 'N/A'}</div>
-            <div class="detail-item"><strong>⚠️ Priority:</strong> ${req.priority || 'Medium'}</div>
-            <div class="detail-item"><strong>📅 Date & Time:</strong> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</div>
-            <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
-            <div class="detail-item"><strong>📎 Attachment:</strong> ${attachmentHtml}</div>
-            <div class="detail-item"><strong>💬 SSE Remark:</strong> ${req.sseRemark || '—'}</div>
-            <div class="detail-item"><strong>📊 AM Remark:</strong> ${req.amRemark || '—'}</div>
-            <div class="detail-item"><strong>🌍 Area Mgr Remark:</strong> ${req.areaRemark || '—'}</div>
-            <div class="detail-item"><strong>🏛️ HOD Remark:</strong> ${req.hodRemark || '—'}</div>
-        `;
-        updateTimeline(req.stage);
-        
-        const stagesMeta = [
-            {key:'sse', label:'SSE IT', icon:'💻', stageFlag:'SSE', remarkField:'sseRemark', next:'→ AM IT', roleRequired:'sse'},
-            {key:'am', label:'AM IT', icon:'📊', stageFlag:'AM', remarkField:'amRemark', next:'→ Area Manager', roleRequired:'am'},
-            {key:'area', label:'Area Manager', icon:'🌍', stageFlag:'AREA', remarkField:'areaRemark', next:'→ HOD IT', roleRequired:'area_manager'},
-            {key:'hod', label:'HOD IT', icon:'🏛️', stageFlag:'HOD', remarkField:'hodRemark', next:'Final Approve', roleRequired:'hod'}
-        ];
-        
-        let cardsHtml = '';
-        for(let m of stagesMeta) {
-            const isCompleted = !!req[m.remarkField];
-            const isActive = (req.stage === m.stageFlag) && !isCompleted && req.stage !== 'COMPLETED';
-            const canApprove = canUserApprove(m.key, req.stage, isCompleted);
-            const shouldEnable = isActive && canApprove && req.stage !== 'COMPLETED';
-            const existingRemark = isCompleted ? (req[m.remarkField] || '') : '';
-            
-            let statusText = '', statusClass = '';
-            if(isCompleted) { statusText = '✓ Approved'; statusClass = 'background:#d1fae5; color:#065f46;'; }
-            else if(isActive && canApprove) { statusText = '⏳ Pending Your Action'; statusClass = 'background:#fed7aa; color:#9a3412;'; }
-            else if(isActive && !canApprove) { statusText = '🔒 Waiting for ' + m.label; statusClass = 'background:#f3f4f6; color:#9ca3af;'; }
-            else {
-                const stageOrder = ['SSE', 'AM', 'AREA', 'HOD'];
-                const currentStageIndex = stageOrder.indexOf(req.stage);
-                const thisStageIndex = stageOrder.indexOf(m.stageFlag);
-                if(thisStageIndex < currentStageIndex) { statusText = '✓ Already Completed'; statusClass = 'background:#d1fae5; color:#065f46;'; }
-                else { statusText = '🔒 Locked'; statusClass = 'background:#f3f4f6; color:#9ca3af;'; }
-            }
-            const cardDisabledClass = (!shouldEnable && !isCompleted) ? 'disabled-card' : '';
-            cardsHtml += `
-                <div class="workflow-card ${cardDisabledClass}">
-                    <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3>${m.label}</h3></div>
-                    <div style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${statusClass}">${statusText}</div>
-                    <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${!shouldEnable ? 'disabled' : ''}>${existingRemark}</textarea>
-                    <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${!shouldEnable ? 'disabled' : ''}><i class="fas fa-check-circle"></i> ${m.next}</button>
-                </div>
-            `;
-        }
-        document.getElementById('workflowGrid').innerHTML = cardsHtml;
-    }
-
-    window.submitApprovalForSelected = async (level) => {
-        if(!selectedRequest) { alert('No request selected'); return; }
-        const req = selectedRequest;
-        const remarkElem = document.getElementById(`remark_${level}`);
-        if(!remarkElem) return;
-        const remark = remarkElem.value.trim();
-        if(!remark) { alert('Please enter remarks before approving'); return; }
-        
-        let isAuthorized = false;
-        if(currentUser?.role === 'admin') isAuthorized = true;
-        else {
-            if(level === 'sse' && currentUser?.role === 'sse' && req.stage === 'SSE' && !req.sseRemark) isAuthorized = true;
-            else if(level === 'am' && currentUser?.role === 'am' && req.stage === 'AM' && !req.amRemark) isAuthorized = true;
-            else if(level === 'area' && currentUser?.role === 'area_manager' && req.stage === 'AREA' && !req.areaRemark) isAuthorized = true;
-            else if(level === 'hod' && currentUser?.role === 'hod' && req.stage === 'HOD' && !req.hodRemark) isAuthorized = true;
-        }
-        if(!isAuthorized) { alert(`❌ Not authorized! Only ${level.toUpperCase()} can approve.`); return; }
-        
-        let updates = {};
-        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved by ${currentUser.name} → AM IT`); }
-        else if(level === 'am') { updates = { amRemark: remark, stage: 'AREA' }; addLog(`✅ AM approved by ${currentUser.name} → Area Manager`); }
-        else if(level === 'area') { updates = { areaRemark: remark, stage: 'HOD' }; addLog(`✅ Area Manager approved → HOD IT`); }
-        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by ${currentUser.name} → Completed!`); }
-        
-        await db.collection('requests').doc(selectedRequest.id).update(updates);
-        await loadAllRequests();
-        await selectRequest(selectedRequest.id);
-        loadStats();
-        alert(`✓ ${level.toUpperCase()} approval submitted!`);
-    };
-
-    window.createRequest = async () => {
-        if(!currentUser) { alert('Please login'); return; }
-        if(currentUser.role !== 'sse' && currentUser.role !== 'admin') { alert('Only SSE IT or Admin can create requests!'); return; }
-        
-        const userEmail = document.getElementById('requestUserEmail').value.trim();
-        const title = document.getElementById('requestTitle').value.trim();
-        const department = document.getElementById('requestDepartment').value.trim();
-        const priority = document.getElementById('requestPriority').value;
-        const description = document.getElementById('requestDesc').value.trim();
-        const file = document.getElementById('fileInput').files[0];
-        const statusDiv = document.getElementById('fileUploadStatus');
-        
-        if(!userEmail) { alert('User Email is required!'); return; }
-        if(!title) { alert('Request Title is required!'); return; }
-        if(!description) { alert('Description is required!'); return; }
-        
-        let attachmentUrl = null;
-        
-        if(file) {
-            if(file.size > 5 * 1024 * 1024) { 
-                alert('File too large! Max 5MB.'); 
-                return;
-            }
-            
-            statusDiv.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Uploading attachment...';
-            statusDiv.className = 'file-info upload-loading';
-            
-            try {
-                const timestamp = Date.now();
-                const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-                const filePath = `request_attachments/${timestamp}_${safeFileName}`;
-                const storageRef = storage.ref(filePath);
-                
-                const uploadTask = await storageRef.put(file);
-                attachmentUrl = await storageRef.getDownloadURL();
-                
-                statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✓ Attachment uploaded successfully!';
-                statusDiv.className = 'file-info upload-success';
-                addLog(`📎 Attachment uploaded: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
-            } catch(e) {
-                console.error('Upload error:', e);
-                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Upload failed: ' + (e.message || 'Storage error');
-                statusDiv.className = 'file-info upload-error';
-                alert('Attachment upload failed! Check Firebase Storage rules. Submitting without attachment.');
-                attachmentUrl = null;
-            }
-        } else {
-            statusDiv.innerHTML = '';
-        }
-        
-        const now = new Date();
-        const requestDate = now.toLocaleString();
-        
-        try {
-            await db.collection('requests').add({
-                requesterId: currentUser.uid,
-                requesterName: currentUser.name,
-                requesterEmail: currentUser.email,
-                userEmail: userEmail,
-                title: title,
-                department: department || 'N/A',
-                priority: priority,
-                description: description,
-                attachmentUrl: attachmentUrl,
-                requestDate: requestDate,
-                stage: 'SSE',
-                sseRemark: '',
-                amRemark: '',
-                areaRemark: '',
-                hodRemark: '',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            addLog(`✅ New request created by ${currentUser.name} for ${userEmail}${attachmentUrl ? ' with attachment' : ''}`);
-            
-            document.getElementById('requestUserEmail').value = '';
-            document.getElementById('requestTitle').value = '';
-            document.getElementById('requestDepartment').value = '';
-            document.getElementById('requestDesc').value = '';
-            document.getElementById('fileInput').value = '';
-            document.getElementById('fileUploadStatus').innerHTML = '';
-            document.getElementById('fileUploadStatus').className = 'file-info';
-            
-            await loadAllRequests();
-            loadStats();
-            alert('✓ Request submitted successfully!' + (attachmentUrl ? ' Attachment uploaded.' : ''));
-        } catch(e) {
-            console.error('Firestore error:', e);
-            alert('Error submitting request: ' + e.message);
-        }
-    };
-
-    window.exportAllToPDF = async () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        let y = 20;
-        doc.setFontSize(18); doc.setTextColor(249,115,22); doc.text('M&P Express Logistics - IT Request Report', 20, y);
-        y += 8; doc.setFontSize(10); doc.setTextColor(107,114,128); doc.text(`Generated: ${new Date().toLocaleString()}`, 20, y); y += 10;
-        for(let i=0; i<allRequests.length; i++) {
-            const req = allRequests[i];
-            if(y > 260) { doc.addPage(); y = 20; }
-            doc.setFontSize(10); doc.setTextColor(249,115,22); doc.setFont(undefined,'bold'); doc.text(`Request #${req.id.slice(0,8)}`,20,y); y+=6;
-            doc.setFont(undefined,'normal'); doc.setTextColor(55,65,81); doc.setFontSize(9);
-            doc.text(`User Email: ${req.userEmail}`,20,y); y+=5;
-            doc.text(`Title: ${req.title || 'IT Request'}`,20,y); y+=5;
-            doc.text(`Dept: ${req.department || 'N/A'} | Priority: ${req.priority || 'Medium'}`,20,y); y+=5;
-            doc.text(`Date: ${req.requestDate || ''}`,20,y); y+=5;
-            doc.text(`Description: ${req.description?.substring(0,80) || ''}`,20,y); y+=5;
-            doc.text(`Status: ${req.stage === 'COMPLETED' ? 'COMPLETED' : req.stage}`,20,y); y+=5;
-            doc.text(`Attachment: ${req.attachmentUrl ? 'Yes' : 'No'}`,20,y); y+=5;
-            doc.text(`SSE: ${req.sseRemark || '—'}`,20,y); y+=4;
-            doc.text(`AM: ${req.amRemark || '—'}`,20,y); y+=4;
-            doc.text(`Area Mgr: ${req.areaRemark || '—'}`,20,y); y+=4;
-            doc.text(`HOD: ${req.hodRemark || '—'}`,20,y); y+=8;
-            doc.setDrawColor(249,115,22); doc.line(20,y-2,190,y-2);
-        }
-        doc.save(`M&P_IT_Requests_${new Date().toISOString().slice(0,19)}.pdf`);
-        addLog(`📄 PDF exported with ${allRequests.length} requests`);
-    };
-
-    auth.onAuthStateChanged(async (user) => {
-        if(user) {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if(!userDoc.exists) { await auth.signOut(); return; }
-            currentUser = { uid: user.uid, ...userDoc.data() };
-            document.getElementById('userName').innerHTML = `<i class="fas fa-user"></i> ${currentUser.name}`;
-            document.getElementById('userRole').innerHTML = `<i class="fas fa-tag"></i> ${currentUser.role.toUpperCase()}`;
-            document.getElementById('authContainer').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            if(currentUser.role === 'admin') { document.getElementById('adminPanel').style.display = 'block'; loadAllUsers(); }
-            if(currentUser.role !== 'sse' && currentUser.role !== 'admin') document.getElementById('createRequestCard').style.display = 'none';
-            await loadAllRequests(); loadStats();
-            addLog(`Welcome ${currentUser.name} (${getRoleDisplayName(currentUser.role)})`);
-            addLog(`📎 Attachment upload feature is now FULLY FIXED! You can upload files up to 5MB.`);
-        } else {
-            document.getElementById('authContainer').style.display = 'flex';
-            document.getElementById('appContainer').style.display = 'none';
-        }
+  // -------------------- AUTH --------------------
+  function renderLogin() {
+    const container = document.getElementById('loginContainer');
+    container.innerHTML = `
+      <div class="login-overlay">
+        <div class="login-card">
+          <h2><i class="fas fa-box"></i> M&P Express Logistics</h2>
+          <p style="margin-bottom:16px; color:#ea580c;">Complaint Management System</p>
+          <div class="form-group"><label>Username</label><input type="text" id="loginUsername" placeholder="admin / it_ahmed / sse_ali"></div>
+          <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••"></div>
+          <button id="doLoginBtn" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign in</button>
+          <p style="margin-top: 12px; font-size:0.7rem;">Demo: admin/admin123 | it_ahmed/it123 | sse_ali/sse123</p>
+        </div>
+      </div>
+    `;
+    document.getElementById('doLoginBtn').addEventListener('click', () => {
+      const uname = document.getElementById('loginUsername').value.trim();
+      const pwd = document.getElementById('loginPassword').value.trim();
+      const user = users.find(u => u.username === uname && u.password === pwd);
+      if (user) {
+        currentUser = { ...user };
+        localStorage.setItem('complaintHub_session', JSON.stringify({ id: user.id, username: user.username, role: user.role }));
+        document.getElementById('loginContainer').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'block';
+        renderMainApp();
+      } else alert('Invalid credentials');
     });
+  }
+
+  function logout() {
+    currentUser = null;
+    localStorage.removeItem('complaintHub_session');
+    document.getElementById('loginContainer').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'none';
+    renderLogin();
+  }
+
+  function checkSession() {
+    const session = localStorage.getItem('complaintHub_session');
+    if (session) {
+      try {
+        const s = JSON.parse(session);
+        const found = users.find(u => u.id === s.id && u.username === s.username);
+        if (found) {
+          currentUser = { ...found };
+          document.getElementById('loginContainer').style.display = 'none';
+          document.getElementById('appContainer').style.display = 'block';
+          renderMainApp();
+          return;
+        }
+      } catch(e) {}
+    }
+    document.getElementById('loginContainer').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'none';
+    renderLogin();
+  }
+
+  function canModifyStatus(role) { return role === 'admin' || role === 'it'; }
+  function canDeleteComplaint(role) { return role === 'admin' || role === 'it'; }
+  function canManageUsers(role) { return role === 'admin'; }
+
+  // -------------------- PDF REPORT GENERATION --------------------
+  async function generatePDF(elementId, filename) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    const opt = {
+      margin: [0.5, 0.5, 0.5, 0.5],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, letterRendering: true },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    await html2pdf().set(opt).from(element).save();
+  }
+
+  function buildSingleComplaintHTML(comp) {
+    const compComments = comments.filter(c => c.complaintId === comp.id).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    let commentsHtml = '<ul>';
+    compComments.forEach(cmt => {
+      commentsHtml += `<li><strong>${escapeHtml(cmt.author)}</strong> (${new Date(cmt.timestamp).toLocaleString()}): ${escapeHtml(cmt.text)}</li>`;
+    });
+    commentsHtml += '</ul>';
+    return `
+      <div style="font-family: 'Inter', sans-serif; padding: 20px;">
+        <div style="text-align: center; border-bottom: 2px solid #f97316; margin-bottom: 20px;">
+          <h1 style="color: #ea580c;">M&P Express Logistics</h1>
+          <h3>Complaint Report (Single Issue)</h3>
+        </div>
+        <div style="margin-bottom: 20px;">
+          <p><strong>Complaint ID:</strong> ${comp.id}</p>
+          <p><strong>Title:</strong> ${escapeHtml(comp.title)}</p>
+          <p><strong>Team Member:</strong> ${escapeHtml(comp.member)}</p>
+          <p><strong>Priority:</strong> ${comp.priority.toUpperCase()}</p>
+          <p><strong>Status:</strong> ${comp.status === 'done' ? 'RESOLVED' : 'PENDING'}</p>
+          <p><strong>Incident Date:</strong> ${comp.date}</p>
+          <p><strong>Description:</strong> ${escapeHtml(comp.description)}</p>
+          <p><strong>Logged by:</strong> ${comp.createdBy} on ${new Date(comp.createdAt).toLocaleString()}</p>
+          ${comp.completedAt ? `<p><strong>Resolved on:</strong> ${new Date(comp.completedAt).toLocaleString()}</p>` : ''}
+        </div>
+        <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
+          <h4>Comments / Ideas</h4>
+          ${compComments.length === 0 ? '<p>No comments added.</p>' : commentsHtml}
+        </div>
+        <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #777;">
+          Generated by ${currentUser.username} on ${new Date().toLocaleString()} | Developed by Central IT
+        </div>
+      </div>
+    `;
+  }
+
+  function buildFullReportHTML() {
+    let complaintsHtml = '';
+    complaints.forEach(comp => {
+      const compComments = comments.filter(c => c.complaintId === comp.id);
+      let commentsHtml = '<ul>';
+      compComments.forEach(cmt => {
+        commentsHtml += `<li><strong>${escapeHtml(cmt.author)}</strong> (${new Date(cmt.timestamp).toLocaleString()}): ${escapeHtml(cmt.text)}</li>`;
+      });
+      commentsHtml += '</ul>';
+      complaintsHtml += `
+        <div style="margin-bottom: 30px; border-bottom: 1px solid #fed7aa; padding-bottom: 15px;">
+          <h3 style="color: #ea580c;">Complaint #${comp.id}</h3>
+          <p><strong>Title:</strong> ${escapeHtml(comp.title)}</p>
+          <p><strong>Member:</strong> ${escapeHtml(comp.member)} | <strong>Priority:</strong> ${comp.priority.toUpperCase()} | <strong>Status:</strong> ${comp.status === 'done' ? 'RESOLVED' : 'PENDING'}</p>
+          <p><strong>Date:</strong> ${comp.date}</p>
+          <p><strong>Description:</strong> ${escapeHtml(comp.description)}</p>
+          <p><strong>Logged by:</strong> ${comp.createdBy} on ${new Date(comp.createdAt).toLocaleString()}</p>
+          ${comp.completedAt ? `<p><strong>Resolved:</strong> ${new Date(comp.completedAt).toLocaleString()}</p>` : ''}
+          <div><strong>Comments (${compComments.length}):</strong> ${compComments.length === 0 ? 'None' : commentsHtml}</div>
+        </div>
+      `;
+    });
+    return `
+      <div style="font-family: 'Inter', sans-serif; padding: 20px;">
+        <div style="text-align: center; border-bottom: 2px solid #f97316; margin-bottom: 20px;">
+          <h1 style="color: #ea580c;">M&P Express Logistics</h1>
+          <h3>Complete Complaints Report</h3>
+          <p>Total: ${complaints.length} | Pending: ${complaints.filter(c => c.status === 'pending').length} | Resolved: ${complaints.filter(c => c.status === 'done').length}</p>
+        </div>
+        ${complaintsHtml}
+        <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #777;">
+          Generated by ${currentUser.username} on ${new Date().toLocaleString()} | Developed by Central IT
+        </div>
+      </div>
+    `;
+  }
+
+  async function exportSingleComplaintPDF(complaintId) {
+    const comp = complaints.find(c => c.id === complaintId);
+    if (!comp) return;
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = buildSingleComplaintHTML(comp);
+    document.body.appendChild(tempDiv);
+    await generatePDF(tempDiv, `complaint_${comp.id}_${comp.member.replace(/\s/g,'_')}.pdf`);
+    document.body.removeChild(tempDiv);
+  }
+
+  async function exportFullReportPDF() {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = buildFullReportHTML();
+    document.body.appendChild(tempDiv);
+    await generatePDF(tempDiv, `full_complaints_report_${new Date().toISOString().slice(0,19)}.pdf`);
+    document.body.removeChild(tempDiv);
+  }
+
+  // -------------------- RENDER MAIN APP (ORANGE THEME + BRANDING) --------------------
+  function renderMainApp() {
+    const container = document.getElementById('appContainer');
+    container.innerHTML = `
+      <div class="app-container">
+        <div class="top-bar">
+          <div class="logo">
+            <h2><i class="fas fa-truck-fast"></i> M&P Express Logistics</h2>
+            <p>Complaint Management System | Enterprise</p>
+          </div>
+          <div class="user-info">
+            <span class="role-badge"><i class="fas fa-user-tag"></i> ${currentUser.role.toUpperCase()} · ${currentUser.username}</span>
+            <button id="logoutBtnMain" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+          </div>
+        </div>
+        <div class="stats-row" id="statsRow"></div>
+        <div class="dashboard">
+          <div class="form-panel">
+            <div class="card">
+              <div class="card-title"><i class="fas fa-plus-circle"></i> Log New Complaint</div>
+              <form id="newComplaintForm">
+                <div class="form-group"><label>Team member name</label><input type="text" id="compMember" required></div>
+                <div class="form-group"><label>Complaint Title</label><input type="text" id="compTitle" placeholder="e.g., WiFi not working, Printer jam" required></div>
+                <div class="form-group"><label>Priority</label><select id="compPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+                <div class="form-group"><label>Description</label><textarea id="compDesc" rows="2" placeholder="Detailed description of the issue..." required></textarea></div>
+                <div class="form-group"><label>Date</label><input type="date" id="compDate" required></div>
+                <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Complaint</button>
+              </form>
+            </div>
+            ${canManageUsers(currentUser.role) ? `<div class="admin-panel" id="adminPanel"><div class="card-title"><i class="fas fa-users-cog"></i> User Management (Admin)</div>
+            <div class="form-group" style="display:flex; gap:6px; flex-wrap:wrap;"><input type="text" id="newUsername" placeholder="username" style="flex:1"><input type="password" id="newPassword" placeholder="pass"><select id="newRole"><option value="member">Member</option><option value="sse">SSE</option><option value="it">IT</option><option value="admin">Admin</option></select><button id="createUserBtn" class="small-btn">Create</button></div>
+            <div id="userList"></div></div>` : ''}
+          </div>
+          <div class="list-panel">
+            <div class="card">
+              <div class="card-title">
+                <span><i class="fas fa-filter"></i> Complaints & Comments</span>
+                <div class="report-buttons">
+                  <button id="fullReportPDFBtn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Export PDF (Full)</button>
+                </div>
+              </div>
+              <div class="filters-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Search member / title / description" style="flex:2">
+                <select id="filterPriority"><option value="all">All priority</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                <select id="filterStatus"><option value="all">All status</option><option value="pending">Pending</option><option value="done">Resolved</option></select>
+              </div>
+              <div id="complaintsListContainer"></div>
+            </div>
+          </div>
+        </div>
+        <footer>
+          <i class="fas fa-code"></i> Developed by Central IT | M&P Express Logistics © 2025
+        </footer>
+      </div>
+    `;
+    attachGlobalListeners();
+    refreshStatsAndList();
+    if (canManageUsers(currentUser.role)) renderUserList();
+  }
+
+  function refreshStatsAndList() {
+    updateStats();
+    renderComplaintsList();
+  }
+
+  function updateStats() {
+    const total = complaints.length;
+    const pending = complaints.filter(c => c.status === 'pending').length;
+    const done = complaints.filter(c => c.status === 'done').length;
+    const rate = total === 0 ? 0 : Math.round((done/total)*100);
+    const statsHtml = `
+      <div class="stat-card"><div><h4>Total</h4><span style="font-size:1.8rem; font-weight:800;">${total}</span></div><i class="fas fa-database fa-2x"></i></div>
+      <div class="stat-card"><div><h4>Pending</h4><span style="font-size:1.8rem; font-weight:800;">${pending}</span></div><i class="fas fa-clock fa-2x"></i></div>
+      <div class="stat-card"><div><h4>Resolved</h4><span style="font-size:1.8rem; font-weight:800;">${done}</span></div><i class="fas fa-check-circle fa-2x"></i></div>
+      <div class="stat-card"><div><h4>Resolution Rate</h4><span style="font-size:1.8rem; font-weight:800;">${rate}%</span></div><i class="fas fa-chart-line fa-2x"></i></div>
+    `;
+    const statsRow = document.getElementById('statsRow');
+    if (statsRow) statsRow.innerHTML = statsHtml;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
+    });
+  }
+
+  function renderComplaintsList() {
+    const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const priorityFilter = document.getElementById('filterPriority')?.value || 'all';
+    const statusFilter = document.getElementById('filterStatus')?.value || 'all';
+    let filtered = complaints.filter(c => {
+      const matchSearch = c.member.toLowerCase().includes(search) || 
+                          c.title.toLowerCase().includes(search) || 
+                          c.description.toLowerCase().includes(search);
+      const matchPriority = priorityFilter === 'all' || c.priority === priorityFilter;
+      const matchStatus = statusFilter === 'all' || c.status === statusFilter;
+      return matchSearch && matchPriority && matchStatus;
+    }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    const container = document.getElementById('complaintsListContainer');
+    if (!container) return;
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i> No complaints match filters</div>';
+      return;
+    }
+    let html = '';
+    filtered.forEach(comp => {
+      const isDone = comp.status === 'done';
+      const priorityClass = comp.priority === 'high' ? 'priority-high' : (comp.priority === 'medium' ? 'priority-medium' : 'priority-low');
+      const priorityLabel = comp.priority === 'high' ? '🔴 HIGH' : (comp.priority === 'medium' ? '🟠 MEDIUM' : '🟢 LOW');
+      const statusClass = isDone ? 'status-done' : 'status-pending';
+      const statusText = isDone ? '✅ Resolved' : '⏳ Pending';
+      const canEdit = canModifyStatus(currentUser.role);
+      const canDelete = canDeleteComplaint(currentUser.role);
+      const compComments = comments.filter(c => c.complaintId === comp.id).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+      let commentsHtml = '';
+      compComments.forEach(cmt => {
+        commentsHtml += `<div class="comment"><span class="comment-author"><i class="fas fa-user-circle"></i> ${escapeHtml(cmt.author)}</span><div class="comment-text">💬 ${escapeHtml(cmt.text)}</div><div style="font-size:0.6rem; color:#6c8b9b;">${new Date(cmt.timestamp).toLocaleString()}</div></div>`;
+      });
+      html += `
+        <div class="complaint-item" data-id="${comp.id}">
+          <div class="complaint-header">
+            <div><strong><i class="fas fa-user"></i> ${escapeHtml(comp.member)}</strong> <span class="badge-priority ${priorityClass}">${priorityLabel}</span> <span class="status-badge ${statusClass}">${statusText}</span></div>
+            <div style="font-size:0.7rem;">📅 ${escapeHtml(comp.date)}</div>
+          </div>
+          <div class="complaint-title-text"><i class="fas fa-heading"></i> ${escapeHtml(comp.title)}</div>
+          <div><i class="fas fa-align-left"></i> ${escapeHtml(comp.description)}</div>
+          <div style="font-size:0.7rem; color:#5a6e7c; margin:6px 0;">🕒 logged by ${escapeHtml(comp.createdBy)} on ${new Date(comp.createdAt).toLocaleDateString()}</div>
+          <div class="comment-section">
+            <div class="comment-list" id="comments-${comp.id}">${commentsHtml || '<div style="font-size:0.7rem; color:gray;">No comments yet. Add a suggestion or idea.</div>'}</div>
+            <div class="add-comment">
+              <input type="text" id="commentInput-${comp.id}" placeholder="Write a comment or solution idea...">
+              <button class="small-btn addCommentBtn" data-id="${comp.id}"><i class="fas fa-comment"></i> Post</button>
+            </div>
+          </div>
+          <div class="action-btns">
+            <button class="btn-icon btn-report" data-action="report" data-id="${comp.id}"><i class="fas fa-download"></i> PDF Report</button>
+            ${canEdit ? (isDone ? `<button class="btn-icon btn-undo" data-action="toggle" data-id="${comp.id}"><i class="fas fa-undo"></i> Reopen</button>` : `<button class="btn-icon btn-done" data-action="toggle" data-id="${comp.id}"><i class="fas fa-check"></i> Mark Resolved</button>`) : ''}
+            ${canDelete ? `<button class="btn-icon btn-delete" data-action="delete" data-id="${comp.id}"><i class="fas fa-trash"></i> Delete</button>` : ''}
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+    // attach dynamic listeners
+    document.querySelectorAll('.addCommentBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const complaintId = parseFloat(btn.getAttribute('data-id'));
+        const input = document.getElementById(`commentInput-${complaintId}`);
+        const text = input.value.trim();
+        if (!text) return alert("Please write a comment");
+        addComment(complaintId, text);
+        input.value = '';
+      });
+    });
+    document.querySelectorAll('[data-action="toggle"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = parseFloat(btn.getAttribute('data-id'));
+        toggleComplaintStatus(id);
+      });
+    });
+    document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = parseFloat(btn.getAttribute('data-id'));
+        deleteComplaintById(id);
+      });
+    });
+    document.querySelectorAll('[data-action="report"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = parseFloat(btn.getAttribute('data-id'));
+        exportSingleComplaintPDF(id);
+      });
+    });
+  }
+
+  function addComment(complaintId, text) {
+    comments.push({
+      id: genId(),
+      complaintId: complaintId,
+      text: text,
+      author: currentUser.username,
+      timestamp: new Date().toISOString()
+    });
+    saveAll();
+    refreshStatsAndList();
+  }
+
+  function toggleComplaintStatus(id) {
+    const idx = complaints.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      if (complaints[idx].status === 'pending') {
+        complaints[idx].status = 'done';
+        complaints[idx].completedAt = new Date().toISOString();
+      } else {
+        complaints[idx].status = 'pending';
+        complaints[idx].completedAt = null;
+      }
+      saveAll();
+      refreshStatsAndList();
+    }
+  }
+
+  function deleteComplaintById(id) {
+    if (confirm("Delete permanently? Comments will also be removed.")) {
+      complaints = complaints.filter(c => c.id !== id);
+      comments = comments.filter(c => c.complaintId !== id);
+      saveAll();
+      refreshStatsAndList();
+      if (canManageUsers(currentUser.role)) renderUserList();
+    }
+  }
+
+  function addNewComplaint(member, title, desc, date, priority) {
+    if (!member || !title || !desc) return false;
+    complaints.unshift({
+      id: genId(),
+      member: member.trim(),
+      title: title.trim(),
+      description: desc.trim(),
+      date: date,
+      priority: priority,
+      status: 'pending',
+      createdBy: currentUser.username,
+      createdAt: new Date().toISOString(),
+      completedAt: null
+    });
+    saveAll();
+    refreshStatsAndList();
+    return true;
+  }
+
+  function renderUserList() {
+    const userDiv = document.getElementById('userList');
+    if (!userDiv) return;
+    let html = '<h4 style="margin:12px 0 8px;">Existing users</h4>';
+    users.forEach(u => {
+      html += `<div class="user-row"><span><i class="fas fa-user"></i> ${escapeHtml(u.username)} (${escapeHtml(u.role)})</span> ${u.username !== 'admin' ? `<button class="small-btn deleteUserBtn" data-id="${u.id}" style="background:#e74c3c;">Delete</button>` : '<span style="font-size:0.7rem;">⭐ protected</span>'}</div>`;
+    });
+    userDiv.innerHTML = html;
+    document.querySelectorAll('.deleteUserBtn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const uid = parseInt(btn.getAttribute('data-id'));
+        if (confirm('Delete user?')) {
+          users = users.filter(u => u.id !== uid);
+          if (currentUser && currentUser.id === uid) logout();
+          else { saveAll(); renderUserList(); refreshStatsAndList(); }
+        }
+      });
+    });
+  }
+
+  function createUser(username, password, role) {
+    if (users.find(u => u.username === username)) { alert("Username exists"); return false; }
+    const newId = users.length > 0 ? Math.max(...users.map(u=>u.id)) + 1 : 100;
+    users.push({ id: newId, username, password, role });
+    saveAll();
+    renderUserList();
+    return true;
+  }
+
+  function attachGlobalListeners() {
+    const form = document.getElementById('newComplaintForm');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const member = document.getElementById('compMember').value;
+        const title = document.getElementById('compTitle').value;
+        const desc = document.getElementById('compDesc').value;
+        const date = document.getElementById('compDate').value;
+        const priority = document.getElementById('compPriority').value;
+        if (!date) { alert("Select incident date"); return; }
+        if (addNewComplaint(member, title, desc, date, priority)) {
+          form.reset();
+          document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
+        }
+      });
+      if(document.getElementById('compDate')) document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
+    }
+    document.getElementById('searchInput')?.addEventListener('input', () => refreshStatsAndList());
+    document.getElementById('filterPriority')?.addEventListener('change', () => refreshStatsAndList());
+    document.getElementById('filterStatus')?.addEventListener('change', () => refreshStatsAndList());
+    document.getElementById('fullReportPDFBtn')?.addEventListener('click', () => exportFullReportPDF());
+    const createBtn = document.getElementById('createUserBtn');
+    if (createBtn) {
+      createBtn.addEventListener('click', () => {
+        const uname = document.getElementById('newUsername').value.trim();
+        const pwd = document.getElementById('newPassword').value.trim();
+        const role = document.getElementById('newRole').value;
+        if (!uname || !pwd) { alert("Username & password required"); return; }
+        createUser(uname, pwd, role);
+        document.getElementById('newUsername').value = '';
+        document.getElementById('newPassword').value = '';
+      });
+    }
+    const logoutBtn = document.getElementById('logoutBtnMain');
+    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+  }
+
+  loadAll();
+  checkSession();
 </script>
 </body>
 </html>
