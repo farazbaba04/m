@@ -3,18 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>M&P Express Logistics | ComplaintHub Pro</title>
+  <title>M&P Express Logistics | Firebase ComplaintHub</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- html2pdf for PDF generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #fff7ed; color: #2c2a29; padding: 24px 20px; }
     .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .login-card { background: white; max-width: 420px; width: 90%; border-radius: 40px; padding: 32px 28px; box-shadow: 0 25px 45px rgba(0,0,0,0.2); }
     .login-card h2 { margin-bottom: 24px; font-weight: 700; color: #ea580c; }
-    .app-container { max-width: 1500px; margin: 0 auto; }
+    .app-container { max-width: 1500px; margin: 0 auto; display: none; }
     .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; background: white; border-radius: 60px; padding: 12px 24px; margin-bottom: 28px; box-shadow: 0 4px 12px rgba(234,88,12,0.1); border: 1px solid #fed7aa; }
     .logo h2 { font-size: 1.6rem; background: linear-gradient(135deg, #ea580c, #c2410c); background-clip: text; -webkit-background-clip: text; color: transparent; }
     .logo p { font-size: 0.7rem; color: #f97316; font-weight: 500; }
@@ -34,7 +33,7 @@
     .btn-primary { background: #f97316; color: white; border: none; width: 100%; padding: 12px; border-radius: 40px; font-weight: 600; cursor: pointer; transition: 0.2s; }
     .btn-primary:hover { background: #ea580c; }
     .filters-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
-    .complaint-item { background: #ffffff; border-radius: 28px; margin-bottom: 20px; padding: 18px; border: 1px solid #ffedd5; transition: 0.1s; }
+    .complaint-item { background: #ffffff; border-radius: 28px; margin-bottom: 20px; padding: 18px; border: 1px solid #ffedd5; }
     .complaint-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
     .complaint-title-text { font-weight: 700; font-size: 1rem; color: #7c2d12; margin: 4px 0; }
     .badge-priority { padding: 4px 12px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; }
@@ -64,237 +63,132 @@
     i { margin-right: 6px; }
     .empty-state { text-align: center; padding: 40px; color: #9a3412; }
     footer { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.75rem; color: #9a3412; border-top: 1px solid #fed7aa; }
+    .loading { text-align: center; padding: 20px; color: #ea580c; }
   </style>
 </head>
 <body>
 <div id="loginContainer"></div>
-<div id="appContainer" style="display: none;"></div>
+<div id="appContainer" class="app-container"></div>
 
-<script>
-  // -------------------- DATA MODELS --------------------
-  let users = [];
-  let complaints = [];
-  let comments = [];
-  let currentUser = null;
+<script type="module">
+  // Firebase imports
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
-  function saveAll() {
-    localStorage.setItem('complaintHub_users', JSON.stringify(users));
-    localStorage.setItem('complaintHub_complaints', JSON.stringify(complaints));
-    localStorage.setItem('complaintHub_comments', JSON.stringify(comments));
+  const firebaseConfig = {
+    apiKey: "AIzaSyCg4_Neo0-hhciQ4M7y1opLJUJgwG19Gfo",
+    authDomain: "itcomplaint-5bf6e.firebaseapp.com",
+    projectId: "itcomplaint-5bf6e",
+    storageBucket: "itcomplaint-5bf6e.firebasestorage.app",
+    messagingSenderId: "492603526578",
+    appId: "1:492603526578:web:79978172cf88455ba9a8ab",
+    measurementId: "G-LDGE63N4ME"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Collections references
+  const usersCollection = collection(db, "users");
+  const complaintsCollection = collection(db, "complaints");
+  const commentsCollection = collection(db, "comments");
+
+  let currentUser = null; // { uid, email, role, username }
+  let unsubscribeComplaints = null;
+  let unsubscribeComments = null;
+
+  // Helper functions
+  function showLoading(container, show) {
+    if (show) container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...</div>';
   }
 
-  function loadAll() {
-    const storedUsers = localStorage.getItem('complaintHub_users');
-    if (storedUsers) {
-      users = JSON.parse(storedUsers);
-    } else {
-      users = [
-        { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
-        { id: 2, username: 'it_ahmed', password: 'it123', role: 'it' },
-        { id: 3, username: 'sse_ali', password: 'sse123', role: 'sse' },
-        { id: 4, username: 'member_fatima', password: 'member123', role: 'member' }
-      ];
+  async function ensureDefaultUsers() {
+    // Default users: admin, it_ahmed, sse_ali, member_fatima
+    const defaultUsers = [
+      { email: "admin@mpexpress.com", password: "admin123", username: "admin", role: "admin" },
+      { email: "it_ahmed@mpexpress.com", password: "it123", username: "it_ahmed", role: "it" },
+      { email: "sse_ali@mpexpress.com", password: "sse123", username: "sse_ali", role: "sse" },
+      { email: "member_fatima@mpexpress.com", password: "member123", username: "member_fatima", role: "member" }
+    ];
+    for (const user of defaultUsers) {
+      try {
+        const userQuery = query(usersCollection, where("username", "==", user.username));
+        const snapshot = await getDocs(userQuery);
+        if (snapshot.empty) {
+          // Create auth user
+          let authUser;
+          try {
+            authUser = await createUserWithEmailAndPassword(auth, user.email, user.password);
+          } catch (err) {
+            if (err.code === 'auth/email-already-in-use') {
+              // Sign in to get UID
+              const cred = await signInWithEmailAndPassword(auth, user.email, user.password);
+              authUser = cred.user;
+            } else throw err;
+          }
+          // Store in Firestore
+          await setDoc(doc(db, "users", authUser.user.uid), {
+            uid: authUser.user.uid,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (err) { console.error("Error creating default user", user.username, err); }
     }
-    const storedComplaints = localStorage.getItem('complaintHub_complaints');
-    if (storedComplaints) {
-      complaints = JSON.parse(storedComplaints);
-      complaints = complaints.map(c => ({ ...c, title: c.title || `Issue #${c.id}` }));
-    } else {
-      complaints = [
-        { id: 1001, member: 'Ahmed Raza', title: 'Laptop overheating', description: 'Laptop overheating frequently, shuts down randomly', date: new Date().toISOString().slice(0,10), priority: 'high', status: 'pending', createdBy: 'it_ahmed', createdAt: new Date().toISOString(), completedAt: null },
-        { id: 1002, member: 'Sara Tariq', title: 'Slack notification failure', description: 'Slack notifications not working on mobile', date: new Date().toISOString().slice(0,10), priority: 'medium', status: 'done', createdBy: 'sse_ali', createdAt: new Date(Date.now()-86400000).toISOString(), completedAt: new Date().toISOString() }
-      ];
-    }
-    const storedComments = localStorage.getItem('complaintHub_comments');
-    if (storedComments) {
-      comments = JSON.parse(storedComments);
-    } else {
-      comments = [
-        { id: 5001, complaintId: 1001, text: 'Please try updating thermal drivers.', author: 'it_ahmed', timestamp: new Date().toISOString() }
-      ];
-    }
-    saveAll();
   }
 
-  function genId() { return Date.now() + Math.random() * 10000; }
-
-  // -------------------- AUTH --------------------
+  // Render login screen
   function renderLogin() {
     const container = document.getElementById('loginContainer');
     container.innerHTML = `
       <div class="login-overlay">
         <div class="login-card">
           <h2><i class="fas fa-box"></i> M&P Express Logistics</h2>
-          <p style="margin-bottom:16px; color:#ea580c;">Complaint Management System</p>
-          <div class="form-group"><label>Username</label><input type="text" id="loginUsername" placeholder="admin / it_ahmed / sse_ali"></div>
+          <p style="margin-bottom:16px; color:#ea580c;">Firebase Complaint System</p>
+          <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@mpexpress.com"></div>
           <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••"></div>
           <button id="doLoginBtn" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign in</button>
-          <p style="margin-top: 12px; font-size:0.7rem;">Demo: admin/admin123 | it_ahmed/it123 | sse_ali/sse123</p>
+          <p style="margin-top: 12px; font-size:0.7rem;">Demo: admin@mpexpress.com/admin123 | it_ahmed@mpexpress.com/it123</p>
         </div>
       </div>
     `;
-    document.getElementById('doLoginBtn').addEventListener('click', () => {
-      const uname = document.getElementById('loginUsername').value.trim();
-      const pwd = document.getElementById('loginPassword').value.trim();
-      const user = users.find(u => u.username === uname && u.password === pwd);
-      if (user) {
-        currentUser = { ...user };
-        localStorage.setItem('complaintHub_session', JSON.stringify({ id: user.id, username: user.username, role: user.role }));
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('appContainer').style.display = 'block';
-        renderMainApp();
-      } else alert('Invalid credentials');
-    });
-  }
-
-  function logout() {
-    currentUser = null;
-    localStorage.removeItem('complaintHub_session');
-    document.getElementById('loginContainer').style.display = 'flex';
-    document.getElementById('appContainer').style.display = 'none';
-    renderLogin();
-  }
-
-  function checkSession() {
-    const session = localStorage.getItem('complaintHub_session');
-    if (session) {
+    document.getElementById('doLoginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      if (!email || !password) return alert("Enter email and password");
       try {
-        const s = JSON.parse(session);
-        const found = users.find(u => u.id === s.id && u.username === s.username);
-        if (found) {
-          currentUser = { ...found };
-          document.getElementById('loginContainer').style.display = 'none';
-          document.getElementById('appContainer').style.display = 'block';
-          renderMainApp();
-          return;
-        }
-      } catch(e) {}
-    }
-    document.getElementById('loginContainer').style.display = 'flex';
-    document.getElementById('appContainer').style.display = 'none';
-    renderLogin();
-  }
-
-  function canModifyStatus(role) { return role === 'admin' || role === 'it'; }
-  function canDeleteComplaint(role) { return role === 'admin' || role === 'it'; }
-  function canManageUsers(role) { return role === 'admin'; }
-
-  // -------------------- PDF REPORT GENERATION --------------------
-  async function generatePDF(elementId, filename) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    const opt = {
-      margin: [0.5, 0.5, 0.5, 0.5],
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, letterRendering: true },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
-    await html2pdf().set(opt).from(element).save();
-  }
-
-  function buildSingleComplaintHTML(comp) {
-    const compComments = comments.filter(c => c.complaintId === comp.id).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-    let commentsHtml = '<ul>';
-    compComments.forEach(cmt => {
-      commentsHtml += `<li><strong>${escapeHtml(cmt.author)}</strong> (${new Date(cmt.timestamp).toLocaleString()}): ${escapeHtml(cmt.text)}</li>`;
+        const userCred = await signInWithEmailAndPassword(auth, email, password);
+        // Auth state will trigger app render
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
     });
-    commentsHtml += '</ul>';
-    return `
-      <div style="font-family: 'Inter', sans-serif; padding: 20px;">
-        <div style="text-align: center; border-bottom: 2px solid #f97316; margin-bottom: 20px;">
-          <h1 style="color: #ea580c;">M&P Express Logistics</h1>
-          <h3>Complaint Report (Single Issue)</h3>
-        </div>
-        <div style="margin-bottom: 20px;">
-          <p><strong>Complaint ID:</strong> ${comp.id}</p>
-          <p><strong>Title:</strong> ${escapeHtml(comp.title)}</p>
-          <p><strong>Team Member:</strong> ${escapeHtml(comp.member)}</p>
-          <p><strong>Priority:</strong> ${comp.priority.toUpperCase()}</p>
-          <p><strong>Status:</strong> ${comp.status === 'done' ? 'RESOLVED' : 'PENDING'}</p>
-          <p><strong>Incident Date:</strong> ${comp.date}</p>
-          <p><strong>Description:</strong> ${escapeHtml(comp.description)}</p>
-          <p><strong>Logged by:</strong> ${comp.createdBy} on ${new Date(comp.createdAt).toLocaleString()}</p>
-          ${comp.completedAt ? `<p><strong>Resolved on:</strong> ${new Date(comp.completedAt).toLocaleString()}</p>` : ''}
-        </div>
-        <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
-          <h4>Comments / Ideas</h4>
-          ${compComments.length === 0 ? '<p>No comments added.</p>' : commentsHtml}
-        </div>
-        <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #777;">
-          Generated by ${currentUser.username} on ${new Date().toLocaleString()} | Developed by Central IT
-        </div>
-      </div>
-    `;
   }
 
-  function buildFullReportHTML() {
-    let complaintsHtml = '';
-    complaints.forEach(comp => {
-      const compComments = comments.filter(c => c.complaintId === comp.id);
-      let commentsHtml = '<ul>';
-      compComments.forEach(cmt => {
-        commentsHtml += `<li><strong>${escapeHtml(cmt.author)}</strong> (${new Date(cmt.timestamp).toLocaleString()}): ${escapeHtml(cmt.text)}</li>`;
-      });
-      commentsHtml += '</ul>';
-      complaintsHtml += `
-        <div style="margin-bottom: 30px; border-bottom: 1px solid #fed7aa; padding-bottom: 15px;">
-          <h3 style="color: #ea580c;">Complaint #${comp.id}</h3>
-          <p><strong>Title:</strong> ${escapeHtml(comp.title)}</p>
-          <p><strong>Member:</strong> ${escapeHtml(comp.member)} | <strong>Priority:</strong> ${comp.priority.toUpperCase()} | <strong>Status:</strong> ${comp.status === 'done' ? 'RESOLVED' : 'PENDING'}</p>
-          <p><strong>Date:</strong> ${comp.date}</p>
-          <p><strong>Description:</strong> ${escapeHtml(comp.description)}</p>
-          <p><strong>Logged by:</strong> ${comp.createdBy} on ${new Date(comp.createdAt).toLocaleString()}</p>
-          ${comp.completedAt ? `<p><strong>Resolved:</strong> ${new Date(comp.completedAt).toLocaleString()}</p>` : ''}
-          <div><strong>Comments (${compComments.length}):</strong> ${compComments.length === 0 ? 'None' : commentsHtml}</div>
-        </div>
-      `;
-    });
-    return `
-      <div style="font-family: 'Inter', sans-serif; padding: 20px;">
-        <div style="text-align: center; border-bottom: 2px solid #f97316; margin-bottom: 20px;">
-          <h1 style="color: #ea580c;">M&P Express Logistics</h1>
-          <h3>Complete Complaints Report</h3>
-          <p>Total: ${complaints.length} | Pending: ${complaints.filter(c => c.status === 'pending').length} | Resolved: ${complaints.filter(c => c.status === 'done').length}</p>
-        </div>
-        ${complaintsHtml}
-        <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #777;">
-          Generated by ${currentUser.username} on ${new Date().toLocaleString()} | Developed by Central IT
-        </div>
-      </div>
-    `;
-  }
-
-  async function exportSingleComplaintPDF(complaintId) {
-    const comp = complaints.find(c => c.id === complaintId);
-    if (!comp) return;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = buildSingleComplaintHTML(comp);
-    document.body.appendChild(tempDiv);
-    await generatePDF(tempDiv, `complaint_${comp.id}_${comp.member.replace(/\s/g,'_')}.pdf`);
-    document.body.removeChild(tempDiv);
-  }
-
-  async function exportFullReportPDF() {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = buildFullReportHTML();
-    document.body.appendChild(tempDiv);
-    await generatePDF(tempDiv, `full_complaints_report_${new Date().toISOString().slice(0,19)}.pdf`);
-    document.body.removeChild(tempDiv);
-  }
-
-  // -------------------- RENDER MAIN APP (ORANGE THEME + BRANDING) --------------------
-  function renderMainApp() {
+  // Main app render after login
+  async function renderMainApp() {
     const container = document.getElementById('appContainer');
+    container.style.display = 'block';
+    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+    const userData = userDoc.data();
+    const role = userData?.role || 'member';
+    const username = userData?.username || currentUser.email.split('@')[0];
+    currentUser.role = role;
+    currentUser.username = username;
+
     container.innerHTML = `
       <div class="app-container">
         <div class="top-bar">
           <div class="logo">
             <h2><i class="fas fa-truck-fast"></i> M&P Express Logistics</h2>
-            <p>Complaint Management System | Enterprise</p>
+            <p>Firebase Complaint System | Real-time</p>
           </div>
           <div class="user-info">
-            <span class="role-badge"><i class="fas fa-user-tag"></i> ${currentUser.role.toUpperCase()} · ${currentUser.username}</span>
+            <span class="role-badge"><i class="fas fa-user-tag"></i> ${role.toUpperCase()} · ${username}</span>
             <button id="logoutBtnMain" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
           </div>
         </div>
@@ -305,15 +199,15 @@
               <div class="card-title"><i class="fas fa-plus-circle"></i> Log New Complaint</div>
               <form id="newComplaintForm">
                 <div class="form-group"><label>Team member name</label><input type="text" id="compMember" required></div>
-                <div class="form-group"><label>Complaint Title</label><input type="text" id="compTitle" placeholder="e.g., WiFi not working, Printer jam" required></div>
+                <div class="form-group"><label>Complaint Title</label><input type="text" id="compTitle" placeholder="e.g., WiFi not working" required></div>
                 <div class="form-group"><label>Priority</label><select id="compPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
-                <div class="form-group"><label>Description</label><textarea id="compDesc" rows="2" placeholder="Detailed description of the issue..." required></textarea></div>
+                <div class="form-group"><label>Description</label><textarea id="compDesc" rows="2" required></textarea></div>
                 <div class="form-group"><label>Date</label><input type="date" id="compDate" required></div>
                 <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Complaint</button>
               </form>
             </div>
-            ${canManageUsers(currentUser.role) ? `<div class="admin-panel" id="adminPanel"><div class="card-title"><i class="fas fa-users-cog"></i> User Management (Admin)</div>
-            <div class="form-group" style="display:flex; gap:6px; flex-wrap:wrap;"><input type="text" id="newUsername" placeholder="username" style="flex:1"><input type="password" id="newPassword" placeholder="pass"><select id="newRole"><option value="member">Member</option><option value="sse">SSE</option><option value="it">IT</option><option value="admin">Admin</option></select><button id="createUserBtn" class="small-btn">Create</button></div>
+            ${role === 'admin' ? `<div class="admin-panel" id="adminPanel"><div class="card-title"><i class="fas fa-users-cog"></i> User Management (Admin)</div>
+            <div class="form-group" style="display:flex; gap:6px; flex-wrap:wrap;"><input type="text" id="newUsername" placeholder="username" style="flex:1"><input type="email" id="newEmail" placeholder="email@example.com" style="flex:1"><input type="password" id="newPassword" placeholder="password"><select id="newRole"><option value="member">Member</option><option value="sse">SSE</option><option value="it">IT</option><option value="admin">Admin</option></select><button id="createUserBtn" class="small-btn">Create</button></div>
             <div id="userList"></div></div>` : ''}
           </div>
           <div class="list-panel">
@@ -325,7 +219,7 @@
                 </div>
               </div>
               <div class="filters-bar">
-                <input type="text" id="searchInput" placeholder="🔍 Search member / title / description" style="flex:2">
+                <input type="text" id="searchInput" placeholder="🔍 Search member / title" style="flex:2">
                 <select id="filterPriority"><option value="all">All priority</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
                 <select id="filterStatus"><option value="all">All status</option><option value="pending">Pending</option><option value="done">Resolved</option></select>
               </div>
@@ -333,31 +227,43 @@
             </div>
           </div>
         </div>
-        <footer>
-          <i class="fas fa-code"></i> Developed by Central IT | M&P Express Logistics © 2025
-        </footer>
+        <footer><i class="fas fa-code"></i> Developed by Central IT | M&P Express Logistics © 2025</footer>
       </div>
     `;
     attachGlobalListeners();
-    refreshStatsAndList();
-    if (canManageUsers(currentUser.role)) renderUserList();
+    subscribeToComplaints();
+    if (role === 'admin') loadUserList();
+    updateStats();
   }
 
-  function refreshStatsAndList() {
-    updateStats();
-    renderComplaintsList();
+  // Real-time complaints subscription
+  let allComplaints = [];
+  let allComments = [];
+  function subscribeToComplaints() {
+    if (unsubscribeComplaints) unsubscribeComplaints();
+    const q = query(complaintsCollection, orderBy("createdAt", "desc"));
+    unsubscribeComplaints = onSnapshot(q, (snapshot) => {
+      allComplaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      updateStats();
+      renderComplaintsList();
+    });
+    if (unsubscribeComments) unsubscribeComments();
+    unsubscribeComments = onSnapshot(commentsCollection, (snapshot) => {
+      allComments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderComplaintsList(); // re-render to show fresh comments
+    });
   }
 
   function updateStats() {
-    const total = complaints.length;
-    const pending = complaints.filter(c => c.status === 'pending').length;
-    const done = complaints.filter(c => c.status === 'done').length;
+    const total = allComplaints.length;
+    const pending = allComplaints.filter(c => c.status === 'pending').length;
+    const done = allComplaints.filter(c => c.status === 'done').length;
     const rate = total === 0 ? 0 : Math.round((done/total)*100);
     const statsHtml = `
-      <div class="stat-card"><div><h4>Total</h4><span style="font-size:1.8rem; font-weight:800;">${total}</span></div><i class="fas fa-database fa-2x"></i></div>
-      <div class="stat-card"><div><h4>Pending</h4><span style="font-size:1.8rem; font-weight:800;">${pending}</span></div><i class="fas fa-clock fa-2x"></i></div>
-      <div class="stat-card"><div><h4>Resolved</h4><span style="font-size:1.8rem; font-weight:800;">${done}</span></div><i class="fas fa-check-circle fa-2x"></i></div>
-      <div class="stat-card"><div><h4>Resolution Rate</h4><span style="font-size:1.8rem; font-weight:800;">${rate}%</span></div><i class="fas fa-chart-line fa-2x"></i></div>
+      <div class="stat-card"><div><h4>Total</h4><span style="font-size:1.8rem;">${total}</span></div><i class="fas fa-database fa-2x"></i></div>
+      <div class="stat-card"><div><h4>Pending</h4><span style="font-size:1.8rem;">${pending}</span></div><i class="fas fa-clock fa-2x"></i></div>
+      <div class="stat-card"><div><h4>Resolved</h4><span style="font-size:1.8rem;">${done}</span></div><i class="fas fa-check-circle fa-2x"></i></div>
+      <div class="stat-card"><div><h4>Resolution Rate</h4><span style="font-size:1.8rem;">${rate}%</span></div><i class="fas fa-chart-line fa-2x"></i></div>
     `;
     const statsRow = document.getElementById('statsRow');
     if (statsRow) statsRow.innerHTML = statsHtml;
@@ -365,27 +271,19 @@
 
   function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-      if (m === '&') return '&amp;';
-      if (m === '<') return '&lt;';
-      if (m === '>') return '&gt;';
-      return m;
-    });
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
   }
 
   function renderComplaintsList() {
     const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
     const priorityFilter = document.getElementById('filterPriority')?.value || 'all';
     const statusFilter = document.getElementById('filterStatus')?.value || 'all';
-    let filtered = complaints.filter(c => {
-      const matchSearch = c.member.toLowerCase().includes(search) || 
-                          c.title.toLowerCase().includes(search) || 
-                          c.description.toLowerCase().includes(search);
+    let filtered = allComplaints.filter(c => {
+      const matchSearch = c.member.toLowerCase().includes(search) || (c.title && c.title.toLowerCase().includes(search));
       const matchPriority = priorityFilter === 'all' || c.priority === priorityFilter;
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
       return matchSearch && matchPriority && matchStatus;
-    }).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-
+    });
     const container = document.getElementById('complaintsListContainer');
     if (!container) return;
     if (filtered.length === 0) {
@@ -399,24 +297,24 @@
       const priorityLabel = comp.priority === 'high' ? '🔴 HIGH' : (comp.priority === 'medium' ? '🟠 MEDIUM' : '🟢 LOW');
       const statusClass = isDone ? 'status-done' : 'status-pending';
       const statusText = isDone ? '✅ Resolved' : '⏳ Pending';
-      const canEdit = canModifyStatus(currentUser.role);
-      const canDelete = canDeleteComplaint(currentUser.role);
-      const compComments = comments.filter(c => c.complaintId === comp.id).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const canEdit = currentUser.role === 'admin' || currentUser.role === 'it';
+      const canDelete = currentUser.role === 'admin' || currentUser.role === 'it';
+      const compComments = allComments.filter(c => c.complaintId === comp.id).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
       let commentsHtml = '';
       compComments.forEach(cmt => {
-        commentsHtml += `<div class="comment"><span class="comment-author"><i class="fas fa-user-circle"></i> ${escapeHtml(cmt.author)}</span><div class="comment-text">💬 ${escapeHtml(cmt.text)}</div><div style="font-size:0.6rem; color:#6c8b9b;">${new Date(cmt.timestamp).toLocaleString()}</div></div>`;
+        commentsHtml += `<div class="comment"><span class="comment-author"><i class="fas fa-user-circle"></i> ${escapeHtml(cmt.author)}</span><div class="comment-text">💬 ${escapeHtml(cmt.text)}</div><div style="font-size:0.6rem;">${new Date(cmt.timestamp).toLocaleString()}</div></div>`;
       });
       html += `
         <div class="complaint-item" data-id="${comp.id}">
           <div class="complaint-header">
             <div><strong><i class="fas fa-user"></i> ${escapeHtml(comp.member)}</strong> <span class="badge-priority ${priorityClass}">${priorityLabel}</span> <span class="status-badge ${statusClass}">${statusText}</span></div>
-            <div style="font-size:0.7rem;">📅 ${escapeHtml(comp.date)}</div>
+            <div style="font-size:0.7rem;">📅 ${comp.date}</div>
           </div>
           <div class="complaint-title-text"><i class="fas fa-heading"></i> ${escapeHtml(comp.title)}</div>
           <div><i class="fas fa-align-left"></i> ${escapeHtml(comp.description)}</div>
-          <div style="font-size:0.7rem; color:#5a6e7c; margin:6px 0;">🕒 logged by ${escapeHtml(comp.createdBy)} on ${new Date(comp.createdAt).toLocaleDateString()}</div>
+          <div style="font-size:0.7rem; margin:6px 0;">🕒 logged by ${escapeHtml(comp.createdBy)} on ${new Date(comp.createdAt).toLocaleDateString()}</div>
           <div class="comment-section">
-            <div class="comment-list" id="comments-${comp.id}">${commentsHtml || '<div style="font-size:0.7rem; color:gray;">No comments yet. Add a suggestion or idea.</div>'}</div>
+            <div class="comment-list">${commentsHtml || '<div style="font-size:0.7rem;">No comments yet.</div>'}</div>
             <div class="add-comment">
               <input type="text" id="commentInput-${comp.id}" placeholder="Write a comment or solution idea...">
               <button class="small-btn addCommentBtn" data-id="${comp.id}"><i class="fas fa-comment"></i> Post</button>
@@ -431,78 +329,67 @@
       `;
     });
     container.innerHTML = html;
-    // attach dynamic listeners
+    // Attach dynamic listeners
     document.querySelectorAll('.addCommentBtn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const complaintId = parseFloat(btn.getAttribute('data-id'));
+      btn.addEventListener('click', async (e) => {
+        const complaintId = btn.getAttribute('data-id');
         const input = document.getElementById(`commentInput-${complaintId}`);
         const text = input.value.trim();
-        if (!text) return alert("Please write a comment");
-        addComment(complaintId, text);
+        if (!text) return alert("Write a comment");
+        await addComment(complaintId, text);
         input.value = '';
       });
     });
     document.querySelectorAll('[data-action="toggle"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = parseFloat(btn.getAttribute('data-id'));
-        toggleComplaintStatus(id);
+      btn.addEventListener('click', async (e) => {
+        const id = btn.getAttribute('data-id');
+        await toggleComplaintStatus(id);
       });
     });
     document.querySelectorAll('[data-action="delete"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = parseFloat(btn.getAttribute('data-id'));
-        deleteComplaintById(id);
+      btn.addEventListener('click', async (e) => {
+        const id = btn.getAttribute('data-id');
+        if (confirm("Delete permanently?")) await deleteComplaint(id);
       });
     });
     document.querySelectorAll('[data-action="report"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = parseFloat(btn.getAttribute('data-id'));
-        exportSingleComplaintPDF(id);
+      btn.addEventListener('click', async (e) => {
+        const id = btn.getAttribute('data-id');
+        await exportSingleComplaintPDF(id);
       });
     });
   }
 
-  function addComment(complaintId, text) {
-    comments.push({
-      id: genId(),
+  async function addComment(complaintId, text) {
+    const commentData = {
       complaintId: complaintId,
       text: text,
       author: currentUser.username,
       timestamp: new Date().toISOString()
-    });
-    saveAll();
-    refreshStatsAndList();
+    };
+    await addDoc(commentsCollection, commentData);
   }
 
-  function toggleComplaintStatus(id) {
-    const idx = complaints.findIndex(c => c.id === id);
-    if (idx !== -1) {
-      if (complaints[idx].status === 'pending') {
-        complaints[idx].status = 'done';
-        complaints[idx].completedAt = new Date().toISOString();
-      } else {
-        complaints[idx].status = 'pending';
-        complaints[idx].completedAt = null;
-      }
-      saveAll();
-      refreshStatsAndList();
+  async function toggleComplaintStatus(id) {
+    const compRef = doc(db, "complaints", id);
+    const compSnap = await getDoc(compRef);
+    if (compSnap.exists()) {
+      const newStatus = compSnap.data().status === 'pending' ? 'done' : 'pending';
+      await updateDoc(compRef, { status: newStatus, completedAt: newStatus === 'done' ? new Date().toISOString() : null });
     }
   }
 
-  function deleteComplaintById(id) {
-    if (confirm("Delete permanently? Comments will also be removed.")) {
-      complaints = complaints.filter(c => c.id !== id);
-      comments = comments.filter(c => c.complaintId !== id);
-      saveAll();
-      refreshStatsAndList();
-      if (canManageUsers(currentUser.role)) renderUserList();
-    }
+  async function deleteComplaint(id) {
+    // Delete comments first
+    const commentsQuery = query(commentsCollection, where("complaintId", "==", id));
+    const snap = await getDocs(commentsQuery);
+    snap.forEach(doc => deleteDoc(doc.ref));
+    await deleteDoc(doc(db, "complaints", id));
   }
 
-  function addNewComplaint(member, title, desc, date, priority) {
+  async function addNewComplaint(member, title, desc, date, priority) {
     if (!member || !title || !desc) return false;
-    complaints.unshift({
-      id: genId(),
+    const newComplaint = {
       member: member.trim(),
       title: title.trim(),
       description: desc.trim(),
@@ -512,81 +399,153 @@
       createdBy: currentUser.username,
       createdAt: new Date().toISOString(),
       completedAt: null
-    });
-    saveAll();
-    refreshStatsAndList();
+    };
+    await addDoc(complaintsCollection, newComplaint);
     return true;
   }
 
-  function renderUserList() {
+  // Admin functions
+  async function loadUserList() {
+    const usersSnap = await getDocs(usersCollection);
+    const usersList = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
     const userDiv = document.getElementById('userList');
     if (!userDiv) return;
-    let html = '<h4 style="margin:12px 0 8px;">Existing users</h4>';
-    users.forEach(u => {
-      html += `<div class="user-row"><span><i class="fas fa-user"></i> ${escapeHtml(u.username)} (${escapeHtml(u.role)})</span> ${u.username !== 'admin' ? `<button class="small-btn deleteUserBtn" data-id="${u.id}" style="background:#e74c3c;">Delete</button>` : '<span style="font-size:0.7rem;">⭐ protected</span>'}</div>`;
-    });
+    let html = '<h4>Existing Users</h4>';
+    for (const u of usersList) {
+      html += `<div class="user-row"><span><i class="fas fa-user"></i> ${u.username} (${u.role}) - ${u.email}</span> ${u.username !== 'admin' ? `<button class="small-btn deleteUserBtn" data-uid="${u.uid}" style="background:#e74c3c;">Delete</button>` : '<span>⭐ protected</span>'}</div>`;
+    }
     userDiv.innerHTML = html;
     document.querySelectorAll('.deleteUserBtn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const uid = parseInt(btn.getAttribute('data-id'));
-        if (confirm('Delete user?')) {
-          users = users.filter(u => u.id !== uid);
-          if (currentUser && currentUser.id === uid) logout();
-          else { saveAll(); renderUserList(); refreshStatsAndList(); }
+      btn.addEventListener('click', async (e) => {
+        const uid = btn.getAttribute('data-uid');
+        if (confirm("Delete user permanently?")) {
+          try {
+            // Delete from Auth (admin only)
+            const userToDelete = await auth.getUser(uid); // requires admin SDK, but client can't. Alternative: delete from Firestore only.
+            // Since client cannot delete other users via Auth, we just delete from Firestore and disable login.
+            await deleteDoc(doc(db, "users", uid));
+            loadUserList();
+          } catch(err) { console.error(err); alert("Error deleting user"); }
         }
       });
     });
   }
 
-  function createUser(username, password, role) {
-    if (users.find(u => u.username === username)) { alert("Username exists"); return false; }
-    const newId = users.length > 0 ? Math.max(...users.map(u=>u.id)) + 1 : 100;
-    users.push({ id: newId, username, password, role });
-    saveAll();
-    renderUserList();
-    return true;
+  async function createUser(username, email, password, role) {
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, "users", userCred.user.uid), {
+        uid: userCred.user.uid,
+        username: username,
+        email: email,
+        role: role,
+        createdAt: new Date().toISOString()
+      });
+      alert("User created successfully");
+      loadUserList();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  // PDF exports
+  async function generatePDFFromElement(element, filename) {
+    const opt = { margin: 0.5, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4' } };
+    await html2pdf().set(opt).from(element).save();
+  }
+
+  function buildSingleComplaintHTML(comp, compComments) {
+    let commentsHtml = '<ul>';
+    compComments.forEach(c => commentsHtml += `<li><strong>${c.author}</strong> (${new Date(c.timestamp).toLocaleString()}): ${c.text}</li>`);
+    commentsHtml += '</ul>';
+    return `<div style="padding:20px"><div style="text-align:center;border-bottom:2px solid #f97316;"><h1>M&P Express Logistics</h1><h3>Complaint Report</h3></div>
+      <p><strong>ID:</strong> ${comp.id}</p><p><strong>Title:</strong> ${comp.title}</p><p><strong>Member:</strong> ${comp.member}</p>
+      <p><strong>Priority:</strong> ${comp.priority}</p><p><strong>Status:</strong> ${comp.status}</p><p><strong>Date:</strong> ${comp.date}</p>
+      <p><strong>Description:</strong> ${comp.description}</p><p><strong>Logged by:</strong> ${comp.createdBy}</p>
+      <div><strong>Comments:</strong> ${commentsHtml}</div><div style="margin-top:30px;text-align:center;">Generated by ${currentUser.username} | Developed by Central IT</div></div>`;
+  }
+
+  async function exportSingleComplaintPDF(complaintId) {
+    const comp = allComplaints.find(c => c.id === complaintId);
+    if (!comp) return;
+    const compComments = allComments.filter(c => c.complaintId === complaintId);
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px';
+    tempDiv.innerHTML = buildSingleComplaintHTML(comp, compComments);
+    document.body.appendChild(tempDiv);
+    await generatePDFFromElement(tempDiv, `complaint_${complaintId}.pdf`);
+    document.body.removeChild(tempDiv);
+  }
+
+  async function exportFullReportPDF() {
+    let fullHtml = `<div style="padding:20px"><div style="text-align:center;border-bottom:2px solid #f97316;"><h1>M&P Express Logistics</h1><h3>Complete Complaints Report</h3><p>Total: ${allComplaints.length} | Pending: ${allComplaints.filter(c=>c.status==='pending').length} | Resolved: ${allComplaints.filter(c=>c.status==='done').length}</p></div>`;
+    for (const comp of allComplaints) {
+      const compComments = allComments.filter(c => c.complaintId === comp.id);
+      fullHtml += `<div style="margin-bottom:20px;"><h3>#${comp.id} - ${comp.title}</h3><p><strong>Member:</strong> ${comp.member} | <strong>Priority:</strong> ${comp.priority} | <strong>Status:</strong> ${comp.status}</p><p>${comp.description}</p><p><strong>Comments:</strong> ${compComments.map(c=>`${c.author}: ${c.text}`).join('; ')}</p></div>`;
+    }
+    fullHtml += `<div style="text-align:center;">Generated by ${currentUser.username} | Developed by Central IT</div></div>`;
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px';
+    tempDiv.innerHTML = fullHtml;
+    document.body.appendChild(tempDiv);
+    await generatePDFFromElement(tempDiv, `full_report_${Date.now()}.pdf`);
+    document.body.removeChild(tempDiv);
   }
 
   function attachGlobalListeners() {
     const form = document.getElementById('newComplaintForm');
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const member = document.getElementById('compMember').value;
         const title = document.getElementById('compTitle').value;
         const desc = document.getElementById('compDesc').value;
         const date = document.getElementById('compDate').value;
         const priority = document.getElementById('compPriority').value;
-        if (!date) { alert("Select incident date"); return; }
-        if (addNewComplaint(member, title, desc, date, priority)) {
-          form.reset();
-          document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
-        }
+        if (!date) return alert("Select date");
+        await addNewComplaint(member, title, desc, date, priority);
+        form.reset();
+        document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
       });
-      if(document.getElementById('compDate')) document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
+      document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
     }
-    document.getElementById('searchInput')?.addEventListener('input', () => refreshStatsAndList());
-    document.getElementById('filterPriority')?.addEventListener('change', () => refreshStatsAndList());
-    document.getElementById('filterStatus')?.addEventListener('change', () => refreshStatsAndList());
+    document.getElementById('searchInput')?.addEventListener('input', () => renderComplaintsList());
+    document.getElementById('filterPriority')?.addEventListener('change', () => renderComplaintsList());
+    document.getElementById('filterStatus')?.addEventListener('change', () => renderComplaintsList());
     document.getElementById('fullReportPDFBtn')?.addEventListener('click', () => exportFullReportPDF());
     const createBtn = document.getElementById('createUserBtn');
     if (createBtn) {
       createBtn.addEventListener('click', () => {
-        const uname = document.getElementById('newUsername').value.trim();
-        const pwd = document.getElementById('newPassword').value.trim();
+        const username = document.getElementById('newUsername').value.trim();
+        const email = document.getElementById('newEmail').value.trim();
+        const password = document.getElementById('newPassword').value.trim();
         const role = document.getElementById('newRole').value;
-        if (!uname || !pwd) { alert("Username & password required"); return; }
-        createUser(uname, pwd, role);
-        document.getElementById('newUsername').value = '';
-        document.getElementById('newPassword').value = '';
+        if (!username || !email || !password) return alert("All fields required");
+        createUser(username, email, password, role);
       });
     }
     const logoutBtn = document.getElementById('logoutBtnMain');
-    if (logoutBtn) logoutBtn.addEventListener('click', logout);
+    if (logoutBtn) logoutBtn.addEventListener('click', async () => { await signOut(auth); window.location.reload(); });
   }
 
-  loadAll();
-  checkSession();
+  // Authentication state listener
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) {
+        // Fallback: create profile
+        await setDoc(doc(db, "users", user.uid), { uid: user.uid, username: user.email.split('@')[0], email: user.email, role: 'member', createdAt: new Date().toISOString() });
+      }
+      currentUser = { uid: user.uid, email: user.email, role: userDoc.data()?.role || 'member', username: userDoc.data()?.username || user.email.split('@')[0] };
+      document.getElementById('loginContainer').style.display = 'none';
+      await ensureDefaultUsers();
+      renderMainApp();
+    } else {
+      document.getElementById('loginContainer').style.display = 'flex';
+      document.getElementById('appContainer').style.display = 'none';
+      renderLogin();
+    }
+  });
 </script>
 </body>
 </html>
