@@ -71,10 +71,9 @@
 <div id="appContainer" class="app-container"></div>
 
 <script type="module">
-  // Firebase imports
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+  import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, orderBy, onSnapshot, addDoc, where } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCg4_Neo0-hhciQ4M7y1opLJUJgwG19Gfo",
@@ -90,22 +89,18 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  // Collections references
   const usersCollection = collection(db, "users");
   const complaintsCollection = collection(db, "complaints");
   const commentsCollection = collection(db, "comments");
 
-  let currentUser = null; // { uid, email, role, username }
+  let currentUser = null;
   let unsubscribeComplaints = null;
   let unsubscribeComments = null;
+  let allComplaints = [];
+  let allComments = [];
 
-  // Helper functions
-  function showLoading(container, show) {
-    if (show) container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-pulse"></i> Loading...</div>';
-  }
-
-  async function ensureDefaultUsers() {
-    // Default users: admin, it_ahmed, sse_ali, member_fatima
+  // ---------- Create default users in Firebase Auth & Firestore (run once on load) ----------
+  async function createDefaultUsers() {
     const defaultUsers = [
       { email: "admin@mpexpress.com", password: "admin123", username: "admin", role: "admin" },
       { email: "it_ahmed@mpexpress.com", password: "it123", username: "it_ahmed", role: "it" },
@@ -114,34 +109,49 @@
     ];
     for (const user of defaultUsers) {
       try {
-        const userQuery = query(usersCollection, where("username", "==", user.username));
-        const snapshot = await getDocs(userQuery);
-        if (snapshot.empty) {
-          // Create auth user
+        // Check if already exists in Firestore
+        const q = query(usersCollection, where("username", "==", user.username));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          // Create Auth user
           let authUser;
           try {
             authUser = await createUserWithEmailAndPassword(auth, user.email, user.password);
           } catch (err) {
             if (err.code === 'auth/email-already-in-use') {
-              // Sign in to get UID
+              // If email exists but not in Firestore, just sign in to get UID
               const cred = await signInWithEmailAndPassword(auth, user.email, user.password);
               authUser = cred.user;
-            } else throw err;
+            } else {
+              throw err;
+            }
           }
-          // Store in Firestore
-          await setDoc(doc(db, "users", authUser.user.uid), {
-            uid: authUser.user.uid,
+          // Save to Firestore
+          await setDoc(doc(db, "users", authUser.uid), {
+            uid: authUser.uid,
             username: user.username,
             email: user.email,
             role: user.role,
             createdAt: new Date().toISOString()
           });
+          console.log(`Default user created: ${user.username}`);
         }
-      } catch (err) { console.error("Error creating default user", user.username, err); }
+      } catch (err) {
+        console.error(`Error creating default user ${user.username}:`, err);
+      }
     }
   }
 
-  // Render login screen
+  // Call this immediately to ensure default users exist before any login
+  createDefaultUsers().catch(console.error);
+
+  // ---------- Helper functions ----------
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+  }
+
+  // ---------- Login UI ----------
   function renderLogin() {
     const container = document.getElementById('loginContainer');
     container.innerHTML = `
@@ -152,7 +162,7 @@
           <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@mpexpress.com"></div>
           <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••"></div>
           <button id="doLoginBtn" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign in</button>
-          <p style="margin-top: 12px; font-size:0.7rem;">Demo: admin@mpexpress.com/admin123 | it_ahmed@mpexpress.com/it123</p>
+          <p style="margin-top: 12px; font-size:0.7rem;">Demo: admin@mpexpress.com / admin123</p>
         </div>
       </div>
     `;
@@ -161,84 +171,14 @@
       const password = document.getElementById('loginPassword').value.trim();
       if (!email || !password) return alert("Enter email and password");
       try {
-        const userCred = await signInWithEmailAndPassword(auth, email, password);
-        // Auth state will trigger app render
+        await signInWithEmailAndPassword(auth, email, password);
       } catch (err) {
         alert("Login failed: " + err.message);
       }
     });
   }
 
-  // Main app render after login
-  async function renderMainApp() {
-    const container = document.getElementById('appContainer');
-    container.style.display = 'block';
-    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-    const userData = userDoc.data();
-    const role = userData?.role || 'member';
-    const username = userData?.username || currentUser.email.split('@')[0];
-    currentUser.role = role;
-    currentUser.username = username;
-
-    container.innerHTML = `
-      <div class="app-container">
-        <div class="top-bar">
-          <div class="logo">
-            <h2><i class="fas fa-truck-fast"></i> M&P Express Logistics</h2>
-            <p>Firebase Complaint System | Real-time</p>
-          </div>
-          <div class="user-info">
-            <span class="role-badge"><i class="fas fa-user-tag"></i> ${role.toUpperCase()} · ${username}</span>
-            <button id="logoutBtnMain" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
-          </div>
-        </div>
-        <div class="stats-row" id="statsRow"></div>
-        <div class="dashboard">
-          <div class="form-panel">
-            <div class="card">
-              <div class="card-title"><i class="fas fa-plus-circle"></i> Log New Complaint</div>
-              <form id="newComplaintForm">
-                <div class="form-group"><label>Team member name</label><input type="text" id="compMember" required></div>
-                <div class="form-group"><label>Complaint Title</label><input type="text" id="compTitle" placeholder="e.g., WiFi not working" required></div>
-                <div class="form-group"><label>Priority</label><select id="compPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
-                <div class="form-group"><label>Description</label><textarea id="compDesc" rows="2" required></textarea></div>
-                <div class="form-group"><label>Date</label><input type="date" id="compDate" required></div>
-                <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Complaint</button>
-              </form>
-            </div>
-            ${role === 'admin' ? `<div class="admin-panel" id="adminPanel"><div class="card-title"><i class="fas fa-users-cog"></i> User Management (Admin)</div>
-            <div class="form-group" style="display:flex; gap:6px; flex-wrap:wrap;"><input type="text" id="newUsername" placeholder="username" style="flex:1"><input type="email" id="newEmail" placeholder="email@example.com" style="flex:1"><input type="password" id="newPassword" placeholder="password"><select id="newRole"><option value="member">Member</option><option value="sse">SSE</option><option value="it">IT</option><option value="admin">Admin</option></select><button id="createUserBtn" class="small-btn">Create</button></div>
-            <div id="userList"></div></div>` : ''}
-          </div>
-          <div class="list-panel">
-            <div class="card">
-              <div class="card-title">
-                <span><i class="fas fa-filter"></i> Complaints & Comments</span>
-                <div class="report-buttons">
-                  <button id="fullReportPDFBtn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Export PDF (Full)</button>
-                </div>
-              </div>
-              <div class="filters-bar">
-                <input type="text" id="searchInput" placeholder="🔍 Search member / title" style="flex:2">
-                <select id="filterPriority"><option value="all">All priority</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
-                <select id="filterStatus"><option value="all">All status</option><option value="pending">Pending</option><option value="done">Resolved</option></select>
-              </div>
-              <div id="complaintsListContainer"></div>
-            </div>
-          </div>
-        </div>
-        <footer><i class="fas fa-code"></i> Developed by Central IT | M&P Express Logistics © 2025</footer>
-      </div>
-    `;
-    attachGlobalListeners();
-    subscribeToComplaints();
-    if (role === 'admin') loadUserList();
-    updateStats();
-  }
-
-  // Real-time complaints subscription
-  let allComplaints = [];
-  let allComments = [];
+  // ---------- Real-time subscriptions ----------
   function subscribeToComplaints() {
     if (unsubscribeComplaints) unsubscribeComplaints();
     const q = query(complaintsCollection, orderBy("createdAt", "desc"));
@@ -250,7 +190,7 @@
     if (unsubscribeComments) unsubscribeComments();
     unsubscribeComments = onSnapshot(commentsCollection, (snapshot) => {
       allComments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      renderComplaintsList(); // re-render to show fresh comments
+      renderComplaintsList();
     });
   }
 
@@ -269,9 +209,131 @@
     if (statsRow) statsRow.innerHTML = statsHtml;
   }
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
+  async function addComment(complaintId, text) {
+    await addDoc(commentsCollection, {
+      complaintId: complaintId,
+      text: text,
+      author: currentUser.username,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  async function toggleComplaintStatus(id) {
+    const compRef = doc(db, "complaints", id);
+    const compSnap = await getDoc(compRef);
+    if (compSnap.exists()) {
+      const newStatus = compSnap.data().status === 'pending' ? 'done' : 'pending';
+      await updateDoc(compRef, { 
+        status: newStatus, 
+        completedAt: newStatus === 'done' ? new Date().toISOString() : null 
+      });
+    }
+  }
+
+  async function deleteComplaint(id) {
+    const commentsQuery = query(commentsCollection, where("complaintId", "==", id));
+    const snap = await getDocs(commentsQuery);
+    snap.forEach(doc => deleteDoc(doc.ref));
+    await deleteDoc(doc(db, "complaints", id));
+  }
+
+  async function addNewComplaint(member, title, desc, date, priority) {
+    if (!member || !title || !desc) return false;
+    await addDoc(complaintsCollection, {
+      member: member.trim(),
+      title: title.trim(),
+      description: desc.trim(),
+      date: date,
+      priority: priority,
+      status: 'pending',
+      createdBy: currentUser.username,
+      createdAt: new Date().toISOString(),
+      completedAt: null
+    });
+    return true;
+  }
+
+  // Admin: load users list
+  async function loadUserList() {
+    const usersSnap = await getDocs(usersCollection);
+    const usersList = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
+    const userDiv = document.getElementById('userList');
+    if (!userDiv) return;
+    let html = '<h4>Existing Users</h4>';
+    for (const u of usersList) {
+      html += `<div class="user-row"><span><i class="fas fa-user"></i> ${escapeHtml(u.username)} (${escapeHtml(u.role)}) - ${escapeHtml(u.email)}</span> ${u.username !== 'admin' ? `<button class="small-btn deleteUserBtn" data-uid="${u.uid}" style="background:#e74c3c;">Delete</button>` : '<span>⭐ protected</span>'}</div>`;
+    }
+    userDiv.innerHTML = html;
+    document.querySelectorAll('.deleteUserBtn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const uid = btn.getAttribute('data-uid');
+        if (confirm("Delete user permanently? This will remove from Firestore only. Auth user will remain but can't login.")) {
+          await deleteDoc(doc(db, "users", uid));
+          loadUserList();
+        }
+      });
+    });
+  }
+
+  async function createUser(username, email, password, role) {
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, "users", userCred.user.uid), {
+        uid: userCred.user.uid,
+        username: username,
+        email: email,
+        role: role,
+        createdAt: new Date().toISOString()
+      });
+      alert("User created successfully");
+      if (currentUser.role === 'admin') loadUserList();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+
+  // PDF exports
+  async function generatePDFFromElement(element, filename) {
+    const opt = { margin: 0.5, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4' } };
+    await html2pdf().set(opt).from(element).save();
+  }
+
+  function buildSingleComplaintHTML(comp, compComments) {
+    let commentsHtml = '<ul>';
+    compComments.forEach(c => commentsHtml += `<li><strong>${escapeHtml(c.author)}</strong> (${new Date(c.timestamp).toLocaleString()}): ${escapeHtml(c.text)}</li>`);
+    commentsHtml += '</ul>';
+    return `<div style="padding:20px"><div style="text-align:center;border-bottom:2px solid #f97316;"><h1>M&P Express Logistics</h1><h3>Complaint Report</h3></div>
+      <p><strong>ID:</strong> ${comp.id}</p><p><strong>Title:</strong> ${escapeHtml(comp.title)}</p><p><strong>Member:</strong> ${escapeHtml(comp.member)}</p>
+      <p><strong>Priority:</strong> ${comp.priority}</p><p><strong>Status:</strong> ${comp.status}</p><p><strong>Date:</strong> ${comp.date}</p>
+      <p><strong>Description:</strong> ${escapeHtml(comp.description)}</p><p><strong>Logged by:</strong> ${comp.createdBy}</p>
+      <div><strong>Comments:</strong> ${commentsHtml}</div><div style="margin-top:30px;text-align:center;">Generated by ${currentUser.username} | Developed by Central IT</div></div>`;
+  }
+
+  async function exportSingleComplaintPDF(complaintId) {
+    const comp = allComplaints.find(c => c.id === complaintId);
+    if (!comp) return;
+    const compComments = allComments.filter(c => c.complaintId === complaintId);
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px';
+    tempDiv.innerHTML = buildSingleComplaintHTML(comp, compComments);
+    document.body.appendChild(tempDiv);
+    await generatePDFFromElement(tempDiv, `complaint_${complaintId}.pdf`);
+    document.body.removeChild(tempDiv);
+  }
+
+  async function exportFullReportPDF() {
+    let fullHtml = `<div style="padding:20px"><div style="text-align:center;border-bottom:2px solid #f97316;"><h1>M&P Express Logistics</h1><h3>Complete Complaints Report</h3><p>Total: ${allComplaints.length} | Pending: ${allComplaints.filter(c=>c.status==='pending').length} | Resolved: ${allComplaints.filter(c=>c.status==='done').length}</p></div>`;
+    for (const comp of allComplaints) {
+      const compComments = allComments.filter(c => c.complaintId === comp.id);
+      fullHtml += `<div style="margin-bottom:20px;"><h3>#${comp.id} - ${escapeHtml(comp.title)}</h3><p><strong>Member:</strong> ${escapeHtml(comp.member)} | <strong>Priority:</strong> ${comp.priority} | <strong>Status:</strong> ${comp.status}</p><p>${escapeHtml(comp.description)}</p><p><strong>Comments:</strong> ${compComments.map(c=>`${c.author}: ${c.text}`).join('; ')}</p></div>`;
+    }
+    fullHtml += `<div style="text-align:center;">Generated by ${currentUser.username} | Developed by Central IT</div></div>`;
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px';
+    tempDiv.innerHTML = fullHtml;
+    document.body.appendChild(tempDiv);
+    await generatePDFFromElement(tempDiv, `full_report_${Date.now()}.pdf`);
+    document.body.removeChild(tempDiv);
   }
 
   function renderComplaintsList() {
@@ -360,162 +422,89 @@
     });
   }
 
-  async function addComment(complaintId, text) {
-    const commentData = {
-      complaintId: complaintId,
-      text: text,
-      author: currentUser.username,
-      timestamp: new Date().toISOString()
-    };
-    await addDoc(commentsCollection, commentData);
-  }
+  // ---------- Main App Render ----------
+  async function renderMainApp() {
+    const container = document.getElementById('appContainer');
+    container.style.display = 'block';
+    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+    const userData = userDoc.data();
+    const role = userData?.role || 'member';
+    const username = userData?.username || currentUser.email.split('@')[0];
+    currentUser.role = role;
+    currentUser.username = username;
 
-  async function toggleComplaintStatus(id) {
-    const compRef = doc(db, "complaints", id);
-    const compSnap = await getDoc(compRef);
-    if (compSnap.exists()) {
-      const newStatus = compSnap.data().status === 'pending' ? 'done' : 'pending';
-      await updateDoc(compRef, { status: newStatus, completedAt: newStatus === 'done' ? new Date().toISOString() : null });
-    }
-  }
+    container.innerHTML = `
+      <div class="app-container">
+        <div class="top-bar">
+          <div class="logo">
+            <h2><i class="fas fa-truck-fast"></i> M&P Express Logistics</h2>
+            <p>Firebase Complaint System | Real-time</p>
+          </div>
+          <div class="user-info">
+            <span class="role-badge"><i class="fas fa-user-tag"></i> ${role.toUpperCase()} · ${username}</span>
+            <button id="logoutBtnMain" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+          </div>
+        </div>
+        <div class="stats-row" id="statsRow"></div>
+        <div class="dashboard">
+          <div class="form-panel">
+            <div class="card">
+              <div class="card-title"><i class="fas fa-plus-circle"></i> Log New Complaint</div>
+              <form id="newComplaintForm">
+                <div class="form-group"><label>Team member name</label><input type="text" id="compMember" required></div>
+                <div class="form-group"><label>Complaint Title</label><input type="text" id="compTitle" placeholder="e.g., WiFi not working" required></div>
+                <div class="form-group"><label>Priority</label><select id="compPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+                <div class="form-group"><label>Description</label><textarea id="compDesc" rows="2" required></textarea></div>
+                <div class="form-group"><label>Date</label><input type="date" id="compDate" required></div>
+                <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Complaint</button>
+              </form>
+            </div>
+            ${role === 'admin' ? `<div class="admin-panel" id="adminPanel"><div class="card-title"><i class="fas fa-users-cog"></i> User Management (Admin)</div>
+            <div class="form-group" style="display:flex; gap:6px; flex-wrap:wrap;"><input type="text" id="newUsername" placeholder="username" style="flex:1"><input type="email" id="newEmail" placeholder="email@example.com" style="flex:1"><input type="password" id="newPassword" placeholder="password"><select id="newRole"><option value="member">Member</option><option value="sse">SSE</option><option value="it">IT</option><option value="admin">Admin</option></select><button id="createUserBtn" class="small-btn">Create</button></div>
+            <div id="userList"></div></div>` : ''}
+          </div>
+          <div class="list-panel">
+            <div class="card">
+              <div class="card-title">
+                <span><i class="fas fa-filter"></i> Complaints & Comments</span>
+                <div class="report-buttons">
+                  <button id="fullReportPDFBtn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Export PDF (Full)</button>
+                </div>
+              </div>
+              <div class="filters-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Search member / title" style="flex:2">
+                <select id="filterPriority"><option value="all">All priority</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                <select id="filterStatus"><option value="all">All status</option><option value="pending">Pending</option><option value="done">Resolved</option></select>
+              </div>
+              <div id="complaintsListContainer"></div>
+            </div>
+          </div>
+        </div>
+        <footer><i class="fas fa-code"></i> Developed by Central IT | M&P Express Logistics © 2025</footer>
+      </div>
+    `;
 
-  async function deleteComplaint(id) {
-    // Delete comments first
-    const commentsQuery = query(commentsCollection, where("complaintId", "==", id));
-    const snap = await getDocs(commentsQuery);
-    snap.forEach(doc => deleteDoc(doc.ref));
-    await deleteDoc(doc(db, "complaints", id));
-  }
-
-  async function addNewComplaint(member, title, desc, date, priority) {
-    if (!member || !title || !desc) return false;
-    const newComplaint = {
-      member: member.trim(),
-      title: title.trim(),
-      description: desc.trim(),
-      date: date,
-      priority: priority,
-      status: 'pending',
-      createdBy: currentUser.username,
-      createdAt: new Date().toISOString(),
-      completedAt: null
-    };
-    await addDoc(complaintsCollection, newComplaint);
-    return true;
-  }
-
-  // Admin functions
-  async function loadUserList() {
-    const usersSnap = await getDocs(usersCollection);
-    const usersList = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
-    const userDiv = document.getElementById('userList');
-    if (!userDiv) return;
-    let html = '<h4>Existing Users</h4>';
-    for (const u of usersList) {
-      html += `<div class="user-row"><span><i class="fas fa-user"></i> ${u.username} (${u.role}) - ${u.email}</span> ${u.username !== 'admin' ? `<button class="small-btn deleteUserBtn" data-uid="${u.uid}" style="background:#e74c3c;">Delete</button>` : '<span>⭐ protected</span>'}</div>`;
-    }
-    userDiv.innerHTML = html;
-    document.querySelectorAll('.deleteUserBtn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const uid = btn.getAttribute('data-uid');
-        if (confirm("Delete user permanently?")) {
-          try {
-            // Delete from Auth (admin only)
-            const userToDelete = await auth.getUser(uid); // requires admin SDK, but client can't. Alternative: delete from Firestore only.
-            // Since client cannot delete other users via Auth, we just delete from Firestore and disable login.
-            await deleteDoc(doc(db, "users", uid));
-            loadUserList();
-          } catch(err) { console.error(err); alert("Error deleting user"); }
-        }
-      });
-    });
-  }
-
-  async function createUser(username, email, password, role) {
-    try {
-      const userCred = await createUserWithEmailAndPassword(auth, email, password);
-      await setDoc(doc(db, "users", userCred.user.uid), {
-        uid: userCred.user.uid,
-        username: username,
-        email: email,
-        role: role,
-        createdAt: new Date().toISOString()
-      });
-      alert("User created successfully");
-      loadUserList();
-    } catch (err) {
-      alert("Error: " + err.message);
-    }
-  }
-
-  // PDF exports
-  async function generatePDFFromElement(element, filename) {
-    const opt = { margin: 0.5, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4' } };
-    await html2pdf().set(opt).from(element).save();
-  }
-
-  function buildSingleComplaintHTML(comp, compComments) {
-    let commentsHtml = '<ul>';
-    compComments.forEach(c => commentsHtml += `<li><strong>${c.author}</strong> (${new Date(c.timestamp).toLocaleString()}): ${c.text}</li>`);
-    commentsHtml += '</ul>';
-    return `<div style="padding:20px"><div style="text-align:center;border-bottom:2px solid #f97316;"><h1>M&P Express Logistics</h1><h3>Complaint Report</h3></div>
-      <p><strong>ID:</strong> ${comp.id}</p><p><strong>Title:</strong> ${comp.title}</p><p><strong>Member:</strong> ${comp.member}</p>
-      <p><strong>Priority:</strong> ${comp.priority}</p><p><strong>Status:</strong> ${comp.status}</p><p><strong>Date:</strong> ${comp.date}</p>
-      <p><strong>Description:</strong> ${comp.description}</p><p><strong>Logged by:</strong> ${comp.createdBy}</p>
-      <div><strong>Comments:</strong> ${commentsHtml}</div><div style="margin-top:30px;text-align:center;">Generated by ${currentUser.username} | Developed by Central IT</div></div>`;
-  }
-
-  async function exportSingleComplaintPDF(complaintId) {
-    const comp = allComplaints.find(c => c.id === complaintId);
-    if (!comp) return;
-    const compComments = allComments.filter(c => c.complaintId === complaintId);
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px';
-    tempDiv.innerHTML = buildSingleComplaintHTML(comp, compComments);
-    document.body.appendChild(tempDiv);
-    await generatePDFFromElement(tempDiv, `complaint_${complaintId}.pdf`);
-    document.body.removeChild(tempDiv);
-  }
-
-  async function exportFullReportPDF() {
-    let fullHtml = `<div style="padding:20px"><div style="text-align:center;border-bottom:2px solid #f97316;"><h1>M&P Express Logistics</h1><h3>Complete Complaints Report</h3><p>Total: ${allComplaints.length} | Pending: ${allComplaints.filter(c=>c.status==='pending').length} | Resolved: ${allComplaints.filter(c=>c.status==='done').length}</p></div>`;
-    for (const comp of allComplaints) {
-      const compComments = allComments.filter(c => c.complaintId === comp.id);
-      fullHtml += `<div style="margin-bottom:20px;"><h3>#${comp.id} - ${comp.title}</h3><p><strong>Member:</strong> ${comp.member} | <strong>Priority:</strong> ${comp.priority} | <strong>Status:</strong> ${comp.status}</p><p>${comp.description}</p><p><strong>Comments:</strong> ${compComments.map(c=>`${c.author}: ${c.text}`).join('; ')}</p></div>`;
-    }
-    fullHtml += `<div style="text-align:center;">Generated by ${currentUser.username} | Developed by Central IT</div></div>`;
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px';
-    tempDiv.innerHTML = fullHtml;
-    document.body.appendChild(tempDiv);
-    await generatePDFFromElement(tempDiv, `full_report_${Date.now()}.pdf`);
-    document.body.removeChild(tempDiv);
-  }
-
-  function attachGlobalListeners() {
+    // Attach global listeners
     const form = document.getElementById('newComplaintForm');
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const member = document.getElementById('compMember').value;
-        const title = document.getElementById('compTitle').value;
-        const desc = document.getElementById('compDesc').value;
-        const date = document.getElementById('compDate').value;
-        const priority = document.getElementById('compPriority').value;
-        if (!date) return alert("Select date");
-        await addNewComplaint(member, title, desc, date, priority);
-        form.reset();
-        document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
-      });
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const member = document.getElementById('compMember').value;
+      const title = document.getElementById('compTitle').value;
+      const desc = document.getElementById('compDesc').value;
+      const date = document.getElementById('compDate').value;
+      const priority = document.getElementById('compPriority').value;
+      if (!date) return alert("Select date");
+      await addNewComplaint(member, title, desc, date, priority);
+      form.reset();
       document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
-    }
-    document.getElementById('searchInput')?.addEventListener('input', () => renderComplaintsList());
-    document.getElementById('filterPriority')?.addEventListener('change', () => renderComplaintsList());
-    document.getElementById('filterStatus')?.addEventListener('change', () => renderComplaintsList());
-    document.getElementById('fullReportPDFBtn')?.addEventListener('click', () => exportFullReportPDF());
-    const createBtn = document.getElementById('createUserBtn');
-    if (createBtn) {
-      createBtn.addEventListener('click', () => {
+    });
+    document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('searchInput').addEventListener('input', () => renderComplaintsList());
+    document.getElementById('filterPriority').addEventListener('change', () => renderComplaintsList());
+    document.getElementById('filterStatus').addEventListener('change', () => renderComplaintsList());
+    document.getElementById('fullReportPDFBtn').addEventListener('click', () => exportFullReportPDF());
+    if (role === 'admin') {
+      document.getElementById('createUserBtn').addEventListener('click', () => {
         const username = document.getElementById('newUsername').value.trim();
         const email = document.getElementById('newEmail').value.trim();
         const password = document.getElementById('newPassword').value.trim();
@@ -523,22 +512,29 @@
         if (!username || !email || !password) return alert("All fields required");
         createUser(username, email, password, role);
       });
+      loadUserList();
     }
-    const logoutBtn = document.getElementById('logoutBtnMain');
-    if (logoutBtn) logoutBtn.addEventListener('click', async () => { await signOut(auth); window.location.reload(); });
+    document.getElementById('logoutBtnMain').addEventListener('click', async () => { await signOut(auth); window.location.reload(); });
+
+    subscribeToComplaints();
+    updateStats();
   }
 
-  // Authentication state listener
+  // ---------- Auth State Listener ----------
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists()) {
-        // Fallback: create profile
-        await setDoc(doc(db, "users", user.uid), { uid: user.uid, username: user.email.split('@')[0], email: user.email, role: 'member', createdAt: new Date().toISOString() });
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          username: user.email.split('@')[0],
+          email: user.email,
+          role: 'member',
+          createdAt: new Date().toISOString()
+        });
       }
       currentUser = { uid: user.uid, email: user.email, role: userDoc.data()?.role || 'member', username: userDoc.data()?.username || user.email.split('@')[0] };
       document.getElementById('loginContainer').style.display = 'none';
-      await ensureDefaultUsers();
       renderMainApp();
     } else {
       document.getElementById('loginContainer').style.display = 'flex';
