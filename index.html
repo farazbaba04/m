@@ -99,51 +99,48 @@
   let allComplaints = [];
   let allComments = [];
 
-  // ---------- Create default users in Firebase Auth & Firestore (run once on load) ----------
-  async function createDefaultUsers() {
-    const defaultUsers = [
-      { email: "admin@mpexpress.com", password: "admin123", username: "admin", role: "admin" },
-      { email: "it_ahmed@mpexpress.com", password: "it123", username: "it_ahmed", role: "it" },
-      { email: "sse_ali@mpexpress.com", password: "sse123", username: "sse_ali", role: "sse" },
-      { email: "member_fatima@mpexpress.com", password: "member123", username: "member_fatima", role: "member" }
-    ];
-    for (const user of defaultUsers) {
-      try {
-        // Check if already exists in Firestore
-        const q = query(usersCollection, where("username", "==", user.username));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-          // Create Auth user
-          let authUser;
-          try {
-            authUser = await createUserWithEmailAndPassword(auth, user.email, user.password);
-          } catch (err) {
-            if (err.code === 'auth/email-already-in-use') {
-              // If email exists but not in Firestore, just sign in to get UID
-              const cred = await signInWithEmailAndPassword(auth, user.email, user.password);
-              authUser = cred.user;
-            } else {
-              throw err;
-            }
+  // ---------- Create ONLY the admin user (admin / admin54321) ----------
+  async function createAdminUser() {
+    const adminEmail = "admin@mpexpress.com";
+    const adminPassword = "admin54321";
+    const adminUsername = "admin";
+    const adminRole = "admin";
+    try {
+      // Check if admin already exists in Firestore
+      const q = query(usersCollection, where("username", "==", adminUsername));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        // Create Auth user
+        let authUser;
+        try {
+          authUser = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
+        } catch (err) {
+          if (err.code === 'auth/email-already-in-use') {
+            const cred = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+            authUser = cred.user;
+          } else {
+            throw err;
           }
-          // Save to Firestore
-          await setDoc(doc(db, "users", authUser.uid), {
-            uid: authUser.uid,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            createdAt: new Date().toISOString()
-          });
-          console.log(`Default user created: ${user.username}`);
         }
-      } catch (err) {
-        console.error(`Error creating default user ${user.username}:`, err);
+        // Save to Firestore
+        await setDoc(doc(db, "users", authUser.uid), {
+          uid: authUser.uid,
+          username: adminUsername,
+          email: adminEmail,
+          role: adminRole,
+          createdAt: new Date().toISOString()
+        });
+        console.log("Admin user created successfully");
+      } else {
+        console.log("Admin user already exists");
       }
+    } catch (err) {
+      console.error("Error creating admin user:", err);
     }
   }
 
-  // Call this immediately to ensure default users exist before any login
-  createDefaultUsers().catch(console.error);
+  // Run admin creation on load (doesn't interfere with login)
+  createAdminUser().catch(console.error);
 
   // ---------- Helper functions ----------
   function escapeHtml(str) {
@@ -151,7 +148,7 @@
     return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
   }
 
-  // ---------- Login UI ----------
+  // ---------- Login UI (no demo text) ----------
   function renderLogin() {
     const container = document.getElementById('loginContainer');
     container.innerHTML = `
@@ -162,7 +159,6 @@
           <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@mpexpress.com"></div>
           <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••"></div>
           <button id="doLoginBtn" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign in</button>
-          <p style="margin-top: 12px; font-size:0.7rem;">Demo: admin@mpexpress.com / admin123</p>
         </div>
       </div>
     `;
@@ -267,7 +263,7 @@
     document.querySelectorAll('.deleteUserBtn').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         const uid = btn.getAttribute('data-uid');
-        if (confirm("Delete user permanently? This will remove from Firestore only. Auth user will remain but can't login.")) {
+        if (confirm("Delete user permanently? This will remove from Firestore only.")) {
           await deleteDoc(doc(db, "users", uid));
           loadUserList();
         }
@@ -525,6 +521,7 @@
     if (user) {
       const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists()) {
+        // Auto-create profile for any new auth user (should not happen normally)
         await setDoc(doc(db, "users", user.uid), {
           uid: user.uid,
           username: user.email.split('@')[0],
