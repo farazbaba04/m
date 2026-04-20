@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-  <title>M&P Express Logistics | ComplaintHub</title>
+  <title>M&P Express Logistics | Complaint Management</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #fff7ed; color: #2c2a29; padding: 24px 20px; }
-    .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+    .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
     .login-card { background: white; max-width: 420px; width: 90%; border-radius: 40px; padding: 32px 28px; box-shadow: 0 25px 45px rgba(0,0,0,0.2); }
     .login-card h2 { margin-bottom: 24px; font-weight: 700; color: #ea580c; }
     .app-container { max-width: 1500px; margin: 0 auto; display: none; }
@@ -64,6 +64,7 @@
     .empty-state { text-align: center; padding: 40px; color: #9a3412; }
     footer { text-align: center; margin-top: 40px; padding: 20px; font-size: 0.75rem; color: #9a3412; border-top: 1px solid #fed7aa; }
     .loading { text-align: center; padding: 20px; color: #ea580c; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -75,6 +76,7 @@
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
   import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, orderBy, onSnapshot, addDoc, where } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
+  // Firebase config
   const firebaseConfig = {
     apiKey: "AIzaSyCg4_Neo0-hhciQ4M7y1opLJUJgwG19Gfo",
     authDomain: "itcomplaint-5bf6e.firebaseapp.com",
@@ -99,16 +101,17 @@
   let allComplaints = [];
   let allComments = [];
 
-  // ---------- Create ONLY admin user (username: admin, password: admin123) ----------
-  async function createAdminUser() {
+  // ---------- Create ONLY admin user (admin@mpexpress.com / admin123) ----------
+  async function ensureAdminUser() {
     const adminEmail = "admin@mpexpress.com";
     const adminPassword = "admin123";
     const adminUsername = "admin";
-    const adminRole = "admin";
     try {
+      // Check if admin exists in Firestore
       const q = query(usersCollection, where("username", "==", adminUsername));
       const snap = await getDocs(q);
       if (snap.empty) {
+        // Create auth user
         let authUser;
         try {
           authUser = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
@@ -120,69 +123,81 @@
             throw err;
           }
         }
+        // Save to Firestore
         await setDoc(doc(db, "users", authUser.uid), {
           uid: authUser.uid,
           username: adminUsername,
           email: adminEmail,
-          role: adminRole,
+          role: "admin",
           createdAt: new Date().toISOString()
         });
-        console.log("Admin user created");
+        console.log("Admin user created successfully");
       }
     } catch (err) {
       console.error("Admin creation error:", err);
     }
   }
 
-  // Run immediately
-  createAdminUser();
+  // Run admin creation immediately (doesn't block)
+  ensureAdminUser();
 
+  // Helper: escape HTML
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : (m === '<' ? '&lt;' : '&gt;'));
   }
 
-  // ---------- Login UI ----------
+  // ---------- LOGIN UI ----------
   function renderLogin() {
-    const container = document.getElementById('loginContainer');
-    container.innerHTML = `
+    const loginContainer = document.getElementById('loginContainer');
+    if (!loginContainer) return;
+    loginContainer.innerHTML = `
       <div class="login-overlay">
         <div class="login-card">
-          <h2><i class="fas fa-box"></i> M&P Express Logistics</h2>
+          <h2><i class="fas fa-truck-fast"></i> M&P Express Logistics</h2>
           <p style="margin-bottom:16px; color:#ea580c;">Complaint Management System</p>
-          <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@mpexpress.com"></div>
-          <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@mpexpress.com" value="admin@mpexpress.com"></div>
+          <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••" value="admin123"></div>
           <button id="doLoginBtn" class="btn-primary"><i class="fas fa-sign-in-alt"></i> Sign in</button>
         </div>
       </div>
     `;
-    document.getElementById('doLoginBtn').addEventListener('click', async () => {
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value.trim();
-      if (!email || !password) return alert("Enter email and password");
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (err) {
-        alert("Login failed: " + err.message);
-      }
-    });
+    const loginBtn = document.getElementById('doLoginBtn');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', async () => {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        if (!email || !password) return alert("Enter email and password");
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (err) {
+          alert("Login failed: " + err.message);
+        }
+      });
+    }
   }
 
-  // ---------- Real-time subscriptions ----------
+  // ---------- REAL-TIME SUBSCRIPTIONS ----------
   function subscribeToComplaints() {
     if (unsubscribeComplaints) unsubscribeComplaints();
     const q = query(complaintsCollection, orderBy("createdAt", "desc"));
-    unsubscribeComplaints = onSnapshot(q, (snapshot) => {
-      allComplaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      updateStats();
-      renderComplaintsList();
-    }, (error) => console.error("Complaints snapshot error:", error));
+    unsubscribeComplaints = onSnapshot(q, 
+      (snapshot) => {
+        allComplaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        updateStats();
+        renderComplaintsList();
+      },
+      (error) => console.error("Complaints error:", error)
+    );
     
     if (unsubscribeComments) unsubscribeComments();
-    unsubscribeComments = onSnapshot(commentsCollection, (snapshot) => {
-      allComments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      renderComplaintsList();
-    }, (error) => console.error("Comments snapshot error:", error));
+    unsubscribeComments = onSnapshot(commentsCollection,
+      (snapshot) => {
+        allComments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderComplaintsList();
+      },
+      (error) => console.error("Comments error:", error)
+    );
   }
 
   function updateStats() {
@@ -244,7 +259,7 @@
     return true;
   }
 
-  // Admin functions
+  // Admin: load user list
   async function loadUserList() {
     const usersSnap = await getDocs(usersCollection);
     const usersList = usersSnap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
@@ -252,7 +267,7 @@
     if (!userDiv) return;
     let html = '<h4>Existing Users</h4>';
     for (const u of usersList) {
-      html += `<div class="user-row"><span><i class="fas fa-user"></i> ${escapeHtml(u.username)} (${escapeHtml(u.role)}) - ${escapeHtml(u.email)}</span> ${u.username !== 'admin' ? `<button class="small-btn deleteUserBtn" data-uid="${u.uid}" style="background:#e74c3c;">Delete</button>` : '<span>⭐ Admin</span>'}</div>`;
+      html += `<div class="user-row"><span><i class="fas fa-user"></i> ${escapeHtml(u.username)} (${escapeHtml(u.role)}) - ${escapeHtml(u.email)}</span> ${u.username !== 'admin' ? `<button class="small-btn deleteUserBtn" data-uid="${u.uid}" style="background:#e74c3c;">Delete</button>` : '<span>⭐ Admin (protected)</span>'}</div>`;
     }
     userDiv.innerHTML = html;
     document.querySelectorAll('.deleteUserBtn').forEach(btn => {
@@ -328,6 +343,8 @@
   }
 
   function renderComplaintsList() {
+    const container = document.getElementById('complaintsListContainer');
+    if (!container) return;
     const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
     const priorityFilter = document.getElementById('filterPriority')?.value || 'all';
     const statusFilter = document.getElementById('filterStatus')?.value || 'all';
@@ -337,8 +354,6 @@
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
       return matchSearch && matchPriority && matchStatus;
     });
-    const container = document.getElementById('complaintsListContainer');
-    if (!container) return;
     if (filtered.length === 0) {
       container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i> No complaints match filters</div>';
       return;
@@ -413,126 +428,165 @@
     });
   }
 
-  // ---------- Main App Render ----------
+  // ---------- MAIN APP RENDER ----------
   async function renderMainApp() {
-    const container = document.getElementById('appContainer');
-    container.style.display = 'block';
-    const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-    const userData = userDoc.data();
-    const role = userData?.role || 'admin';
-    const username = userData?.username || 'admin';
-    currentUser.role = role;
-    currentUser.username = username;
-
-    container.innerHTML = `
-      <div class="app-container">
-        <div class="top-bar">
-          <div class="logo">
-            <h2><i class="fas fa-truck-fast"></i> M&P Express Logistics</h2>
-            <p>Complaint Management System | Real-time</p>
-          </div>
-          <div class="user-info">
-            <span class="role-badge"><i class="fas fa-user-tag"></i> ${role.toUpperCase()} · ${username}</span>
-            <button id="logoutBtnMain" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
-          </div>
-        </div>
-        <div class="stats-row" id="statsRow"></div>
-        <div class="dashboard">
-          <div class="form-panel">
-            <div class="card">
-              <div class="card-title"><i class="fas fa-plus-circle"></i> Log New Complaint</div>
-              <form id="newComplaintForm">
-                <div class="form-group"><label>Team member name</label><input type="text" id="compMember" required></div>
-                <div class="form-group"><label>Complaint Title</label><input type="text" id="compTitle" placeholder="e.g., WiFi not working" required></div>
-                <div class="form-group"><label>Priority</label><select id="compPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
-                <div class="form-group"><label>Description</label><textarea id="compDesc" rows="2" required></textarea></div>
-                <div class="form-group"><label>Date</label><input type="date" id="compDate" required></div>
-                <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Complaint</button>
-              </form>
+    try {
+      const appContainer = document.getElementById('appContainer');
+      if (!appContainer) return;
+      appContainer.style.display = 'block';
+      
+      // Ensure user data is fresh
+      const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+      const userData = userDoc.exists() ? userDoc.data() : { role: 'admin', username: 'admin' };
+      currentUser.role = userData.role || 'admin';
+      currentUser.username = userData.username || 'admin';
+      
+      appContainer.innerHTML = `
+        <div class="app-container">
+          <div class="top-bar">
+            <div class="logo">
+              <h2><i class="fas fa-truck-fast"></i> M&P Express Logistics</h2>
+              <p>Complaint Management System | Real-time</p>
             </div>
-            <div class="admin-panel" id="adminPanel"><div class="card-title"><i class="fas fa-users-cog"></i> User Management (Admin)</div>
-            <div class="form-group" style="display:flex; gap:6px; flex-wrap:wrap;"><input type="text" id="newUsername" placeholder="username" style="flex:1"><input type="email" id="newEmail" placeholder="email@example.com" style="flex:1"><input type="password" id="newPassword" placeholder="password"><select id="newRole"><option value="member">Member</option><option value="sse">SSE</option><option value="it">IT</option><option value="admin">Admin</option></select><button id="createUserBtn" class="small-btn">Create</button></div>
-            <div id="userList"></div></div>
+            <div class="user-info">
+              <span class="role-badge"><i class="fas fa-user-tag"></i> ${currentUser.role.toUpperCase()} · ${escapeHtml(currentUser.username)}</span>
+              <button id="logoutBtnMain" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
           </div>
-          <div class="list-panel">
-            <div class="card">
-              <div class="card-title">
-                <span><i class="fas fa-filter"></i> Complaints & Comments</span>
-                <div class="report-buttons">
-                  <button id="fullReportPDFBtn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Export PDF (Full)</button>
+          <div class="stats-row" id="statsRow"></div>
+          <div class="dashboard">
+            <div class="form-panel">
+              <div class="card">
+                <div class="card-title"><i class="fas fa-plus-circle"></i> Log New Complaint</div>
+                <form id="newComplaintForm">
+                  <div class="form-group"><label>Team member name</label><input type="text" id="compMember" required></div>
+                  <div class="form-group"><label>Complaint Title</label><input type="text" id="compTitle" placeholder="e.g., WiFi not working" required></div>
+                  <div class="form-group"><label>Priority</label><select id="compPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+                  <div class="form-group"><label>Description</label><textarea id="compDesc" rows="2" required></textarea></div>
+                  <div class="form-group"><label>Date</label><input type="date" id="compDate" required></div>
+                  <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> Submit Complaint</button>
+                </form>
+              </div>
+              <div class="admin-panel" id="adminPanel">
+                <div class="card-title"><i class="fas fa-users-cog"></i> User Management (Admin)</div>
+                <div class="form-group" style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <input type="text" id="newUsername" placeholder="username" style="flex:1">
+                  <input type="email" id="newEmail" placeholder="email@example.com" style="flex:1">
+                  <input type="password" id="newPassword" placeholder="password">
+                  <select id="newRole"><option value="member">Member</option><option value="sse">SSE</option><option value="it">IT</option><option value="admin">Admin</option></select>
+                  <button id="createUserBtn" class="small-btn">Create</button>
                 </div>
+                <div id="userList"></div>
               </div>
-              <div class="filters-bar">
-                <input type="text" id="searchInput" placeholder="🔍 Search member / title" style="flex:2">
-                <select id="filterPriority"><option value="all">All priority</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
-                <select id="filterStatus"><option value="all">All status</option><option value="pending">Pending</option><option value="done">Resolved</option></select>
+            </div>
+            <div class="list-panel">
+              <div class="card">
+                <div class="card-title">
+                  <span><i class="fas fa-filter"></i> Complaints & Comments</span>
+                  <div class="report-buttons">
+                    <button id="fullReportPDFBtn" class="btn-secondary"><i class="fas fa-file-pdf"></i> Export PDF (Full)</button>
+                  </div>
+                </div>
+                <div class="filters-bar">
+                  <input type="text" id="searchInput" placeholder="🔍 Search member / title" style="flex:2">
+                  <select id="filterPriority"><option value="all">All priority</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                  <select id="filterStatus"><option value="all">All status</option><option value="pending">Pending</option><option value="done">Resolved</option></select>
+                </div>
+                <div id="complaintsListContainer"></div>
               </div>
-              <div id="complaintsListContainer"></div>
             </div>
           </div>
+          <footer><i class="fas fa-code"></i> Developed by Central IT | M&P Express Logistics © 2025</footer>
         </div>
-        <footer><i class="fas fa-code"></i> Developed by Central IT | M&P Express Logistics © 2025</footer>
-      </div>
-    `;
-
-    // Attach listeners
-    const form = document.getElementById('newComplaintForm');
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const member = document.getElementById('compMember').value;
-      const title = document.getElementById('compTitle').value;
-      const desc = document.getElementById('compDesc').value;
-      const date = document.getElementById('compDate').value;
-      const priority = document.getElementById('compPriority').value;
-      if (!date) return alert("Select date");
-      await addNewComplaint(member, title, desc, date, priority);
-      form.reset();
-      document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
-    });
-    document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
-    document.getElementById('searchInput').addEventListener('input', () => renderComplaintsList());
-    document.getElementById('filterPriority').addEventListener('change', () => renderComplaintsList());
-    document.getElementById('filterStatus').addEventListener('change', () => renderComplaintsList());
-    document.getElementById('fullReportPDFBtn').addEventListener('click', () => exportFullReportPDF());
-    
-    // Admin panel
-    document.getElementById('createUserBtn').addEventListener('click', () => {
-      const username = document.getElementById('newUsername').value.trim();
-      const email = document.getElementById('newEmail').value.trim();
-      const password = document.getElementById('newPassword').value.trim();
-      const role = document.getElementById('newRole').value;
-      if (!username || !email || !password) return alert("All fields required");
-      createUser(username, email, password, role);
-    });
-    loadUserList();
-    
-    document.getElementById('logoutBtnMain').addEventListener('click', async () => { await signOut(auth); window.location.reload(); });
-
-    subscribeToComplaints();
-    updateStats();
-  }
-
-  // ---------- Auth State Listener ----------
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (!userDoc.exists()) {
-        // This should not happen because admin is created, but just in case
-        await setDoc(doc(db, "users", user.uid), {
-          uid: user.uid,
-          username: 'admin',
-          email: user.email,
-          role: 'admin',
-          createdAt: new Date().toISOString()
+      `;
+      
+      // Attach event listeners
+      const form = document.getElementById('newComplaintForm');
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const member = document.getElementById('compMember').value;
+          const title = document.getElementById('compTitle').value;
+          const desc = document.getElementById('compDesc').value;
+          const date = document.getElementById('compDate').value;
+          const priority = document.getElementById('compPriority').value;
+          if (!date) return alert("Select date");
+          await addNewComplaint(member, title, desc, date, priority);
+          form.reset();
+          document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
+        });
+        document.getElementById('compDate').value = new Date().toISOString().slice(0,10);
+      }
+      
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.addEventListener('input', () => renderComplaintsList());
+      const filterPriority = document.getElementById('filterPriority');
+      if (filterPriority) filterPriority.addEventListener('change', () => renderComplaintsList());
+      const filterStatus = document.getElementById('filterStatus');
+      if (filterStatus) filterStatus.addEventListener('change', () => renderComplaintsList());
+      const fullReportBtn = document.getElementById('fullReportPDFBtn');
+      if (fullReportBtn) fullReportBtn.addEventListener('click', () => exportFullReportPDF());
+      
+      const createBtn = document.getElementById('createUserBtn');
+      if (createBtn) {
+        createBtn.addEventListener('click', () => {
+          const username = document.getElementById('newUsername').value.trim();
+          const email = document.getElementById('newEmail').value.trim();
+          const password = document.getElementById('newPassword').value.trim();
+          const role = document.getElementById('newRole').value;
+          if (!username || !email || !password) return alert("All fields required");
+          createUser(username, email, password, role);
         });
       }
-      currentUser = { uid: user.uid, email: user.email, role: userDoc.data()?.role || 'admin', username: userDoc.data()?.username || 'admin' };
-      document.getElementById('loginContainer').style.display = 'none';
-      renderMainApp();
-    } else {
-      document.getElementById('loginContainer').style.display = 'flex';
-      document.getElementById('appContainer').style.display = 'none';
-      renderLogin();
+      
+      const logoutBtn = document.getElementById('logoutBtnMain');
+      if (logoutBtn) logoutBtn.addEventListener('click', async () => { await signOut(auth); window.location.reload(); });
+      
+      // Load initial data
+      await loadUserList();
+      subscribeToComplaints();
+      updateStats();
+    } catch (err) {
+      console.error("RenderMainApp error:", err);
+      document.getElementById('appContainer').innerHTML = '<div class="empty-state">Error loading app. Please refresh.</div>';
+    }
+  }
+
+  // ---------- AUTH STATE LISTENER ----------
+  onAuthStateChanged(auth, async (user) => {
+    try {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (!userDoc.exists()) {
+          // This should not happen because admin is pre-created, but fallback
+          await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            username: 'admin',
+            email: user.email,
+            role: 'admin',
+            createdAt: new Date().toISOString()
+          });
+        }
+        currentUser = { 
+          uid: user.uid, 
+          email: user.email, 
+          role: userDoc.exists() ? userDoc.data().role : 'admin',
+          username: userDoc.exists() ? userDoc.data().username : 'admin'
+        };
+        // Hide login, show app
+        const loginContainer = document.getElementById('loginContainer');
+        if (loginContainer) loginContainer.style.display = 'none';
+        await renderMainApp();
+      } else {
+        // Show login, hide app
+        const loginContainer = document.getElementById('loginContainer');
+        if (loginContainer) loginContainer.style.display = 'flex';
+        const appContainer = document.getElementById('appContainer');
+        if (appContainer) appContainer.style.display = 'none';
+        renderLogin();
+      }
+    } catch (err) {
+      console.error("Auth state error:", err);
     }
   });
 </script>
