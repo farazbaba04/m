@@ -211,7 +211,7 @@
                         <h2 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <i class="fa-solid fa-heart text-brand-600"></i> Send Funds to a Pharmacy
                         </h2>
-                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Pick a verified pharmacy and send your donation to its wallet.</p>
+                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Pick a verified pharmacy, transfer payment, and upload proof for approval.</p>
                     </div>
                     <div class="relative w-full sm:w-64">
                         <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
@@ -259,7 +259,7 @@
                         <div class="bg-gradient-to-br from-brand-50 to-emerald-50 p-4 rounded-xl border border-brand-100">
                             <span class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Available Donation Wallet</span>
                             <span id="pharma-balance" class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1 block">PKR 0</span>
-                            <span class="text-[10px] text-slate-500 mt-1 block"><i class="fa-solid fa-shield-halved text-brand-600"></i> Funds received from donors</span>
+                            <span class="text-[10px] text-slate-500 mt-1 block"><i class="fa-solid fa-shield-halved text-brand-600"></i> Approved funds received from donors</span>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
@@ -340,7 +340,7 @@
                         <h2 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                             <i class="fa-solid fa-user-shield text-rose-600"></i> Admin Control Panel
                         </h2>
-                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Full control over stores, users, and ledger.</p>
+                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Approve donations, manage stores, users, and audit log.</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <button onclick="exportData()" class="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-brand-500 hover:text-brand-700 text-slate-700 text-xs font-semibold transition flex items-center justify-center gap-1.5">
@@ -352,12 +352,14 @@
                     </div>
                 </div>
 
-                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] text-rose-800 flex items-start gap-2">
-                    <i class="fa-solid fa-key mt-0.5"></i>
-                    <div>
-                        <b>Your admin login:</b> <span class="font-mono">03095607170</span> &nbsp;·&nbsp; PIN <span class="font-mono">123456</span>
-                        — you can change any user's PIN from the Users list below.
+                <div class="card p-5 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Pending Donation Verification
+                        </h3>
+                        <span id="admin-pending-count" class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">0 Pending</span>
                     </div>
+                    <div id="admin-pending-donations-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -484,9 +486,6 @@
                                                class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
                                     </div>
                                 </div>
-                                <div class="bg-brand-50 border border-brand-100 rounded-xl p-3 text-[11px] text-brand-800">
-                                    <i class="fa-solid fa-info-circle"></i> Donor signs in with this phone + PIN and can send funds to any pharmacy.
-                                </div>
                                 <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
                                     <i class="fa-solid fa-user-plus"></i> Create Donor Account
                                 </button>
@@ -547,7 +546,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-
                     <div class="card p-5 rounded-2xl space-y-3">
                         <div class="flex items-center justify-between border-b border-slate-200 pb-3">
                             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -575,7 +573,6 @@
                         </div>
                         <div id="admin-users-list" class="max-h-[420px] overflow-y-auto"></div>
                     </div>
-
                 </div>
 
                 <div class="card p-5 rounded-2xl space-y-3">
@@ -654,6 +651,7 @@
         </nav>
     </div>
 
+    <!-- DONATION MODAL WITH SCREENSHOT UPLOAD & BANK DETAILS -->
     <div id="modal-budget" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden overflow-y-auto">
         <div class="min-h-full flex items-center justify-center p-4">
             <div class="bg-white w-full max-w-md rounded-2xl p-5 md:p-6 space-y-5 relative shadow-xl border border-slate-200">
@@ -665,28 +663,54 @@
                     <h3 class="text-lg font-bold text-slate-900">Send Funds to Pharmacy</h3>
                     <p id="modal-pharmacy-name" class="text-xs text-brand-700 font-semibold">—</p>
                 </div>
+
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-2">Quick Amount (PKR)</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button type="button" onclick="setBudgetAmount(1000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">1,000</button>
-                            <button type="button" onclick="setBudgetAmount(5000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">5,000</button>
-                            <button type="button" onclick="setBudgetAmount(10000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">10,000</button>
-                            <button type="button" onclick="setBudgetAmount(25000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">25,000</button>
+                    <!-- Bank / Payment Details Box -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 text-xs">
+                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-1 flex items-center justify-between">
+                            <span><i class="fa-solid fa-building-columns text-brand-600 mr-1"></i> Trust Payment Accounts</span>
+                            <span class="text-[10px] text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">Official</span>
+                        </div>
+                        <div class="space-y-1 text-[11px] text-slate-700">
+                            <p><b>JazzCash / EasyPaisa:</b> <span class="font-mono bg-white px-1.5 py-0.5 rounded border">0309-5607170</span> (Faraz Nadeem)</p>
+                            <p><b>Meezan Bank:</b> <span class="font-mono bg-white px-1.5 py-0.5 rounded border">01020109876543</span></p>
                         </div>
                     </div>
+
                     <div>
-                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Custom Amount (PKR)</label>
-                        <input type="number" id="custom-budget-input" min="500" placeholder="Enter amount…"
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Amount Transferred (PKR) *</label>
+                        <input type="number" id="custom-budget-input" min="100" placeholder="e.g. 5000" required
                                class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 font-bold placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
                     </div>
-                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
-                        <div class="flex justify-between"><span>Payment:</span><span class="text-slate-900 font-medium">JazzCash / Bank</span></div>
-                        <div class="flex justify-between"><span>Alert:</span><span class="text-emerald-700 font-medium">WhatsApp to Store</span></div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Payment Screenshot / Receipt *</label>
+                        <input type="file" id="donation-proof-file" accept="image/*" onchange="handleProofImageUpload(event)" required
+                               class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 transition border border-slate-200 rounded-xl p-1">
+                        <input type="hidden" id="donation-proof-base64">
+                        <div id="proof-preview-container" class="mt-2 hidden">
+                            <img id="proof-preview-img" src="" class="h-28 w-full object-cover rounded-xl border border-slate-200">
+                        </div>
                     </div>
-                    <button onclick="confirmBudgetAssignment()" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-paper-plane"></i> Send Funds & Notify
+
+                    <button onclick="submitDonationForVerification()" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Submit Receipt for Verification
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROOF VIEW MODAL (FOR ADMIN) -->
+    <div id="modal-proof-view" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden overflow-y-auto">
+        <div class="min-h-full flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-lg rounded-2xl p-5 space-y-4 relative shadow-xl border border-slate-200">
+                <button onclick="closeProofModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h3 class="text-base font-bold text-slate-900">Donation Payment Receipt Proof</h3>
+                <div class="bg-slate-100 rounded-xl overflow-hidden flex items-center justify-center p-2 max-h-[70vh]">
+                    <img id="full-proof-img" src="" class="max-h-[65vh] w-auto object-contain rounded-lg shadow-sm">
                 </div>
             </div>
         </div>
@@ -745,8 +769,9 @@
     let pharmacies = [];
     let users = [];
     let ledgerRecords = [];
+    let pendingDonations = [];
 
-    /* ---------- SEED DATA (INITIAL SYNC TO FIRESTORE) ---------- */
+    /* ---------- INITIAL SEED DATA ---------- */
     const initialPharmacies = [
         { id: 'pharma-1', name: 'Bismillah Medical Store', owner: 'Haji Tanveer', area: 'Harbanspura, Lahore', phone: '03214567890', isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 50000 },
         { id: 'pharma-2', name: 'Al-Shifa Pharmacy', owner: 'Muhammad Tariq', area: 'Muslim Town, Lahore', phone: '03009876543', isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 40000 },
@@ -776,9 +801,8 @@
         toastTimer = setTimeout(() => t.classList.add('hidden'), 2800);
     }
 
-    /* ---------- FIRESTORE REAL-TIME LISTENERS ---------- */
+    /* ---------- FIRESTORE LISTENERS ---------- */
     function initFirebaseSync() {
-        // 1. Sync Pharmacies
         db.collection('pharmacies').onSnapshot(snapshot => {
             if (snapshot.empty) {
                 initialPharmacies.forEach(p => db.collection('pharmacies').doc(p.id).set(p));
@@ -794,7 +818,6 @@
             }
         });
 
-        // 2. Sync Users
         db.collection('users').onSnapshot(snapshot => {
             if (snapshot.empty) {
                 initialUsers.forEach(u => db.collection('users').doc(u.id).set(u));
@@ -805,7 +828,6 @@
             }
         });
 
-        // 3. Sync Ledger Records
         db.collection('ledgerRecords').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
             ledgerRecords = [];
             snapshot.forEach(doc => ledgerRecords.push({ id: doc.id, ...doc.data() }));
@@ -814,7 +836,12 @@
             updateStats();
         });
 
-        // 4. Sync Global Stats
+        db.collection('pendingDonations').where('status', '==', 'pending').onSnapshot(snapshot => {
+            pendingDonations = [];
+            snapshot.forEach(doc => pendingDonations.push({ id: doc.id, ...doc.data() }));
+            renderAdmin();
+        });
+
         db.collection('stats').doc('global').onSnapshot(doc => {
             if (doc.exists) {
                 totalDonated = doc.data().totalDonated || 0;
@@ -1119,7 +1146,7 @@
         });
 
         db.collection('ledgerRecords').add({
-            time: 'Just now',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             pharmacyName: p.name,
             patientName: name,
@@ -1137,64 +1164,7 @@
         showWhatsAppModal(phone, msg);
     }
 
-    /* ---------- ADMIN: TABS ---------- */
-    function switchAdminTab(tab) {
-        ['pharmacy', 'donor', 'user'].forEach(t => {
-            const formEl = $('admin-form-' + t);
-            const tabBtn = $('admin-tab-' + t);
-            if (!formEl || !tabBtn) return;
-            if (t === tab) {
-                formEl.classList.remove('hidden');
-                tabBtn.className = 'flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-brand-600 text-brand-700 bg-white transition';
-            } else {
-                formEl.classList.add('hidden');
-                tabBtn.className = 'flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition';
-            }
-        });
-    }
-
-    /* ---------- ADMIN: REFRESH & EXPORT ---------- */
-    function refreshAllData() {
-        showToast('Data synced with Cloud Firestore');
-    }
-
-    function exportData() {
-        const data = {
-            exportedAt: new Date().toISOString(),
-            pharmacies: pharmacies,
-            users: users.map(u => ({...u, pin: '***'})),
-            ledgerRecords: ledgerRecords,
-            stats: { totalDonated, patientsHelped }
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `medtrust-backup-${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Backup exported');
-    }
-
-    function filterAdminUsers(role) {
-        adminUserFilter = role;
-        renderAdmin();
-    }
-
-    function onUserRoleChange() {
-        const role = $('admin-user-role').value;
-        const wrap = $('admin-user-pharmacy-wrap');
-        if (role === 'Pharmacy') {
-            wrap.classList.remove('hidden');
-            $('admin-user-pharmacy').innerHTML = '<option value="">Select pharmacy…</option>' +
-                pharmacies.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.area)}</option>`).join('');
-        } else {
-            wrap.classList.add('hidden');
-            $('admin-user-pharmacy').innerHTML = '';
-        }
-    }
-
-    /* ---------- ADMIN: RENDER ---------- */
+    /* ---------- ADMIN RENDER & APPROVAL SYSTEM ---------- */
     function renderAdmin() {
         if (!session || session.role !== 'admin') return;
 
@@ -1207,6 +1177,39 @@
         if ($('admin-user-count')) $('admin-user-count').textContent     = users.length;
         if ($('admin-ledger-count')) $('admin-ledger-count').textContent   = ledgerRecords.length;
 
+        // Pending Donations Approval List
+        const pendingList = $('admin-pending-donations-list');
+        if ($('admin-pending-count')) $('admin-pending-count').textContent = `${pendingDonations.length} Pending`;
+        if (pendingList) {
+            if (!pendingDonations.length) {
+                pendingList.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">No pending donation proofs for verification.</p>`;
+            } else {
+                pendingList.innerHTML = pendingDonations.map(item => `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-slate-900 text-sm">${esc(item.donorName)}</span>
+                                <span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">PKR ${fmt(item.amount)}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500">Target Pharmacy: <b>${esc(item.pharmacyName)}</b></p>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <button onclick="viewProofModal('${item.proofUrl}')" class="px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition flex items-center gap-1">
+                                <i class="fa-solid fa-image"></i> View Receipt
+                            </button>
+                            <button onclick="approveDonation('${item.id}', '${item.pharmacyId}', ${item.amount})" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1">
+                                <i class="fa-solid fa-check"></i> Approve
+                            </button>
+                            <button onclick="rejectDonation('${item.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Stores List
         const storeList = $('admin-stores-list');
         if (storeList) {
             if (!pharmacies.length) {
@@ -1228,9 +1231,6 @@
                             </div>
                             <p class="text-[11px] text-slate-500 truncate">${esc(p.owner)} • ${esc(p.area)}</p>
                             <p class="text-[11px] text-slate-400 font-mono">${esc(p.phone)}</p>
-                            ${owner
-                                ? `<p class="text-[10px] text-brand-700 mt-0.5"><i class="fa-solid fa-key"></i> Login: ${esc(owner.phone)}</p>`
-                                : `<p class="text-[10px] text-rose-500 mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> No login assigned</p>`}
                         </div>
                         <button onclick="deleteStore('${p.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete store">
                             <i class="fa-solid fa-trash text-xs"></i>
@@ -1240,22 +1240,19 @@
             }
         }
 
-        const filteredUsers = adminUserFilter === 'all'
-            ? users
-            : users.filter(u => u.role === adminUserFilter);
-
+        // Users List
+        const filteredUsers = adminUserFilter === 'all' ? users : users.filter(u => u.role === adminUserFilter);
         const userList = $('admin-users-list');
         if (userList) {
             if (!filteredUsers.length) {
                 userList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No ${adminUserFilter === 'all' ? '' : adminUserFilter + ' '}users.</div>`;
             } else {
                 userList.innerHTML = filteredUsers.map(u => {
-                    const roleBadge = u.role === 'admin'    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    const roleBadge = u.role === 'admin' ? 'bg-rose-50 text-rose-700 border-rose-200'
                                     : u.role === 'pharmacy' ? 'bg-amber-50 text-amber-700 border-amber-200'
                                     : 'bg-brand-50 text-brand-700 border-brand-200';
                     const roleLabel = u.role === 'admin' ? 'Admin' : u.role === 'pharmacy' ? 'Pharmacy' : 'Donor';
                     const isMe = session && session.id === u.id;
-                    const linkedStore = u.pharmacyId ? pharmacies.find(p => p.id === u.pharmacyId) : null;
                     return `
                     <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
                         <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm border border-slate-200 shrink-0 font-bold">
@@ -1268,8 +1265,6 @@
                                 ${isMe ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold border border-slate-200">YOU</span>' : ''}
                             </div>
                             <p class="text-[11px] text-slate-500 font-mono">${esc(u.phone)}</p>
-                            ${linkedStore ? `<p class="text-[10px] text-slate-500 mt-0.5"><i class="fa-solid fa-store"></i> ${esc(linkedStore.name)}</p>` : ''}
-                            ${u.city ? `<p class="text-[10px] text-slate-400">${esc(u.city)}</p>` : ''}
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
                             <button onclick="resetUserPin('${u.id}')" class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center transition" title="Reset PIN">
@@ -1285,6 +1280,7 @@
             }
         }
 
+        // Ledger Audit List
         const ledgerList = $('admin-ledger-list');
         if (ledgerList) {
             if (!ledgerRecords.length) {
@@ -1308,7 +1304,141 @@
         }
     }
 
-    /* ---------- ADMIN ACTIONS ---------- */
+    /* ---------- DONATION SUBMISSION & APPROVAL LOGIC ---------- */
+    function openBudgetModal(id) {
+        if (!session || !canAccess('donor')) { alert('Only donors and admins can send funds.'); return; }
+        selectedPharmacyForBudget = pharmacies.find(p => p.id === id);
+        if (!selectedPharmacyForBudget) return;
+        $('modal-pharmacy-name').textContent = `${selectedPharmacyForBudget.name} • ${selectedPharmacyForBudget.area}`;
+        $('custom-budget-input').value = '';
+        $('donation-proof-file').value = '';
+        $('donation-proof-base64').value = '';
+        $('proof-preview-container').classList.add('hidden');
+        $('modal-budget').classList.remove('hidden');
+    }
+    function closeBudgetModal() { $('modal-budget').classList.add('hidden'); }
+
+    function handleProofImageUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 3 * 1024 * 1024) {
+            alert('File size too large. Please select an image smaller than 3MB.');
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            $('donation-proof-base64').value = evt.target.result;
+            $('proof-preview-img').src = evt.target.result;
+            $('proof-preview-container').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function submitDonationForVerification() {
+        if (!session) return;
+        const amount = parseInt($('custom-budget-input').value, 10);
+        const proof = $('donation-proof-base64').value;
+        const p = selectedPharmacyForBudget;
+
+        if (!amount || amount < 100) { alert('Enter a valid amount (min PKR 100).'); return; }
+        if (!proof) { alert('Please upload payment screenshot/receipt image.'); return; }
+        if (!p) return;
+
+        db.collection('pendingDonations').add({
+            donorId: session.id,
+            donorName: session.name,
+            pharmacyId: p.id,
+            pharmacyName: p.name,
+            amount: amount,
+            proofUrl: proof,
+            status: 'pending',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        closeBudgetModal();
+        showToast(`Receipt submitted! Pending Admin approval.`);
+    }
+
+    function viewProofModal(proofUrl) {
+        $('full-proof-img').src = proofUrl;
+        $('modal-proof-view').classList.remove('hidden');
+    }
+    function closeProofModal() { $('modal-proof-view').classList.add('hidden'); }
+
+    function approveDonation(docId, pharmacyId, amount) {
+        const p = pharmacies.find(x => x.id === pharmacyId);
+        if (!p) return;
+
+        const updatedWallet = p.allocatedWallet + amount;
+        db.collection('pharmacies').doc(pharmacyId).update({ allocatedWallet: updatedWallet });
+
+        db.collection('stats').doc('global').get().then(doc => {
+            const currentTotal = doc.exists ? (doc.data().totalDonated || 0) : 0;
+            db.collection('stats').doc('global').update({ totalDonated: currentTotal + amount });
+        });
+
+        db.collection('pendingDonations').doc(docId).update({ status: 'approved' });
+        showToast(`Donation of PKR ${fmt(amount)} Approved!`);
+    }
+
+    function rejectDonation(docId) {
+        if (!confirm('Reject this donation proof?')) return;
+        db.collection('pendingDonations').doc(docId).update({ status: 'rejected' });
+        showToast('Donation proof rejected');
+    }
+
+    /* ---------- ADMIN TABS & MANAGEMENT ---------- */
+    function switchAdminTab(tab) {
+        ['pharmacy', 'donor', 'user'].forEach(t => {
+            const formEl = $('admin-form-' + t);
+            const tabBtn = $('admin-tab-' + t);
+            if (!formEl || !tabBtn) return;
+            if (t === tab) {
+                formEl.classList.remove('hidden');
+                tabBtn.className = 'flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-brand-600 text-brand-700 bg-white transition';
+            } else {
+                formEl.classList.add('hidden');
+                tabBtn.className = 'flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition';
+            }
+        });
+    }
+
+    function refreshAllData() { showToast('Data synced with Cloud Firestore'); }
+
+    function exportData() {
+        const data = {
+            exportedAt: new Date().toISOString(),
+            pharmacies: pharmacies,
+            users: users.map(u => ({...u, pin: '***'})),
+            ledgerRecords: ledgerRecords,
+            stats: { totalDonated, patientsHelped }
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `medtrust-backup-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Backup exported');
+    }
+
+    function filterAdminUsers(role) { adminUserFilter = role; renderAdmin(); }
+
+    function onUserRoleChange() {
+        const role = $('admin-user-role').value;
+        const wrap = $('admin-user-pharmacy-wrap');
+        if (role === 'Pharmacy') {
+            wrap.classList.remove('hidden');
+            $('admin-user-pharmacy').innerHTML = '<option value="">Select pharmacy…</option>' +
+                pharmacies.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.area)}</option>`).join('');
+        } else {
+            wrap.classList.add('hidden');
+            $('admin-user-pharmacy').innerHTML = '';
+        }
+    }
+
     function addNewDonor(e) {
         e.preventDefault();
         const name  = $('admin-donor-name').value.trim();
@@ -1318,13 +1448,10 @@
 
         if (!name || !phone || !pin) { alert('Please fill name, phone, and PIN.'); return; }
         if (!/^\d{4,6}$/.test(pin)) { alert('PIN must be 4-6 digits.'); return; }
-        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) {
-            alert('A user already exists with this phone number.'); return;
-        }
+        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) { alert('A user already exists with this phone number.'); return; }
 
         const newId = 'user-' + Date.now();
-        const newObj = { id: newId, name, phone, pin, role: 'donor', city, pharmacyId: null };
-        db.collection('users').doc(newId).set(newObj);
+        db.collection('users').doc(newId).set({ id: newId, name, phone, pin, role: 'donor', city, pharmacyId: null });
         e.target.reset();
         showToast(`Donor "${name}" created`);
     }
@@ -1338,20 +1465,13 @@
         const target = parseInt($('admin-store-target').value, 10);
         const pin    = $('admin-store-pin').value.trim();
 
-        if (!name || !owner || !phone || !area || !target || target < 1000) {
-            alert('Fill all store fields. Target must be at least PKR 1,000.'); return;
-        }
+        if (!name || !owner || !phone || !area || !target || target < 1000) { alert('Fill all store fields. Target must be at least PKR 1,000.'); return; }
         if (!/^\d{4,6}$/.test(pin)) { alert('Owner PIN must be 4-6 digits.'); return; }
-        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) {
-            alert('A user already exists with this phone number.'); return;
-        }
+        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) { alert('A user already exists with this phone number.'); return; }
 
         const storeId = 'pharma-' + Date.now();
-        const storeObj = { id: storeId, name, owner, area, phone, isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: target };
-        const userObj  = { id: 'user-' + Date.now(), name: owner, phone, pin, role: 'pharmacy', city: area, pharmacyId: storeId };
-
-        db.collection('pharmacies').doc(storeId).set(storeObj);
-        db.collection('users').doc(userObj.id).set(userObj);
+        db.collection('pharmacies').doc(storeId).set({ id: storeId, name, owner, area, phone, isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: target });
+        db.collection('users').doc('user-' + Date.now()).set({ id: 'user-' + Date.now(), name: owner, phone, pin, role: 'pharmacy', city: area, pharmacyId: storeId });
 
         e.target.reset();
         showToast(`Store "${name}" registered with owner login`);
@@ -1369,13 +1489,9 @@
         if (!name || !phone || !pin || !role) { alert('Fill name, phone, PIN, and role.'); return; }
         if (!/^\d{4,6}$/.test(pin)) { alert('PIN must be 4-6 digits.'); return; }
         if (role === 'Pharmacy' && !pharmacyId) { alert('Please select a pharmacy.'); return; }
-        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) {
-            alert('A user already exists with this phone number.'); return;
-        }
 
         const userId = 'user-' + Date.now();
-        const userObj = { id: userId, name, phone, pin, role: role.toLowerCase(), city, pharmacyId };
-        db.collection('users').doc(userId).set(userObj);
+        db.collection('users').doc(userId).set({ id: userId, name, phone, pin, role: role.toLowerCase(), city, pharmacyId });
 
         e.target.reset();
         onUserRoleChange();
@@ -1384,26 +1500,14 @@
 
     function deleteStore(id) {
         if (pharmacies.length <= 1) { alert('Cannot delete the last store.'); return; }
-        const p = pharmacies.find(x => x.id === id);
-        if (!p) return;
-        const linked = users.find(u => u.pharmacyId === id);
-        if (linked) {
-            alert(`Cannot delete this store — "${linked.name}" is managing it.\n\nDelete or reassign that user first.`);
-            return;
-        }
-        if (!confirm(`Delete store "${p.name}"?`)) return;
+        if (!confirm(`Delete store?`)) return;
         db.collection('pharmacies').doc(id).delete();
         showToast('Store deleted');
     }
 
     function deleteUser(id) {
-        const u = users.find(x => x.id === id);
-        if (!u) return;
         if (session && session.id === id) { alert('You cannot delete your own account.'); return; }
-        if (u.role === 'admin' && users.filter(x => x.role === 'admin').length <= 1) {
-            alert('Cannot delete the last admin account.'); return;
-        }
-        if (!confirm(`Delete user "${u.name}"?`)) return;
+        if (!confirm(`Delete user?`)) return;
         db.collection('users').doc(id).delete();
         showToast('User deleted');
     }
@@ -1415,8 +1519,8 @@
     }
 
     function clearAllLedger() {
-        if (!ledgerRecords.length) { alert('Ledger is already empty.'); return; }
-        if (!confirm(`Delete ALL ${ledgerRecords.length} ledger records?`)) return;
+        if (!ledgerRecords.length) return;
+        if (!confirm(`Delete ALL ledger records?`)) return;
         ledgerRecords.forEach(r => db.collection('ledgerRecords').doc(r.id).delete());
         showToast('All records cleared');
     }
@@ -1425,8 +1529,7 @@
         const u = users.find(x => x.id === userId);
         if (!u) return;
         const newPin = prompt(`Enter new 4-6 digit PIN for ${u.name}:`);
-        if (newPin === null) return;
-        if (!/^\d{4,6}$/.test(newPin)) { alert('PIN must be 4-6 digits.'); return; }
+        if (!newPin || !/^\d{4,6}$/.test(newPin)) { alert('PIN must be 4-6 digits.'); return; }
         db.collection('users').doc(userId).update({ pin: newPin });
         showToast(`PIN reset for ${u.name}`);
     }
@@ -1483,39 +1586,6 @@
                 </div>
             </div>
         `).join('');
-    }
-
-    /* ---------- BUDGET ---------- */
-    function openBudgetModal(id) {
-        if (!session || !canAccess('donor')) { alert('Only donors and admins can send funds.'); return; }
-        selectedPharmacyForBudget = pharmacies.find(p => p.id === id);
-        if (!selectedPharmacyForBudget) return;
-        $('modal-pharmacy-name').textContent = `${selectedPharmacyForBudget.name} • ${selectedPharmacyForBudget.area}`;
-        $('custom-budget-input').value = '';
-        $('modal-budget').classList.remove('hidden');
-    }
-    function closeBudgetModal() { $('modal-budget').classList.add('hidden'); }
-    function setBudgetAmount(a) { $('custom-budget-input').value = a; }
-
-    function confirmBudgetAssignment() {
-        if (!session) return;
-        const amount = parseInt($('custom-budget-input').value, 10);
-        if (!amount || amount < 500) { alert('Enter a valid amount (min PKR 500).'); return; }
-        const p = selectedPharmacyForBudget;
-        if (!p) return;
-
-        const updatedWallet = p.allocatedWallet + amount;
-        db.collection('pharmacies').doc(p.id).update({ allocatedWallet: updatedWallet });
-
-        db.collection('stats').doc('global').get().then(doc => {
-            const currentTotal = doc.exists ? (doc.data().totalDonated || 0) : 0;
-            db.collection('stats').doc('global').update({ totalDonated: currentTotal + amount });
-        });
-
-        closeBudgetModal();
-        showToast(`PKR ${fmt(amount)} sent to ${p.name}`);
-        const msg = `Assalam-o-Alaikum!\n\n${session.name} has sent PKR ${fmt(amount)} to ${p.name} on Farazé MedTrust (Sadqah-e-Jariyah for Nagina Nadeem — Late).\n\nYou can now dispense medicines to poor patients from this wallet balance.`;
-        showWhatsAppModal(p.phone, msg);
     }
 
     /* ---------- WHATSAPP ---------- */
