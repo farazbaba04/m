@@ -22,6 +22,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Firebase Compatibility SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+
     <style>
         html { -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #f6f8fb; color: #0f172a; }
@@ -710,37 +715,52 @@
     <div id="toast" class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xl hidden max-w-[90vw] text-center"></div>
 
     <script>
+    /* ---------- FIREBASE CONFIGURATION ---------- */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvhweKhemZq_M4U8-SZx8Hm7SHzTQJfLk",
+      authDomain: "farazemed.firebaseapp.com",
+      projectId: "farazemed",
+      storageBucket: "farazemed.firebasestorage.app",
+      messagingSenderId: "1031399925958",
+      appId: "1:1031399925958:web:45929aaa634c16c0c00fc7",
+      measurementId: "G-8W3ZMFZP4N"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    firebase.analytics();
+    const db = firebase.firestore();
+
     /* ---------- STATE ---------- */
     let session = null;
     let currentRole = 'donor';
-    let activePharmacyId = 'pharma-1';
+    let activePharmacyId = null;
     let selectedPharmacyForBudget = null;
 
-    // Stats start at zero — they build up from real activity only.
     let totalDonated = 0;
     let patientsHelped = 0;
 
     let toastTimer;
     let adminUserFilter = 'all';
 
-    /* ---------- SEED DATA ---------- */
-    // Admin: 03095607170 / 123456. Others are placeholders the admin can delete or keep.
-    let pharmacies = [
-        { id: 'pharma-1', name: 'Bismillah Medical Store', owner: 'Haji Tanveer',    area: 'Harbanspura, Lahore',  phone: '03214567890', isOnline: true,  allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 50000 },
-        { id: 'pharma-2', name: 'Al-Shifa Pharmacy',       owner: 'Muhammad Tariq', area: 'Muslim Town, Lahore', phone: '03009876543', isOnline: true,  allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 40000 },
-        { id: 'pharma-3', name: 'Khyber Pharmacy',         owner: 'Shahid Khan',    area: 'Mughalpura, Lahore',  phone: '03331122334', isOnline: false, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 30000 }
-    ];
-
-    let users = [
-        { id: 'user-admin',   name: 'Faraz Nadeem',  phone: '03095607170', pin: '123456', role: 'admin',    city: 'Lahore', pharmacyId: null },
-        { id: 'user-donor1',  name: 'Ayesha Khan',   phone: '03009998888', pin: '1234',   role: 'donor',    city: 'Lahore', pharmacyId: null },
-        { id: 'user-pharma1', name: 'Haji Tanveer',  phone: '03214567890', pin: '1234',   role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-1' },
-        { id: 'user-pharma2', name: 'Muhammad Tariq',phone: '03009876543', pin: '1234',   role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-2' },
-        { id: 'user-pharma3', name: 'Shahid Khan',   phone: '03331122334', pin: '1234',   role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-3' }
-    ];
-
-    // Empty — real activity only.
+    let pharmacies = [];
+    let users = [];
     let ledgerRecords = [];
+
+    /* ---------- SEED DATA (INITIAL SYNC TO FIRESTORE) ---------- */
+    const initialPharmacies = [
+        { id: 'pharma-1', name: 'Bismillah Medical Store', owner: 'Haji Tanveer', area: 'Harbanspura, Lahore', phone: '03214567890', isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 50000 },
+        { id: 'pharma-2', name: 'Al-Shifa Pharmacy', owner: 'Muhammad Tariq', area: 'Muslim Town, Lahore', phone: '03009876543', isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 40000 },
+        { id: 'pharma-3', name: 'Khyber Pharmacy', owner: 'Shahid Khan', area: 'Mughalpura, Lahore', phone: '03331122334', isOnline: false, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 30000 }
+    ];
+
+    const initialUsers = [
+        { id: 'user-admin', name: 'Faraz Nadeem', phone: '03009560717', pin: '123456', role: 'admin', city: 'Lahore', pharmacyId: null },
+        { id: 'user-admin2', name: 'Faraz Nadeem', phone: '03095607170', pin: '123456', role: 'admin', city: 'Lahore', pharmacyId: null },
+        { id: 'user-donor1', name: 'Ayesha Khan', phone: '03009998888', pin: '1234', role: 'donor', city: 'Lahore', pharmacyId: null },
+        { id: 'user-pharma1', name: 'Haji Tanveer', phone: '03214567890', pin: '1234', role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-1' },
+        { id: 'user-pharma2', name: 'Muhammad Tariq', phone: '03009876543', pin: '1234', role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-2' },
+        { id: 'user-pharma3', name: 'Shahid Khan', phone: '03331122334', pin: '1234', role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-3' }
+    ];
 
     /* ---------- HELPERS ---------- */
     const $ = (id) => document.getElementById(id);
@@ -754,6 +774,55 @@
         t.classList.remove('hidden');
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => t.classList.add('hidden'), 2800);
+    }
+
+    /* ---------- FIRESTORE REAL-TIME LISTENERS ---------- */
+    function initFirebaseSync() {
+        // 1. Sync Pharmacies
+        db.collection('pharmacies').onSnapshot(snapshot => {
+            if (snapshot.empty) {
+                initialPharmacies.forEach(p => db.collection('pharmacies').doc(p.id).set(p));
+            } else {
+                pharmacies = [];
+                snapshot.forEach(doc => pharmacies.push(doc.data()));
+                if (!activePharmacyId && pharmacies.length > 0) activePharmacyId = pharmacies[0].id;
+                renderPharmacies($('pharmacy-search') ? $('pharmacy-search').value : '');
+                renderPharmacySelect();
+                renderWorkstation();
+                renderAdmin();
+                updateStats();
+            }
+        });
+
+        // 2. Sync Users
+        db.collection('users').onSnapshot(snapshot => {
+            if (snapshot.empty) {
+                initialUsers.forEach(u => db.collection('users').doc(u.id).set(u));
+            } else {
+                users = [];
+                snapshot.forEach(doc => users.push(doc.data()));
+                renderAdmin();
+            }
+        });
+
+        // 3. Sync Ledger Records
+        db.collection('ledgerRecords').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+            ledgerRecords = [];
+            snapshot.forEach(doc => ledgerRecords.push({ id: doc.id, ...doc.data() }));
+            renderLedger();
+            renderAdmin();
+            updateStats();
+        });
+
+        // 4. Sync Global Stats
+        db.collection('stats').doc('global').onSnapshot(doc => {
+            if (doc.exists) {
+                totalDonated = doc.data().totalDonated || 0;
+            } else {
+                db.collection('stats').doc('global').set({ totalDonated: 0 });
+            }
+            updateStats();
+        });
     }
 
     /* ---------- AUTH ---------- */
@@ -881,15 +950,13 @@
         $('user-role-badge').className = `text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full ${r.cls} font-semibold border self-end`;
     }
 
-    /* ---------- STATS (derived live) ---------- */
+    /* ---------- STATS ---------- */
     function updateStats() {
-        // Derive patients helped from actual ledger records so admin clears/deletes stay consistent.
         patientsHelped = ledgerRecords.length;
-
-        $('stat-total-funds').textContent    = `PKR ${fmt(totalDonated)}`;
-        $('stat-patients-helped').textContent = fmt(patientsHelped);
-        $('stat-active-stores').textContent  = `${pharmacies.filter(p => p.isOnline).length} Online`;
-        $('stat-needed-funds').textContent   = `PKR ${fmt(pharmacies.reduce((s, p) => s + p.targetMonthly, 0))}`;
+        if ($('stat-total-funds')) $('stat-total-funds').textContent = `PKR ${fmt(totalDonated)}`;
+        if ($('stat-patients-helped')) $('stat-patients-helped').textContent = fmt(patientsHelped);
+        if ($('stat-active-stores')) $('stat-active-stores').textContent = `${pharmacies.filter(p => p.isOnline).length} Online`;
+        if ($('stat-needed-funds')) $('stat-needed-funds').textContent = `PKR ${fmt(pharmacies.reduce((s, p) => s + p.targetMonthly, 0))}`;
     }
 
     /* ---------- DONOR GRID ---------- */
@@ -999,10 +1066,7 @@
         if (!p) return;
         if (session.role === 'pharmacy' && p.id !== session.pharmacyId) return;
         p.isOnline = $('status-toggle').checked;
-        renderWorkstation();
-        renderPharmacies($('pharmacy-search').value);
-        renderAdmin();
-        updateStats();
+        db.collection('pharmacies').doc(p.id).update({ isOnline: p.isOnline });
         showToast(p.isOnline ? 'Store is now ONLINE' : 'Store is now OFFLINE');
     }
 
@@ -1014,11 +1078,7 @@
         if (input === null) return;
         const val = parseInt(input, 10);
         if (!val || val < 1000) { alert('Please enter a valid target (min PKR 1,000).'); return; }
-        p.targetMonthly = val;
-        renderWorkstation();
-        renderPharmacies($('pharmacy-search').value);
-        renderAdmin();
-        updateStats();
+        db.collection('pharmacies').doc(p.id).update({ targetMonthly: val });
         showToast('Monthly target updated');
     }
 
@@ -1049,18 +1109,26 @@
             alert(`Insufficient wallet balance!\nAvailable: PKR ${fmt(p.allocatedWallet)}\nRequired: PKR ${fmt(amount)}\n\nPlease ask a donor to send more funds.`);
             return;
         }
-        p.allocatedWallet -= amount;
-        p.spentThisMonth  += amount;
-        ledgerRecords.unshift({
-            id: 'rec-' + Date.now(), time: 'Just now',
-            pharmacyName: p.name, patientName: name, patientCell: phone,
-            medicines: medicines, amount: amount, donorName: session.name
+
+        const updatedWallet = p.allocatedWallet - amount;
+        const updatedSpent  = p.spentThisMonth + amount;
+
+        db.collection('pharmacies').doc(p.id).update({
+            allocatedWallet: updatedWallet,
+            spentThisMonth: updatedSpent
         });
-        renderWorkstation();
-        renderPharmacies($('pharmacy-search').value);
-        renderLedger();
-        renderAdmin();
-        updateStats();
+
+        db.collection('ledgerRecords').add({
+            time: 'Just now',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            pharmacyName: p.name,
+            patientName: name,
+            patientCell: phone,
+            medicines: medicines,
+            amount: amount,
+            donorName: session.name
+        });
+
         e.target.reset();
         $('preview-patient').textContent = '---';
         $('preview-bill').textContent = 'PKR 0';
@@ -1087,30 +1155,15 @@
 
     /* ---------- ADMIN: REFRESH & EXPORT ---------- */
     function refreshAllData() {
-        if (session) {
-            const fresh = users.find(u => u.id === session.id);
-            if (!fresh) { alert('Your account was removed. Please sign in again.'); handleLogout(); return; }
-            if (fresh.role === 'pharmacy' && !pharmacies.find(p => p.id === fresh.pharmacyId)) {
-                alert('Your pharmacy was removed. Please contact the admin.'); handleLogout(); return;
-            }
-            session = fresh;
-        }
-        updateStats();
-        if ($('pharmacy-search')) renderPharmacies($('pharmacy-search').value);
-        renderPharmacySelect();
-        renderWorkstation();
-        renderAdmin();
-        renderLedger();
-        updateUserHeader();
-        showToast('Data refreshed successfully');
+        showToast('Data synced with Cloud Firestore');
     }
 
     function exportData() {
         const data = {
             exportedAt: new Date().toISOString(),
-            pharmacies: pharmacies.map(p => ({...p})),
+            pharmacies: pharmacies,
             users: users.map(u => ({...u, pin: '***'})),
-            ledgerRecords: ledgerRecords.map(r => ({...r})),
+            ledgerRecords: ledgerRecords,
             stats: { totalDonated, patientsHelped }
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
@@ -1146,43 +1199,45 @@
         if (!session || session.role !== 'admin') return;
 
         const totalWallet = pharmacies.reduce((s, p) => s + p.allocatedWallet, 0);
-        $('admin-stat-stores').textContent    = pharmacies.length;
-        $('admin-stat-online').textContent    = pharmacies.filter(p => p.isOnline).length;
-        $('admin-stat-users').textContent     = users.length;
-        $('admin-stat-allocated').textContent = `PKR ${fmt(totalWallet)}`;
-        $('admin-store-count').textContent    = pharmacies.length;
-        $('admin-user-count').textContent     = users.length;
-        $('admin-ledger-count').textContent   = ledgerRecords.length;
+        if ($('admin-stat-stores')) $('admin-stat-stores').textContent    = pharmacies.length;
+        if ($('admin-stat-online')) $('admin-stat-online').textContent    = pharmacies.filter(p => p.isOnline).length;
+        if ($('admin-stat-users')) $('admin-stat-users').textContent     = users.length;
+        if ($('admin-stat-allocated')) $('admin-stat-allocated').textContent = `PKR ${fmt(totalWallet)}`;
+        if ($('admin-store-count')) $('admin-store-count').textContent    = pharmacies.length;
+        if ($('admin-user-count')) $('admin-user-count').textContent     = users.length;
+        if ($('admin-ledger-count')) $('admin-ledger-count').textContent   = ledgerRecords.length;
 
         const storeList = $('admin-stores-list');
-        if (!pharmacies.length) {
-            storeList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No stores yet.</div>`;
-        } else {
-            storeList.innerHTML = pharmacies.map(p => {
-                const owner = users.find(u => u.pharmacyId === p.id);
-                return `
-                <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
-                    <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-sm border border-brand-100 shrink-0">
-                        <i class="fa-solid fa-clinic-medical"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-semibold text-slate-900 text-sm truncate">${esc(p.name)}</span>
-                            <span class="text-[9px] px-1.5 py-0.5 rounded-full border font-bold ${p.isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
-                                ${p.isOnline ? 'ONLINE' : 'OFFLINE'}
-                            </span>
+        if (storeList) {
+            if (!pharmacies.length) {
+                storeList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No stores yet.</div>`;
+            } else {
+                storeList.innerHTML = pharmacies.map(p => {
+                    const owner = users.find(u => u.pharmacyId === p.id);
+                    return `
+                    <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
+                        <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-sm border border-brand-100 shrink-0">
+                            <i class="fa-solid fa-clinic-medical"></i>
                         </div>
-                        <p class="text-[11px] text-slate-500 truncate">${esc(p.owner)} • ${esc(p.area)}</p>
-                        <p class="text-[11px] text-slate-400 font-mono">${esc(p.phone)}</p>
-                        ${owner
-                            ? `<p class="text-[10px] text-brand-700 mt-0.5"><i class="fa-solid fa-key"></i> Login: ${esc(owner.phone)}</p>`
-                            : `<p class="text-[10px] text-rose-500 mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> No login assigned</p>`}
-                    </div>
-                    <button onclick="deleteStore('${p.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete store">
-                        <i class="fa-solid fa-trash text-xs"></i>
-                    </button>
-                </div>`;
-            }).join('');
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-semibold text-slate-900 text-sm truncate">${esc(p.name)}</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded-full border font-bold ${p.isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+                                    ${p.isOnline ? 'ONLINE' : 'OFFLINE'}
+                                </span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 truncate">${esc(p.owner)} • ${esc(p.area)}</p>
+                            <p class="text-[11px] text-slate-400 font-mono">${esc(p.phone)}</p>
+                            ${owner
+                                ? `<p class="text-[10px] text-brand-700 mt-0.5"><i class="fa-solid fa-key"></i> Login: ${esc(owner.phone)}</p>`
+                                : `<p class="text-[10px] text-rose-500 mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> No login assigned</p>`}
+                        </div>
+                        <button onclick="deleteStore('${p.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete store">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>`;
+                }).join('');
+            }
         }
 
         const filteredUsers = adminUserFilter === 'all'
@@ -1190,66 +1245,70 @@
             : users.filter(u => u.role === adminUserFilter);
 
         const userList = $('admin-users-list');
-        if (!filteredUsers.length) {
-            userList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No ${adminUserFilter === 'all' ? '' : adminUserFilter + ' '}users.</div>`;
-        } else {
-            userList.innerHTML = filteredUsers.map(u => {
-                const roleBadge = u.role === 'admin'    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                : u.role === 'pharmacy' ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-brand-50 text-brand-700 border-brand-200';
-                const roleLabel = u.role === 'admin' ? 'Admin' : u.role === 'pharmacy' ? 'Pharmacy' : 'Donor';
-                const isMe = session && session.id === u.id;
-                const linkedStore = u.pharmacyId ? pharmacies.find(p => p.id === u.pharmacyId) : null;
-                return `
-                <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
-                    <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm border border-slate-200 shrink-0 font-bold">
-                        ${esc((u.name || '?').charAt(0).toUpperCase())}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="font-semibold text-slate-900 text-sm truncate">${esc(u.name)}</span>
-                            <span class="text-[9px] px-1.5 py-0.5 rounded-full border font-bold ${roleBadge}">${roleLabel}</span>
-                            ${isMe ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold border border-slate-200">YOU</span>' : ''}
+        if (userList) {
+            if (!filteredUsers.length) {
+                userList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No ${adminUserFilter === 'all' ? '' : adminUserFilter + ' '}users.</div>`;
+            } else {
+                userList.innerHTML = filteredUsers.map(u => {
+                    const roleBadge = u.role === 'admin'    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : u.role === 'pharmacy' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    : 'bg-brand-50 text-brand-700 border-brand-200';
+                    const roleLabel = u.role === 'admin' ? 'Admin' : u.role === 'pharmacy' ? 'Pharmacy' : 'Donor';
+                    const isMe = session && session.id === u.id;
+                    const linkedStore = u.pharmacyId ? pharmacies.find(p => p.id === u.pharmacyId) : null;
+                    return `
+                    <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm border border-slate-200 shrink-0 font-bold">
+                            ${esc((u.name || '?').charAt(0).toUpperCase())}
                         </div>
-                        <p class="text-[11px] text-slate-500 font-mono">${esc(u.phone)}</p>
-                        ${linkedStore ? `<p class="text-[10px] text-slate-500 mt-0.5"><i class="fa-solid fa-store"></i> ${esc(linkedStore.name)}</p>` : ''}
-                        ${u.city ? `<p class="text-[10px] text-slate-400">${esc(u.city)}</p>` : ''}
-                    </div>
-                    <div class="flex items-center gap-1 shrink-0">
-                        <button onclick="resetUserPin('${u.id}')" class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center transition" title="Reset PIN">
-                            <i class="fa-solid fa-key text-xs"></i>
-                        </button>
-                        ${isMe ? '' : `
-                        <button onclick="deleteUser('${u.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition" title="Delete user">
-                            <i class="fa-solid fa-trash text-xs"></i>
-                        </button>`}
-                    </div>
-                </div>`;
-            }).join('');
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="font-semibold text-slate-900 text-sm truncate">${esc(u.name)}</span>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded-full border font-bold ${roleBadge}">${roleLabel}</span>
+                                ${isMe ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold border border-slate-200">YOU</span>' : ''}
+                            </div>
+                            <p class="text-[11px] text-slate-500 font-mono">${esc(u.phone)}</p>
+                            ${linkedStore ? `<p class="text-[10px] text-slate-500 mt-0.5"><i class="fa-solid fa-store"></i> ${esc(linkedStore.name)}</p>` : ''}
+                            ${u.city ? `<p class="text-[10px] text-slate-400">${esc(u.city)}</p>` : ''}
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="resetUserPin('${u.id}')" class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center transition" title="Reset PIN">
+                                <i class="fa-solid fa-key text-xs"></i>
+                            </button>
+                            ${isMe ? '' : `
+                            <button onclick="deleteUser('${u.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition" title="Delete user">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>`}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
         }
 
         const ledgerList = $('admin-ledger-list');
-        if (!ledgerRecords.length) {
-            ledgerList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No ledger records.</div>`;
-        } else {
-            ledgerList.innerHTML = ledgerRecords.map(r => `
-                <div class="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-xs text-slate-900 font-semibold truncate">
-                            ${esc(r.patientName)}
-                            <span class="text-emerald-700">· PKR ${fmt(r.amount)}</span>
-                        </p>
-                        <p class="text-[10px] text-slate-500 truncate">${esc(r.pharmacyName)} • ${esc(r.time)} • ${esc(r.donorName)}</p>
+        if (ledgerList) {
+            if (!ledgerRecords.length) {
+                ledgerList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No ledger records.</div>`;
+            } else {
+                ledgerList.innerHTML = ledgerRecords.map(r => `
+                    <div class="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs text-slate-900 font-semibold truncate">
+                                ${esc(r.patientName)}
+                                <span class="text-emerald-700">· PKR ${fmt(r.amount)}</span>
+                            </p>
+                            <p class="text-[10px] text-slate-500 truncate">${esc(r.pharmacyName)} • ${esc(r.time)} • ${esc(r.donorName)}</p>
+                        </div>
+                        <button onclick="deleteLedgerRecord('${r.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete record">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
                     </div>
-                    <button onclick="deleteLedgerRecord('${r.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete record">
-                        <i class="fa-solid fa-trash text-xs"></i>
-                    </button>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
     }
 
-    /* ---------- ADMIN: CREATE DONOR ---------- */
+    /* ---------- ADMIN ACTIONS ---------- */
     function addNewDonor(e) {
         e.preventDefault();
         const name  = $('admin-donor-name').value.trim();
@@ -1263,13 +1322,13 @@
             alert('A user already exists with this phone number.'); return;
         }
 
-        users.push({ id: 'user-' + Date.now(), name, phone, pin, role: 'donor', city, pharmacyId: null });
+        const newId = 'user-' + Date.now();
+        const newObj = { id: newId, name, phone, pin, role: 'donor', city, pharmacyId: null };
+        db.collection('users').doc(newId).set(newObj);
         e.target.reset();
-        renderAdmin();
         showToast(`Donor "${name}" created`);
     }
 
-    /* ---------- ADMIN: CREATE STORE ---------- */
     function addNewStore(e) {
         e.preventDefault();
         const name   = $('admin-store-name').value.trim();
@@ -1288,24 +1347,16 @@
         }
 
         const storeId = 'pharma-' + Date.now();
-        pharmacies.push({
-            id: storeId, name, owner, area, phone,
-            isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: target
-        });
-        users.push({
-            id: 'user-' + Date.now(),
-            name: owner, phone, pin, role: 'pharmacy', city: area, pharmacyId: storeId
-        });
+        const storeObj = { id: storeId, name, owner, area, phone, isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: target };
+        const userObj  = { id: 'user-' + Date.now(), name: owner, phone, pin, role: 'pharmacy', city: area, pharmacyId: storeId };
+
+        db.collection('pharmacies').doc(storeId).set(storeObj);
+        db.collection('users').doc(userObj.id).set(userObj);
 
         e.target.reset();
-        renderPharmacySelect();
-        renderPharmacies($('pharmacy-search').value);
-        renderAdmin();
-        updateStats();
         showToast(`Store "${name}" registered with owner login`);
     }
 
-    /* ---------- ADMIN: CREATE STAFF USER ---------- */
     function addNewUser(e) {
         e.preventDefault();
         const name  = $('admin-user-name').value.trim();
@@ -1321,23 +1372,16 @@
         if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) {
             alert('A user already exists with this phone number.'); return;
         }
-        if (role === 'Pharmacy') {
-            const existing = users.find(u => u.pharmacyId === pharmacyId);
-            if (existing && !confirm(`"${existing.name}" already manages this pharmacy. Add another login anyway?`)) return;
-        }
 
-        users.push({
-            id: 'user-' + Date.now(), name, phone, pin,
-            role: role.toLowerCase(), city, pharmacyId
-        });
+        const userId = 'user-' + Date.now();
+        const userObj = { id: userId, name, phone, pin, role: role.toLowerCase(), city, pharmacyId };
+        db.collection('users').doc(userId).set(userObj);
 
         e.target.reset();
         onUserRoleChange();
-        renderAdmin();
         showToast(`User "${name}" created`);
     }
 
-    /* ---------- ADMIN: DELETE ---------- */
     function deleteStore(id) {
         if (pharmacies.length <= 1) { alert('Cannot delete the last store.'); return; }
         const p = pharmacies.find(x => x.id === id);
@@ -1347,14 +1391,8 @@
             alert(`Cannot delete this store — "${linked.name}" is managing it.\n\nDelete or reassign that user first.`);
             return;
         }
-        if (!confirm(`Delete store "${p.name}"?\n\nIts ledger history will be preserved.`)) return;
-        pharmacies = pharmacies.filter(x => x.id !== id);
-        if (activePharmacyId === id) activePharmacyId = pharmacies[0].id;
-        renderPharmacySelect();
-        renderPharmacies($('pharmacy-search').value);
-        renderWorkstation();
-        renderAdmin();
-        updateStats();
+        if (!confirm(`Delete store "${p.name}"?`)) return;
+        db.collection('pharmacies').doc(id).delete();
         showToast('Store deleted');
     }
 
@@ -1366,28 +1404,20 @@
             alert('Cannot delete the last admin account.'); return;
         }
         if (!confirm(`Delete user "${u.name}"?`)) return;
-        users = users.filter(x => x.id !== id);
-        renderAdmin();
+        db.collection('users').doc(id).delete();
         showToast('User deleted');
     }
 
     function deleteLedgerRecord(id) {
-        if (!confirm('Delete this audit record? This removes it from the public ledger.')) return;
-        ledgerRecords = ledgerRecords.filter(r => r.id !== id);
-        renderLedger();
-        renderAdmin();
-        updateStats();
+        if (!confirm('Delete this audit record?')) return;
+        db.collection('ledgerRecords').doc(id).delete();
         showToast('Record deleted');
     }
 
     function clearAllLedger() {
         if (!ledgerRecords.length) { alert('Ledger is already empty.'); return; }
-        if (!confirm(`Delete ALL ${ledgerRecords.length} ledger records?\n\nWallet balances and totals will NOT change.`)) return;
-        if (!confirm('Are you absolutely sure? This permanently erases the audit history.')) return;
-        ledgerRecords = [];
-        renderLedger();
-        renderAdmin();
-        updateStats();
+        if (!confirm(`Delete ALL ${ledgerRecords.length} ledger records?`)) return;
+        ledgerRecords.forEach(r => db.collection('ledgerRecords').doc(r.id).delete());
         showToast('All records cleared');
     }
 
@@ -1397,11 +1427,11 @@
         const newPin = prompt(`Enter new 4-6 digit PIN for ${u.name}:`);
         if (newPin === null) return;
         if (!/^\d{4,6}$/.test(newPin)) { alert('PIN must be 4-6 digits.'); return; }
-        u.pin = newPin;
+        db.collection('users').doc(userId).update({ pin: newPin });
         showToast(`PIN reset for ${u.name}`);
     }
 
-    /* ---------- LEDGER ---------- */
+    /* ---------- LEDGER RENDER ---------- */
     function renderLedger() {
         const tbody = $('ledger-tbody');
         const cards = $('ledger-cards');
@@ -1473,13 +1503,16 @@
         if (!amount || amount < 500) { alert('Enter a valid amount (min PKR 500).'); return; }
         const p = selectedPharmacyForBudget;
         if (!p) return;
-        p.allocatedWallet += amount;
-        totalDonated      += amount;   // lifetime cumulative
+
+        const updatedWallet = p.allocatedWallet + amount;
+        db.collection('pharmacies').doc(p.id).update({ allocatedWallet: updatedWallet });
+
+        db.collection('stats').doc('global').get().then(doc => {
+            const currentTotal = doc.exists ? (doc.data().totalDonated || 0) : 0;
+            db.collection('stats').doc('global').update({ totalDonated: currentTotal + amount });
+        });
+
         closeBudgetModal();
-        renderPharmacies($('pharmacy-search').value);
-        renderWorkstation();
-        renderAdmin();
-        updateStats();
         showToast(`PKR ${fmt(amount)} sent to ${p.name}`);
         const msg = `Assalam-o-Alaikum!\n\n${session.name} has sent PKR ${fmt(amount)} to ${p.name} on Farazé MedTrust (Sadqah-e-Jariyah for Nagina Nadeem — Late).\n\nYou can now dispense medicines to poor patients from this wallet balance.`;
         showWhatsAppModal(p.phone, msg);
@@ -1510,19 +1543,20 @@
 
     /* ---------- BOOT ---------- */
     document.addEventListener('DOMContentLoaded', () => {
+        initFirebaseSync();
         try {
             const savedId = localStorage.getItem('medtrust_session');
             if (savedId) {
-                const u = users.find(x => x.id === savedId);
-                if (u) {
-                    if (u.role === 'pharmacy' && !pharmacies.find(p => p.id === u.pharmacyId)) {
-                        localStorage.removeItem('medtrust_session');
-                    } else {
-                        session = u;
-                        startApp();
-                        return;
+                const checkUser = setInterval(() => {
+                    if (users.length > 0) {
+                        clearInterval(checkUser);
+                        const u = users.find(x => x.id === savedId);
+                        if (u) {
+                            session = u;
+                            startApp();
+                        }
                     }
-                }
+                }, 100);
             }
         } catch (_) {}
         $('login-phone').focus();
