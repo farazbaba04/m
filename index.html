@@ -1,984 +1,1532 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ur" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M&P Express Logistics | Central IT Workflow</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <!-- PDF Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, 'Poppins', sans-serif;
-        }
-        body {
-            background: #f5f7fb;
-            min-height: 100vh;
-        }
-        .auth-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #fff5eb 0%, #ffe4cc 100%);
-            padding: 1.5rem;
-        }
-        .auth-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            border-top: 4px solid #f97316;
-        }
-        .auth-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .auth-header h1 {
-            font-size: 1.6rem;
-            color: #f97316;
-        }
-        .auth-header p {
-            color: #6b7280;
-            font-size: 0.8rem;
-            margin-top: 0.5rem;
-        }
-        .input-group {
-            margin-bottom: 1.2rem;
-        }
-        .input-group label {
-            display: block;
-            color: #374151;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-        }
-        .input-group input, .input-group select, .input-group textarea {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.8rem;
-            font-size: 0.9rem;
-        }
-        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
-            outline: none;
-            border-color: #f97316;
-            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
-        }
-        .auth-btn {
-            width: 100%;
-            padding: 0.8rem;
-            background: #f97316;
-            border: none;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .auth-btn:hover {
-            background: #ea580c;
-        }
-        .error-msg {
-            color: #ef4444;
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-            text-align: center;
-        }
-        .app-container {
-            display: none;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
-        .navbar {
-            background: white;
-            border-radius: 1rem;
-            padding: 0.9rem 2rem;
-            margin-bottom: 1.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-bottom: 2px solid #f97316;
-        }
-        .logo h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #f97316;
-        }
-        .logo p {
-            font-size: 0.7rem;
-            color: #6b7280;
-        }
-        .user-badge {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background: #f3f4f6;
-            padding: 0.3rem 1rem 0.3rem 1.2rem;
-            border-radius: 2rem;
-        }
-        .role-badge {
-            background: #f97316;
-            color: white;
-            padding: 0.2rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
-        .logout-btn {
-            background: #ef4444;
-            border: none;
-            padding: 0.4rem 1.2rem;
-            border-radius: 2rem;
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-        }
-        .stat-card i { font-size: 1.8rem; margin-bottom: 0.3rem; color: #f97316; }
-        .stat-value { font-size: 1.7rem; font-weight: 700; color: #1f2937; }
-        .stat-label { font-size: 0.7rem; color: #6b7280; }
-        .admin-panel {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.3rem;
-            margin-bottom: 1.8rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border-left: 4px solid #f97316;
-        }
-        .admin-panel h3 { color: #f97316; margin-bottom: 1rem; }
-        .add-user-form {
-            background: #f9fafb;
-            padding: 1rem;
-            border-radius: 1rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            align-items: flex-end;
-        }
-        .add-user-form .input-group {
-            margin-bottom: 0;
-            flex: 1;
-            min-width: 140px;
-        }
-        .add-user-btn {
-            background: #f97316;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .export-btn {
-            background: #10b981;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .users-table { overflow-x: auto; margin-top: 1rem; }
-        .users-table table { width: 100%; border-collapse: collapse; }
-        .users-table th, .users-table td { padding: 0.7rem; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 0.85rem; }
-        .delete-user-btn { background: #ef4444; border: none; padding: 0.2rem 0.8rem; border-radius: 2rem; color: white; cursor: pointer; }
-        .flow-timeline {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            overflow-x: auto;
-        }
-        .timeline-steps {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            min-width: 600px;
-        }
-        .timeline-step {
-            flex: 1;
-            text-align: center;
-            padding: 0.7rem 0.2rem;
-            border-radius: 0.8rem;
-            background: #f3f4f6;
-        }
-        .timeline-step .step-icon { font-size: 1.3rem; margin-bottom: 0.2rem; }
-        .timeline-step .step-name { font-size: 0.7rem; font-weight: 600; }
-        .timeline-step.active { background: #f97316; color: white; }
-        .timeline-step.completed { background: #10b981; color: white; }
-        .timeline-step.pending { background: #f3f4f6; color: #9ca3af; }
-        .timeline-arrow { color: #f97316; font-size: 1rem; }
-        .request-form-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-        }
-        .form-title {
-            color: #f97316;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-            border-bottom: 2px solid #f97316;
-            display: inline-block;
-            padding-bottom: 0.3rem;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        .section-title {
-            background: white;
-            border-radius: 1rem;
-            padding: 0.8rem 1.2rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .section-title h3 { color: #f97316; font-size: 1rem; }
-        .requests-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .request-item {
-            background: white;
-            border-radius: 1rem;
-            padding: 1rem;
-            border-left: 4px solid #f97316;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .request-item:hover { transform: translateX(5px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .request-item.completed { border-left-color: #10b981; }
-        .request-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 0.5rem;
-        }
-        .request-id { font-weight: 700; color: #f97316; }
-        .request-status { font-size: 0.7rem; padding: 0.2rem 0.6rem; border-radius: 2rem; }
-        .status-badge-pending { background: #fed7aa; color: #9a3412; }
-        .status-badge-completed { background: #d1fae5; color: #065f46; }
-        .priority-high { background: #fee2e2; color: #dc2626; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
-        .priority-medium { background: #fed7aa; color: #ea580c; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
-        .priority-low { background: #d1fae5; color: #059669; padding: 0.2rem 0.5rem; border-radius: 2rem; font-size: 0.7rem; }
-        .request-desc { font-size: 0.85rem; color: #4b5563; margin-top: 0.3rem; }
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 0.8rem;
-            margin: 1rem 0;
-        }
-        .detail-item {
-            background: #f9fafb;
-            padding: 0.6rem 0.9rem;
-            border-radius: 0.8rem;
-            font-size: 0.85rem;
-        }
-        .detail-item strong { color: #f97316; }
-        .workflow-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.2rem;
-            margin: 1rem 0;
-        }
-        .workflow-card {
-            background: #f9fafb;
-            border-radius: 1rem;
-            padding: 1rem;
-            border: 1px solid #e5e7eb;
-            transition: all 0.2s;
-        }
-        .workflow-card.disabled-card {
-            opacity: 0.6;
-            background: #f3f4f6;
-        }
-        .card-header h3 { color: #f97316; font-size: 1rem; }
-        textarea {
-            width: 100%;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.8rem;
-            padding: 0.6rem;
-            font-size: 0.8rem;
-            resize: vertical;
-            margin: 0.5rem 0;
-        }
-        textarea:disabled {
-            background: #f3f4f6;
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
-        .action-btn {
-            background: #f97316;
-            border: none;
-            padding: 0.6rem;
-            border-radius: 0.8rem;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-        }
-        .action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #9ca3af;
-        }
-        .events-log {
-            background: #1f2937;
-            border-radius: 0.8rem;
-            padding: 0.8rem;
-            max-height: 140px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.7rem;
-            color: #fcd34d;
-        }
-        .footer {
-            margin-top: 2rem;
-            text-align: center;
-            padding: 1rem;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .footer p {
-            color: #6b7280;
-            font-size: 0.75rem;
-        }
-        .footer span {
-            color: #f97316;
-            font-weight: 600;
-        }
-        .role-access-info {
-            background: #fef3c7;
-            border-left: 4px solid #f97316;
-            padding: 0.5rem 1rem;
-            margin-bottom: 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.75rem;
-            color: #92400e;
-        }
-        @media (max-width: 700px) {
-            .app-container { padding: 1rem; }
-            .timeline-steps { flex-direction: column; }
-            .timeline-arrow { display: none; }
-        }
-    </style>
-</head>
-<body>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Farazé MedTrust — In Memory of Nagina Nadeem (Late)</title>
 
-<div class="auth-container" id="authContainer">
-    <div class="auth-card">
-        <div class="auth-header">
-            <i class="fas fa-truck-fast" style="font-size: 2.5rem; color: #f97316;"></i>
-            <h1>M&P Express Logistics</h1>
-            <p>IT Workflow and Approval Management System</p>
-        </div>
-        <div id="loginForm">
-            <div class="input-group">
-                <label><i class="fas fa-envelope"></i> Email</label>
-                <input type="email" id="loginEmail" placeholder="sse@mpexpress.com">
-            </div>
-            <div class="input-group">
-                <label><i class="fas fa-lock"></i> Password</label>
-                <input type="password" id="loginPassword" placeholder="••••••••">
-            </div>
-            <button class="auth-btn" onclick="handleLogin()"><i class="fas fa-sign-in-alt"></i> Login to Portal</button>
-            <div id="loginError" class="error-msg"></div>
-        </div>
-    </div>
-</div>
-
-<div class="app-container" id="appContainer">
-    <div class="navbar">
-        <div class="logo">
-            <h2><i class="fas fa-truck"></i> M&P Express Logistics</h2>
-            <p>5-Stage IT Workflow</p>
-        </div>
-        <div class="user-badge">
-            <span><i class="fas fa-user-circle"></i> <span id="userName"></span></span>
-            <span class="role-badge" id="userRole"></span>
-            <button class="logout-btn" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
-    </div>
-
-    <div class="stats-grid">
-        <div class="stat-card"><i class="fas fa-hourglass-half"></i><div class="stat-value" id="pendingCount">0</div><div class="stat-label">In Progress</div></div>
-        <div class="stat-card"><i class="fas fa-check-double"></i><div class="stat-value" id="completedCount">0</div><div class="stat-label">Completed</div></div>
-        <div class="stat-card"><i class="fas fa-receipt"></i><div class="stat-value" id="totalCount">0</div><div class="stat-label">Total Requests</div></div>
-    </div>
-
-    <div class="admin-panel" id="adminPanel" style="display: none;">
-        <h3><i class="fas fa-shield-alt"></i> Admin Dashboard - User Management</h3>
-        <div class="add-user-form">
-            <div class="input-group"><label>Full Name</label><input type="text" id="newUserName" placeholder="Name"></div>
-            <div class="input-group"><label>Email</label><input type="email" id="newUserEmail" placeholder="email@mpexpress.com"></div>
-            <div class="input-group"><label>Password</label><input type="text" id="newUserPassword" placeholder="temp123"></div>
-            <div class="input-group"><label>Role</label>
-                <select id="newUserRole">
-                    <option value="sse">SSE IT</option>
-                    <option value="am">AM IT</option>
-                    <option value="manager_it">Manager IT</option>
-                    <option value="sdh">SDH</option>
-                    <option value="hod">HOD IT</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-            <button class="add-user-btn" onclick="addNewUser()"><i class="fas fa-user-plus"></i> Add User</button>
-            <button class="export-btn" onclick="exportAllToPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
-        </div>
-        <div class="users-table" id="usersTable"></div>
-    </div>
-
-    <div class="flow-timeline">
-        <div class="timeline-steps" id="timelineSteps">
-            <div class="timeline-step pending" id="stepSSE"><div class="step-icon">💻</div><div class="step-name">SSE IT</div></div>
-            <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepAM"><div class="step-icon">📊</div><div class="step-name">AM IT</div></div>
-            <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepManager"><div class="step-icon">👔</div><div class="step-name">Manager IT</div></div>
-            <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepSDH"><div class="step-icon">🏛️</div><div class="step-name">SDH</div></div>
-            <div class="timeline-arrow">→</div>
-            <div class="timeline-step pending" id="stepHOD"><div class="step-icon">👑</div><div class="step-name">HOD IT</div></div>
-        </div>
-    </div>
-
-    <div class="request-form-card" id="createRequestCard">
-        <h3 class="form-title"><i class="fas fa-plus-circle"></i> Create New IT Request (SSE Only)</h3>
-        <div class="form-row">
-            <div class="input-group"><label><i class="fas fa-envelope"></i> User Email *</label><input type="email" id="requestUserEmail" placeholder="employee@mpexpress.com"></div>
-            <div class="input-group"><label><i class="fas fa-heading"></i> Request Title *</label><input type="text" id="requestTitle" placeholder="e.g., Laptop Issue, Software Access"></div>
-        </div>
-        <div class="form-row">
-            <div class="input-group"><label><i class="fas fa-building"></i> Department</label><input type="text" id="requestDepartment" placeholder="e.g., Operations, HR, Finance"></div>
-            <div class="input-group"><label><i class="fas fa-flag"></i> Priority</label>
-                <select id="requestPriority">
-                    <option value="High">🔴 High</option>
-                    <option value="Medium">🟠 Medium</option>
-                    <option value="Low">🟢 Low</option>
-                </select>
-            </div>
-        </div>
-        <div class="input-group"><label><i class="fas fa-align-left"></i> Description / Issue *</label><textarea id="requestDesc" rows="2" placeholder="Detailed description of the issue..."></textarea></div>
-        <div class="input-group"><label><i class="fas fa-paperclip"></i> Attachment (optional)</label><input type="file" id="fileInput"></div>
-        <button class="action-btn" onclick="createRequest()" style="background: #f97316; width: auto; padding: 0.7rem 2rem;"><i class="fas fa-paper-plane"></i> Submit Request to AM IT</button>
-    </div>
-
-    <div class="section-title">
-        <h3><i class="fas fa-list"></i> All IT Requests / Complaints</h3>
-        <button class="export-btn" onclick="exportAllToPDF()" style="background: #f97316;"><i class="fas fa-file-pdf"></i> Export PDF</button>
-    </div>
-    <div class="requests-container" id="allRequestsList"></div>
-
-    <div class="request-form-card" id="selectedRequestCard" style="display: none;">
-        <h3 class="form-title"><i class="fas fa-file-alt"></i> Request Details #<span id="selectedReqId"></span></h3>
-        <div class="role-access-info" id="accessInfoMsg"></div>
-        <div class="detail-grid" id="selectedReqDetails"></div>
-        <div class="workflow-grid" id="workflowGrid"></div>
-    </div>
-
-    <div class="events-log" id="eventsLog"><div><i class="fas fa-circle-info"></i> System ready - 5-Stage Workflow (SSE→AM→Manager IT→SDH→HOD)</div></div>
-    
-    <div class="footer">
-        <p>M&P Express Logistics - IT Request Management Portal | Developed by <span>FARAZ SHEIKH</span></p>
-    </div>
-</div>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBNFuH14JA0RCrkMhl-37ysgla46QpSJyM",
-        authDomain: "faraze-a0339.firebaseapp.com",
-        projectId: "faraze-a0339",
-        storageBucket: "faraze-a0339.firebasestorage.app",
-        messagingSenderId: "463612751566",
-        appId: "1:463612751566:web:0e6b1e8367321c4ffbaa9f"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const auth = firebase.auth();
-    
-    let currentUser = null;
-    let selectedRequest = null;
-    let allRequests = [];
-
-    function addLog(msg) {
-        const logDiv = document.getElementById('eventsLog');
-        const div = document.createElement('div');
-        div.innerHTML = `<i class="fas fa-clock"></i> [${new Date().toLocaleTimeString()}] ${msg}`;
-        logDiv.prepend(div);
-        if(logDiv.children.length > 20) logDiv.removeChild(logDiv.lastChild);
-    }
-
-    async function handleLogin() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        if(!email || !password) return;
-        try {
-            await auth.signInWithEmailAndPassword(email, password);
-        } catch(e) {
-            document.getElementById('loginError').innerText = 'Invalid credentials. Contact admin.';
-        }
-    }
-
-    async function handleLogout() { await auth.signOut(); location.reload(); }
-
-    window.addNewUser = async () => {
-        const name = document.getElementById('newUserName').value;
-        const email = document.getElementById('newUserEmail').value;
-        const password = document.getElementById('newUserPassword').value;
-        const role = document.getElementById('newUserRole').value;
-        if(!name || !email || !password) { alert('Fill all fields'); return; }
-        if(password.length < 6) { alert('Password 6+ chars'); return; }
-        try {
-            const userCred = await auth.createUserWithEmailAndPassword(email, password);
-            await db.collection('users').doc(userCred.user.uid).set({ name, email, role, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-            addLog(`✅ User created: ${name} (${role})`);
-            document.getElementById('newUserName').value = '';
-            document.getElementById('newUserEmail').value = '';
-            document.getElementById('newUserPassword').value = '';
-            loadAllUsers();
-        } catch(e) { alert('Error: ' + e.message); }
-    };
-
-    window.deleteUser = async (userId) => {
-        if(confirm('Delete user?')) {
-            await db.collection('users').doc(userId).delete();
-            loadAllUsers();
-        }
-    };
-
-    async function loadAllUsers() {
-        const snapshot = await db.collection('users').get();
-        let html = '<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `<tr><td>${data.name}</td><td>${data.email}</td><td>${data.role}</td><td><button class="delete-user-btn" onclick="deleteUser('${doc.id}')"><i class="fas fa-trash"></i> Del</button></td></tr>`;
-        });
-        html += '</tbody></table>';
-        document.getElementById('usersTable').innerHTML = html;
-    }
-
-    async function loadStats() {
-        const snapshot = await db.collection('requests').get();
-        let pending = 0, completed = 0;
-        snapshot.forEach(doc => {
-            if(doc.data().stage === 'COMPLETED') completed++;
-            else pending++;
-        });
-        document.getElementById('pendingCount').innerText = pending;
-        document.getElementById('completedCount').innerText = completed;
-        document.getElementById('totalCount').innerText = snapshot.size;
-    }
-
-    async function loadAllRequests() {
-        const snapshot = await db.collection('requests').orderBy('createdAt', 'desc').get();
-        allRequests = [];
-        snapshot.forEach(doc => {
-            allRequests.push({ id: doc.id, ...doc.data() });
-        });
-        displayAllRequests();
-    }
-
-    function getPriorityClass(priority) {
-        if(priority === 'High') return 'priority-high';
-        if(priority === 'Medium') return 'priority-medium';
-        return 'priority-low';
-    }
-
-    function displayAllRequests() {
-        const container = document.getElementById('allRequestsList');
-        if(!container) return;
-        let html = '';
-        allRequests.forEach(req => {
-            const isCompleted = req.stage === 'COMPLETED';
-            const statusClass = isCompleted ? 'status-badge-completed' : 'status-badge-pending';
-            const statusText = isCompleted ? '✅ Completed' : `🔄 ${req.stage}`;
-            const priorityClass = getPriorityClass(req.priority);
-            html += `
-                <div class="request-item ${isCompleted ? 'completed' : ''}" onclick="selectRequest('${req.id}')">
-                    <div class="request-header-row">
-                        <span class="request-id"><i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}</span>
-                        <span class="request-status ${statusClass}">${statusText}</span>
-                        <span class="${priorityClass}"><i class="fas fa-flag"></i> ${req.priority || 'Medium'}</span>
-                    </div>
-                    <div class="request-header-row">
-                        <span style="font-size:0.8rem; color:#6b7280;"><i class="fas fa-user"></i> ${req.userEmail} | <i class="fas fa-building"></i> ${req.department || 'N/A'}</span>
-                        <span style="font-size:0.7rem; color:#6b7280;"><i class="fas fa-calendar"></i> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</span>
-                    </div>
-                    <div class="request-header-row">
-                        <span style="font-size:0.85rem; color:#f97316;"><i class="fas fa-tag"></i> ${req.title || 'IT Request'}</span>
-                    </div>
-                    <div class="request-desc"><i class="fas fa-file-alt"></i> ${req.description?.substring(0,100) || ''}${req.description?.length > 100 ? '...' : ''}</div>
-                </div>
-            `;
-        });
-        if(allRequests.length === 0) html = '<div style="background:white; border-radius:1rem; padding:2rem; text-align:center; color:#6b7280;">No requests found. SSE can create new requests.</div>';
-        container.innerHTML = html;
-    }
-
-    window.selectRequest = async (requestId) => {
-        const doc = await db.collection('requests').doc(requestId).get();
-        if(doc.exists) {
-            selectedRequest = { id: doc.id, ...doc.data() };
-            displaySelectedRequest();
-        }
-    };
-
-    function updateTimeline(stage) {
-        const order = ['SSE', 'AM', 'MANAGER', 'SDH', 'HOD'];
-        const stepMap = { SSE:'stepSSE', AM:'stepAM', MANAGER:'stepManager', SDH:'stepSDH', HOD:'stepHOD' };
-        let stageIdx = order.indexOf(stage);
-        if(stage === 'COMPLETED') stageIdx = order.length;
-        for(let i=0; i<order.length; i++) {
-            const el = document.getElementById(stepMap[order[i]]);
-            if(el) {
-                if(i < stageIdx) el.className = 'timeline-step completed';
-                else if(i === stageIdx && stage !== 'COMPLETED') el.className = 'timeline-step active';
-                else el.className = 'timeline-step pending';
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',900:'#064e3b' }
+                    },
+                    fontFamily: { sans: ['Plus Jakarta Sans','system-ui','sans-serif'], arabic: ['Amiri','serif'] }
+                }
             }
         }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        html { -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #f6f8fb; color: #0f172a; }
+        .card { background: #fff; border: 1px solid #e8edf3; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+        .arabic-text { font-family: 'Amiri', serif; line-height: 1.9; }
+        #ledger-section { scroll-margin-top: 84px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        input, select, textarea, button { font-family: inherit; }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        input:focus, select:focus, textarea:focus { outline: none; }
+    </style>
+</head>
+
+<body class="min-h-screen antialiased">
+
+    <div id="login-screen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-white to-brand-50">
+        <div class="w-full max-w-md">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white mx-auto shadow-lg mb-3">
+                    <i class="fa-solid fa-hand-holding-medical text-2xl"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold text-slate-900">Farazé <span class="text-brand-600">MedTrust</span></h1>
+                <p class="text-xs text-amber-700 mt-1">
+                    <i class="fa-solid fa-heart text-rose-500 text-[10px] mr-0.5"></i>
+                    For Nagina Nadeem (Late) — Sadqah-e-Jariyah
+                </p>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="text-center">
+                    <h2 class="text-lg font-bold text-slate-900">Sign In</h2>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Enter your phone number and PIN</p>
+                </div>
+
+                <div id="login-error" class="hidden bg-rose-50 border border-rose-200 text-rose-700 text-xs p-2.5 rounded-lg font-medium"></div>
+
+                <form onsubmit="handleLogin(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Phone Number</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="tel" id="login-phone" required placeholder="03XX-XXXXXXX" autocomplete="username"
+                                   class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">PIN / Password</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                            <input type="password" id="login-pin" required placeholder="••••••" inputmode="numeric" autocomplete="current-password"
+                                   class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                    </button>
+                </form>
+
+                <div class="text-center text-[11px] text-slate-500 pt-2 border-t border-slate-100">
+                    Need an account? Ask the administrator to create one for you.
+                </div>
+            </div>
+
+            <p class="text-center text-[10px] text-slate-400 mt-4">A transparent charitable medicine platform — Sadqah-e-Jariyah.</p>
+        </div>
+    </div>
+
+    <div id="app-shell" class="hidden min-h-screen flex flex-col pb-16 md:pb-0">
+
+        <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16 md:h-20 gap-2">
+                    <button onclick="switchRole('donor')" class="flex items-center gap-2.5 min-w-0 text-left shrink-0">
+                        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shrink-0 shadow-sm">
+                            <i class="fa-solid fa-hand-holding-medical text-lg md:text-xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-base md:text-xl font-extrabold tracking-tight text-slate-900 whitespace-nowrap">Farazé <span class="text-brand-600">MedTrust</span></span>
+                                <span class="hidden lg:inline-block px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-700 whitespace-nowrap">Sadqah-e-Jariyah</span>
+                            </div>
+                            <span class="block text-[10px] md:text-xs text-amber-700 truncate">
+                                <i class="fa-solid fa-heart text-rose-500 text-[8px] mr-0.5"></i>
+                                <span class="font-semibold underline decoration-amber-300">Nagina Nadeem (Late)</span>
+                            </span>
+                        </div>
+                    </button>
+
+                    <nav class="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                        <button id="nav-donor-btn" onclick="switchRole('donor')" class="px-3.5 py-2 rounded-lg text-sm font-semibold transition">
+                            <i class="fa-solid fa-heart mr-2"></i>Donor
+                        </button>
+                        <button id="nav-pharmacy-btn" onclick="switchRole('pharmacy')" class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-500 hover:text-slate-800">
+                            <i class="fa-solid fa-clinic-medical mr-2"></i>Store
+                        </button>
+                        <button id="nav-admin-btn" onclick="switchRole('admin')" class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-500 hover:text-slate-800">
+                            <i class="fa-solid fa-user-shield mr-2"></i>Admin
+                        </button>
+                        <button onclick="scrollToLedger()" class="px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-500 hover:text-slate-800">
+                            <i class="fa-solid fa-receipt mr-2"></i>Ledger
+                        </button>
+                    </nav>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="flex flex-col text-right">
+                            <span id="user-display-name" class="text-[11px] sm:text-sm font-bold text-slate-800 leading-tight truncate max-w-[100px] sm:max-w-none">—</span>
+                            <span id="user-role-badge" class="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 font-semibold border border-brand-200 self-end">—</span>
+                        </div>
+                        <button onclick="handleLogout()" title="Sign out" class="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition">
+                            <i class="fa-solid fa-right-from-bracket text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 py-5 md:py-8 flex-1 space-y-5 md:space-y-8">
+
+            <section class="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-amber-50 via-white to-brand-50 border border-amber-100 p-4 sm:p-6 md:p-8">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center gap-5">
+                    <div class="flex-1 space-y-2.5">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-amber-200 text-amber-700 text-[10px] md:text-xs font-bold shadow-sm">
+                            <i class="fa-solid fa-ribbon"></i> Dedicated to Nagina Nadeem (Late)
+                        </div>
+                        <p class="arabic-text text-xl sm:text-2xl lg:text-3xl font-bold text-amber-800 text-center md:text-right" dir="rtl">
+                            مَنْ أَحْيَاهَا فَكَأَنَّمَا أَحْيَا النَّاسَ جَمِيعًا
+                        </p>
+                        <p class="text-slate-700 text-sm sm:text-base font-medium leading-relaxed text-center md:text-left">
+                            "Aur jis ne kisi ek insaan ki jaan bachai, goya us ne poori insaniyat ki jaan bacha li."
+                        </p>
+                        <p class="text-[11px] md:text-xs text-slate-500 italic text-center md:text-left">
+                            Surah Al-Ma'idah (5:32) • Every medicine served here is a continuous charity.
+                        </p>
+                    </div>
+                    <div class="shrink-0 text-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-full md:max-w-xs">
+                        <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center text-lg mx-auto mb-2 border border-amber-200">
+                            <i class="fa-solid fa-hands-praying"></i>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900">Dua for Nagina Nadeem</h4>
+                        <p class="text-[11px] text-slate-600 mt-1 leading-relaxed">May Allah (SWT) grant her the highest ranks in Jannat-ul-Firdaus. Ameen.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                <div class="card p-3.5 md:p-5 rounded-2xl flex items-center gap-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-base md:text-xl border border-emerald-100 shrink-0"><i class="fa-solid fa-vault"></i></div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] md:text-xs text-slate-500 font-semibold block truncate">Total Donated</span>
+                        <span id="stat-total-funds" class="text-base md:text-xl font-extrabold text-slate-900 block truncate">PKR 0</span>
+                    </div>
+                </div>
+                <div class="card p-3.5 md:p-5 rounded-2xl flex items-center gap-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center text-base md:text-xl border border-sky-100 shrink-0"><i class="fa-solid fa-users"></i></div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] md:text-xs text-slate-500 font-semibold block truncate">Patients Helped</span>
+                        <span id="stat-patients-helped" class="text-base md:text-xl font-extrabold text-slate-900 block truncate">0</span>
+                    </div>
+                </div>
+                <div class="card p-3.5 md:p-5 rounded-2xl flex items-center gap-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-base md:text-xl border border-violet-100 shrink-0"><i class="fa-solid fa-store"></i></div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] md:text-xs text-slate-500 font-semibold block truncate">Active Stores</span>
+                        <span id="stat-active-stores" class="text-base md:text-xl font-extrabold text-slate-900 block truncate">0 Online</span>
+                    </div>
+                </div>
+                <div class="card p-3.5 md:p-5 rounded-2xl flex items-center gap-3">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-base md:text-xl border border-amber-100 shrink-0"><i class="fa-solid fa-bullseye"></i></div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] md:text-xs text-slate-500 font-semibold block truncate">Monthly Need</span>
+                        <span id="stat-needed-funds" class="text-base md:text-xl font-extrabold text-slate-900 block truncate">PKR 0</span>
+                    </div>
+                </div>
+            </section>
+
+            <div id="view-donor" class="space-y-5 md:space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            <i class="fa-solid fa-heart text-brand-600"></i> Send Funds to a Pharmacy
+                        </h2>
+                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Pick a verified pharmacy and send your donation to its wallet.</p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="pharmacy-search" oninput="renderPharmacies(this.value)" placeholder="Search name or area…"
+                               class="w-full bg-white border border-slate-200 text-sm rounded-xl pl-9 pr-3 py-2.5 text-slate-800 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                    </div>
+                </div>
+                <div id="pharmacies-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5"></div>
+            </div>
+
+            <div id="view-pharmacy" class="space-y-5 md:space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            <i class="fa-solid fa-clinic-medical text-brand-600"></i> Medical Store Workstation
+                        </h2>
+                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Dispense free medicine from donor-funded wallet.</p>
+                    </div>
+                    <select id="pharmacy-select" onchange="selectPharmacy(this.value)"
+                            class="w-full sm:w-auto bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 font-semibold focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"></select>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <div class="card p-5 md:p-6 rounded-2xl space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-lg border border-brand-100 shrink-0"><i class="fa-solid fa-clinic-medical"></i></div>
+                            <div class="min-w-0">
+                                <h3 id="pharma-card-title" class="font-bold text-slate-900 text-base leading-tight truncate">—</h3>
+                                <p id="pharma-card-area" class="text-xs text-slate-500 truncate"><i class="fa-solid fa-location-dot text-brand-600 mr-1"></i>—</p>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                <div class="min-w-0">
+                                    <span id="status-text" class="text-xs font-bold text-slate-800 block">ONLINE</span>
+                                    <span class="text-[10px] text-slate-500 block truncate">Patient portal active</span>
+                                </div>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input type="checkbox" id="status-toggle" onchange="togglePharmacyStatus()" class="sr-only peer">
+                                <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all after:shadow-sm peer-checked:bg-brand-600"></div>
+                            </label>
+                        </div>
+                        <div class="bg-gradient-to-br from-brand-50 to-emerald-50 p-4 rounded-xl border border-brand-100">
+                            <span class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">Available Donation Wallet</span>
+                            <span id="pharma-balance" class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1 block">PKR 0</span>
+                            <span class="text-[10px] text-slate-500 mt-1 block"><i class="fa-solid fa-shield-halved text-brand-600"></i> Funds received from donors</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="text-[10px] text-slate-500 block">Spent (Month)</span>
+                                <span id="pharma-spent" class="text-sm font-bold text-slate-900">PKR 0</span>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                <span class="text-[10px] text-slate-500 block">Target</span>
+                                <span id="pharma-target" class="text-sm font-bold text-amber-600">PKR 0</span>
+                            </div>
+                        </div>
+                        <button onclick="promptUpdateTarget()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition border border-slate-200 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-pen-to-square"></i> Update Monthly Target
+                        </button>
+                    </div>
+
+                    <div class="lg:col-span-2 card p-5 md:p-7 rounded-2xl space-y-5">
+                        <div class="border-b border-slate-200 pb-4">
+                            <h3 class="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-hand-holding-medical text-brand-600"></i> Dispense Free Medicine
+                            </h3>
+                            <p class="text-[11px] md:text-xs text-slate-500 mt-1">Enter patient details to deduct from the donor wallet and send a receipt.</p>
+                        </div>
+                        <form id="dispense-form" onsubmit="handleDispenseMedicine(event)" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Patient Full Name *</label>
+                                    <input type="text" id="patient-name" required placeholder="e.g. Tariq Mahmood"
+                                           class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Phone / WhatsApp *</label>
+                                    <input type="tel" id="patient-phone" required placeholder="0321-1234567" pattern="[0-9+\-\s()]{7,20}"
+                                           class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">CNIC (optional)</label>
+                                    <input type="text" id="patient-cnic" placeholder="35202-XXXXXXX-X"
+                                           class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Bill Amount (PKR) *</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">PKR</span>
+                                        <input type="number" id="medicine-amount" required min="10" max="500000" placeholder="850"
+                                               class="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-3.5 py-2.5 text-sm text-slate-900 font-bold placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Prescribed Medicines *</label>
+                                <textarea id="medicine-details" required rows="3" placeholder="e.g. Insulin Humulin 70/30 (1 vial), Panadol 500mg (2 strips)"
+                                          class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition resize-none"></textarea>
+                            </div>
+                            <div class="bg-slate-50 p-3.5 rounded-xl border border-dashed border-slate-300 space-y-1.5">
+                                <div class="flex items-center justify-between text-[11px] text-slate-500">
+                                    <span><i class="fa-solid fa-receipt text-amber-500"></i> Receipt Preview</span>
+                                    <span class="text-[10px] text-slate-400">Auto-sent to donor</span>
+                                </div>
+                                <p class="text-[11px] text-slate-700 font-mono bg-white p-2.5 rounded-lg border border-slate-200 leading-relaxed">
+                                    [Farazé MedTrust] Medicine worth <span id="preview-bill" class="text-emerald-600 font-bold">PKR 0</span> provided to <span id="preview-patient" class="text-slate-900 font-bold">---</span> at <span id="preview-pharmacy" class="text-slate-900 font-bold">—</span>. Donor wallet updated.
+                                </p>
+                            </div>
+                            <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-check-circle"></i> Confirm Dispense & Notify Donor
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-admin" class="space-y-5 md:space-y-6 hidden">
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            <i class="fa-solid fa-user-shield text-rose-600"></i> Admin Control Panel
+                        </h2>
+                        <p class="text-xs md:text-sm text-slate-500 mt-0.5">Full control over stores, users, and ledger.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportData()" class="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-brand-500 hover:text-brand-700 text-slate-700 text-xs font-semibold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Export
+                        </button>
+                        <button onclick="refreshAllData()" class="px-3 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] text-rose-800 flex items-start gap-2">
+                    <i class="fa-solid fa-key mt-0.5"></i>
+                    <div>
+                        <b>Your admin login:</b> <span class="font-mono">03095607170</span> &nbsp;·&nbsp; PIN <span class="font-mono">123456</span>
+                        — you can change any user's PIN from the Users list below.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="card p-3.5 md:p-4 rounded-2xl flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shrink-0"><i class="fa-solid fa-clinic-medical"></i></div>
+                        <div class="min-w-0">
+                            <span class="text-[10px] text-slate-500 block truncate">Total Stores</span>
+                            <span id="admin-stat-stores" class="text-lg font-extrabold text-slate-900 block">0</span>
+                        </div>
+                    </div>
+                    <div class="card p-3.5 md:p-4 rounded-2xl flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shrink-0"><i class="fa-solid fa-wifi"></i></div>
+                        <div class="min-w-0">
+                            <span class="text-[10px] text-slate-500 block truncate">Online Now</span>
+                            <span id="admin-stat-online" class="text-lg font-extrabold text-slate-900 block">0</span>
+                        </div>
+                    </div>
+                    <div class="card p-3.5 md:p-4 rounded-2xl flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center border border-sky-100 shrink-0"><i class="fa-solid fa-users"></i></div>
+                        <div class="min-w-0">
+                            <span class="text-[10px] text-slate-500 block truncate">Total Users</span>
+                            <span id="admin-stat-users" class="text-lg font-extrabold text-slate-900 block">0</span>
+                        </div>
+                    </div>
+                    <div class="card p-3.5 md:p-4 rounded-2xl flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100 shrink-0"><i class="fa-solid fa-wallet"></i></div>
+                        <div class="min-w-0">
+                            <span class="text-[10px] text-slate-500 block truncate">Total Wallet</span>
+                            <span id="admin-stat-allocated" class="text-sm font-extrabold text-slate-900 block truncate">PKR 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card rounded-2xl overflow-hidden">
+                    <div class="flex border-b border-slate-200 overflow-x-auto bg-slate-50/60">
+                        <button id="admin-tab-pharmacy" onclick="switchAdminTab('pharmacy')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-brand-600 text-brand-700 bg-white transition">
+                            <i class="fa-solid fa-store"></i> Onboard Pharmacy
+                        </button>
+                        <button id="admin-tab-donor" onclick="switchAdminTab('donor')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition">
+                            <i class="fa-solid fa-heart"></i> Create Donor
+                        </button>
+                        <button id="admin-tab-user" onclick="switchAdminTab('user')" class="flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition">
+                            <i class="fa-solid fa-user-shield"></i> Create User
+                        </button>
+                    </div>
+
+                    <div class="p-5 md:p-6">
+
+                        <div id="admin-form-pharmacy">
+                            <div class="mb-4">
+                                <h3 class="text-base font-bold text-slate-900">Register Medical Store</h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Creates the store and the owner's login in one step.</p>
+                            </div>
+                            <form onsubmit="addNewStore(event)" class="space-y-3.5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Store Name *</label>
+                                        <input type="text" id="admin-store-name" required placeholder="Al-Noor Pharmacy"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Owner Name *</label>
+                                        <input type="text" id="admin-store-owner" required placeholder="Abdul Rehman"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Phone / WhatsApp (login) *</label>
+                                        <input type="tel" id="admin-store-phone" required placeholder="0321-1234567" pattern="[0-9+\-\s()]{7,20}"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Area / City *</label>
+                                        <input type="text" id="admin-store-area" required placeholder="Gulberg, Lahore"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Monthly Target (PKR) *</label>
+                                        <input type="number" id="admin-store-target" required min="1000" step="500" placeholder="50000"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Owner PIN (4-6 digits) *</label>
+                                        <input type="password" id="admin-store-pin" required inputmode="numeric" minlength="4" maxlength="6" pattern="[0-9]{4,6}" placeholder="1234"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-plus-circle"></i> Register Store + Login
+                                </button>
+                            </form>
+                        </div>
+
+                        <div id="admin-form-donor" class="hidden">
+                            <div class="mb-4">
+                                <h3 class="text-base font-bold text-slate-900">Create Donor Account</h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Donor can sign in and send funds to any registered pharmacy.</p>
+                            </div>
+                            <form onsubmit="addNewDonor(event)" class="space-y-3.5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Full Name *</label>
+                                        <input type="text" id="admin-donor-name" required placeholder="Ayesha Khan"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Phone / WhatsApp (login) *</label>
+                                        <input type="tel" id="admin-donor-phone" required placeholder="0300-1234567" pattern="[0-9+\-\s()]{7,20}"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Login PIN (4-6 digits) *</label>
+                                        <input type="password" id="admin-donor-pin" required inputmode="numeric" minlength="4" maxlength="6" pattern="[0-9]{4,6}" placeholder="1234"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">City (optional)</label>
+                                        <input type="text" id="admin-donor-city" placeholder="Lahore"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                </div>
+                                <div class="bg-brand-50 border border-brand-100 rounded-xl p-3 text-[11px] text-brand-800">
+                                    <i class="fa-solid fa-info-circle"></i> Donor signs in with this phone + PIN and can send funds to any pharmacy.
+                                </div>
+                                <button type="submit" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-user-plus"></i> Create Donor Account
+                                </button>
+                            </form>
+                        </div>
+
+                        <div id="admin-form-user" class="hidden">
+                            <div class="mb-4">
+                                <h3 class="text-base font-bold text-slate-900">Create Staff User</h3>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Add another admin or a pharmacy staff login.</p>
+                            </div>
+                            <form onsubmit="addNewUser(event)" class="space-y-3.5">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Full Name *</label>
+                                        <input type="text" id="admin-user-name" required placeholder="Ahmed Khan"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Phone / WhatsApp (login) *</label>
+                                        <input type="tel" id="admin-user-phone" required placeholder="0300-1234567" pattern="[0-9+\-\s()]{7,20}"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Login PIN (4-6 digits) *</label>
+                                        <input type="password" id="admin-user-pin" required inputmode="numeric" minlength="4" maxlength="6" pattern="[0-9]{4,6}" placeholder="1234"
+                                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Role *</label>
+                                        <select id="admin-user-role" required onchange="onUserRoleChange()"
+                                                class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                            <option value="">Select role…</option>
+                                            <option value="Admin">Admin</option>
+                                            <option value="Pharmacy">Pharmacy Staff</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="admin-user-pharmacy-wrap" class="hidden">
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Assign to Pharmacy *</label>
+                                    <select id="admin-user-pharmacy"
+                                            class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">City (optional)</label>
+                                    <input type="text" id="admin-user-city" placeholder="Lahore"
+                                           class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                                </div>
+                                <button type="submit" class="w-full py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-user-plus"></i> Create Staff User
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+
+                    <div class="card p-5 rounded-2xl space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-store text-brand-600"></i> Registered Stores
+                            </h3>
+                            <span id="admin-store-count" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">0</span>
+                        </div>
+                        <div id="admin-stores-list" class="max-h-[420px] overflow-y-auto"></div>
+                    </div>
+
+                    <div class="card p-5 rounded-2xl space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-200 pb-3 gap-2">
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 shrink-0">
+                                <i class="fa-solid fa-users text-violet-600"></i> Platform Users
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <span id="admin-user-count" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">0</span>
+                                <select onchange="filterAdminUsers(this.value)" class="text-[11px] bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-semibold focus:border-brand-500">
+                                    <option value="all">All</option>
+                                    <option value="admin">Admins</option>
+                                    <option value="donor">Donors</option>
+                                    <option value="pharmacy">Pharmacy</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="admin-users-list" class="max-h-[420px] overflow-y-auto"></div>
+                    </div>
+
+                </div>
+
+                <div class="card p-5 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-3 gap-2">
+                        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 shrink-0">
+                            <i class="fa-solid fa-receipt text-amber-500"></i> Ledger Audit
+                            <span id="admin-ledger-count" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">0</span>
+                        </h3>
+                        <button onclick="clearAllLedger()" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-broom"></i> Clear All
+                        </button>
+                    </div>
+                    <div id="admin-ledger-list" class="max-h-[420px] overflow-y-auto"></div>
+                </div>
+
+            </div>
+
+            <section id="ledger-section" class="card p-4 sm:p-6 md:p-7 rounded-2xl space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                    <div>
+                        <h3 class="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-amber-500"></i> Public Disbursal Ledger
+                        </h3>
+                        <p class="text-[11px] md:text-xs text-slate-500 mt-0.5">Real-time audit of every free medicine delivered.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-[10px] md:text-xs text-emerald-700 font-semibold uppercase tracking-wider">Live</span>
+                    </div>
+                </div>
+
+                <div class="hidden md:block overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-700">
+                        <thead class="text-[11px] uppercase bg-slate-50 text-slate-500 border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-3 font-semibold">Time</th>
+                                <th class="py-3 px-3 font-semibold">Store</th>
+                                <th class="py-3 px-3 font-semibold">Patient</th>
+                                <th class="py-3 px-3 font-semibold">Medicines</th>
+                                <th class="py-3 px-3 font-semibold">Amount</th>
+                                <th class="py-3 px-3 font-semibold">Fund Source</th>
+                                <th class="py-3 px-3 font-semibold text-right">Proof</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-tbody" class="divide-y divide-slate-100 font-medium"></tbody>
+                    </table>
+                </div>
+                <div id="ledger-cards" class="md:hidden space-y-2.5"></div>
+            </section>
+        </main>
+
+        <footer class="border-t border-slate-200 py-6 md:py-8 bg-white mt-4">
+            <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+                <div class="flex items-center justify-center gap-2 text-amber-700 text-xs md:text-sm font-semibold">
+                    <i class="fa-solid fa-heart text-rose-500"></i> Farazé MedTrust • For Nagina Nadeem (Late)
+                </div>
+                <p class="text-[10px] md:text-xs text-slate-500">A transparent charitable medicine distribution platform — Sadqah-e-Jariyah.</p>
+            </div>
+        </footer>
+
+        <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 safe-bottom">
+            <div class="flex h-16">
+                <button id="mnav-donor" onclick="switchRole('donor')" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-brand-600 transition">
+                    <i class="fa-solid fa-heart text-lg"></i><span class="text-[9px] font-bold">Donor</span>
+                </button>
+                <button id="mnav-pharmacy" onclick="switchRole('pharmacy')" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 transition">
+                    <i class="fa-solid fa-clinic-medical text-lg"></i><span class="text-[9px] font-bold">Store</span>
+                </button>
+                <button id="mnav-admin" onclick="switchRole('admin')" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 transition">
+                    <i class="fa-solid fa-user-shield text-lg"></i><span class="text-[9px] font-bold">Admin</span>
+                </button>
+                <button onclick="scrollToLedger()" class="flex-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 transition">
+                    <i class="fa-solid fa-receipt text-lg"></i><span class="text-[9px] font-bold">Ledger</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <div id="modal-budget" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden overflow-y-auto">
+        <div class="min-h-full flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-2xl p-5 md:p-6 space-y-5 relative shadow-xl border border-slate-200">
+                <button onclick="closeBudgetModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="space-y-1.5 pr-8">
+                    <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold border border-brand-100"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <h3 class="text-lg font-bold text-slate-900">Send Funds to Pharmacy</h3>
+                    <p id="modal-pharmacy-name" class="text-xs text-brand-700 font-semibold">—</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-2">Quick Amount (PKR)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="setBudgetAmount(1000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">1,000</button>
+                            <button type="button" onclick="setBudgetAmount(5000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">5,000</button>
+                            <button type="button" onclick="setBudgetAmount(10000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">10,000</button>
+                            <button type="button" onclick="setBudgetAmount(25000)" class="py-2.5 rounded-xl border border-slate-200 bg-white hover:border-brand-500 hover:text-brand-700 hover:bg-brand-50 text-sm font-bold text-slate-700 transition">25,000</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Custom Amount (PKR)</label>
+                        <input type="number" id="custom-budget-input" min="500" placeholder="Enter amount…"
+                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 font-bold placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
+                        <div class="flex justify-between"><span>Payment:</span><span class="text-slate-900 font-medium">JazzCash / Bank</span></div>
+                        <div class="flex justify-between"><span>Alert:</span><span class="text-emerald-700 font-medium">WhatsApp to Store</span></div>
+                    </div>
+                    <button onclick="confirmBudgetAssignment()" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> Send Funds & Notify
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-whatsapp" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden overflow-y-auto">
+        <div class="min-h-full flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-md rounded-2xl p-5 md:p-6 space-y-5 text-center shadow-xl border border-slate-200">
+                <div class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mx-auto border border-emerald-100"><i class="fa-brands fa-whatsapp"></i></div>
+                <div class="space-y-1.5">
+                    <h3 class="text-lg font-bold text-slate-900">Send WhatsApp Verification</h3>
+                    <p class="text-[11px] text-slate-500">Transaction recorded. Send the receipt below via WhatsApp.</p>
+                </div>
+                <div id="whatsapp-message-box" class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-left text-[11px] text-slate-700 font-mono whitespace-pre-wrap max-h-44 overflow-y-auto"></div>
+                <div class="flex items-center gap-2.5">
+                    <button onclick="closeWhatsAppModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">Dismiss</button>
+                    <a id="whatsapp-direct-link" href="#" target="_blank" rel="noopener" onclick="closeWhatsAppModal()"
+                       class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm">
+                        <i class="fa-brands fa-whatsapp"></i> Open
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xl hidden max-w-[90vw] text-center"></div>
+
+    <script>
+    /* ---------- STATE ---------- */
+    let session = null;
+    let currentRole = 'donor';
+    let activePharmacyId = 'pharma-1';
+    let selectedPharmacyForBudget = null;
+
+    // Stats start at zero — they build up from real activity only.
+    let totalDonated = 0;
+    let patientsHelped = 0;
+
+    let toastTimer;
+    let adminUserFilter = 'all';
+
+    /* ---------- SEED DATA ---------- */
+    // Admin: 03095607170 / 123456. Others are placeholders the admin can delete or keep.
+    let pharmacies = [
+        { id: 'pharma-1', name: 'Bismillah Medical Store', owner: 'Haji Tanveer',    area: 'Harbanspura, Lahore',  phone: '03214567890', isOnline: true,  allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 50000 },
+        { id: 'pharma-2', name: 'Al-Shifa Pharmacy',       owner: 'Muhammad Tariq', area: 'Muslim Town, Lahore', phone: '03009876543', isOnline: true,  allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 40000 },
+        { id: 'pharma-3', name: 'Khyber Pharmacy',         owner: 'Shahid Khan',    area: 'Mughalpura, Lahore',  phone: '03331122334', isOnline: false, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: 30000 }
+    ];
+
+    let users = [
+        { id: 'user-admin',   name: 'Faraz Nadeem',  phone: '03095607170', pin: '123456', role: 'admin',    city: 'Lahore', pharmacyId: null },
+        { id: 'user-donor1',  name: 'Ayesha Khan',   phone: '03009998888', pin: '1234',   role: 'donor',    city: 'Lahore', pharmacyId: null },
+        { id: 'user-pharma1', name: 'Haji Tanveer',  phone: '03214567890', pin: '1234',   role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-1' },
+        { id: 'user-pharma2', name: 'Muhammad Tariq',phone: '03009876543', pin: '1234',   role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-2' },
+        { id: 'user-pharma3', name: 'Shahid Khan',   phone: '03331122334', pin: '1234',   role: 'pharmacy', city: 'Lahore', pharmacyId: 'pharma-3' }
+    ];
+
+    // Empty — real activity only.
+    let ledgerRecords = [];
+
+    /* ---------- HELPERS ---------- */
+    const $ = (id) => document.getElementById(id);
+    const fmt = (n) => Number(n).toLocaleString('en-PK');
+    const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const cleanPhone = (p) => String(p).replace(/\D/g, '');
+
+    function showToast(msg) {
+        const t = $('toast');
+        t.textContent = msg;
+        t.classList.remove('hidden');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.add('hidden'), 2800);
     }
 
-    function getRoleDisplayName(role) {
-        const roles = {
-            'sse': 'SSE IT',
-            'am': 'AM IT',
-            'manager_it': 'Manager IT',
-            'sdh': 'SDH',
-            'hod': 'HOD IT',
-            'admin': 'Administrator'
-        };
-        return roles[role] || role;
+    /* ---------- AUTH ---------- */
+    function handleLogin(e) {
+        e.preventDefault();
+        const phone = cleanPhone($('login-phone').value);
+        const pin   = $('login-pin').value.trim();
+        const err   = $('login-error');
+
+        const user = users.find(u => cleanPhone(u.phone) === phone && u.pin === pin);
+        if (!user) {
+            err.textContent = 'Invalid phone number or PIN. Please try again.';
+            err.classList.remove('hidden');
+            return;
+        }
+        if (user.role === 'pharmacy' && !pharmacies.find(p => p.id === user.pharmacyId)) {
+            err.textContent = 'Your assigned pharmacy no longer exists. Contact admin.';
+            err.classList.remove('hidden');
+            return;
+        }
+
+        err.classList.add('hidden');
+        session = user;
+        try { localStorage.setItem('medtrust_session', user.id); } catch (_) {}
+        startApp();
     }
 
-    function canUserApprove(level, requestStage, isRemarkCompleted) {
-        if(!currentUser) return false;
-        if(currentUser.role === 'admin') return true;
-        if(isRemarkCompleted) return false;
-        
-        if(level === 'sse' && currentUser.role === 'sse' && requestStage === 'SSE') return true;
-        if(level === 'am' && currentUser.role === 'am' && requestStage === 'AM') return true;
-        if(level === 'manager' && currentUser.role === 'manager_it' && requestStage === 'MANAGER') return true;
-        if(level === 'sdh' && currentUser.role === 'sdh' && requestStage === 'SDH') return true;
-        if(level === 'hod' && currentUser.role === 'hod' && requestStage === 'HOD') return true;
-        
+    function handleLogout() {
+        if (!confirm('Sign out of your account?')) return;
+        session = null;
+        try { localStorage.removeItem('medtrust_session'); } catch (_) {}
+        $('app-shell').classList.add('hidden');
+        $('login-screen').classList.remove('hidden');
+        $('login-phone').value = '';
+        $('login-pin').value = '';
+        $('login-error').classList.add('hidden');
+        closeBudgetModal();
+        closeWhatsAppModal();
+    }
+
+    function startApp() {
+        $('login-screen').classList.add('hidden');
+        $('app-shell').classList.remove('hidden');
+
+        if (session.role === 'pharmacy') {
+            activePharmacyId = session.pharmacyId;
+        } else if (!pharmacies.find(p => p.id === activePharmacyId)) {
+            activePharmacyId = pharmacies[0] ? pharmacies[0].id : null;
+        }
+
+        let defaultRole = 'donor';
+        if (session.role === 'pharmacy') defaultRole = 'pharmacy';
+
+        updateUserHeader();
+        updateNavForRole();
+        renderPharmacies();
+        renderPharmacySelect();
+        renderWorkstation();
+        renderAdmin();
+        renderLedger();
+        updateStats();
+        setupFormPreview();
+        switchRole(defaultRole);
+    }
+
+    /* ---------- ROLE GUARDS ---------- */
+    function canAccess(role) {
+        if (!session) return false;
+        if (role === 'donor')    return ['admin','donor'].includes(session.role);
+        if (role === 'pharmacy') return ['admin','pharmacy'].includes(session.role);
+        if (role === 'admin')    return session.role === 'admin';
         return false;
     }
 
-    function displaySelectedRequest() {
-        if(!selectedRequest) return;
-        const req = selectedRequest;
-        document.getElementById('selectedRequestCard').style.display = 'block';
-        document.getElementById('selectedReqId').innerHTML = `<i class="fas fa-hashtag"></i> ${req.id.slice(0,8)}`;
-        
-        const accessMsg = document.getElementById('accessInfoMsg');
-        if(currentUser?.role !== 'admin') {
-            accessMsg.innerHTML = `<i class="fas fa-info-circle"></i> You are logged in as <strong>${getRoleDisplayName(currentUser?.role)}</strong>. You can only approve when request is at your stage.`;
-            accessMsg.style.display = 'block';
-        } else {
-            accessMsg.innerHTML = `<i class="fas fa-crown"></i> Admin access - You can approve any stage.`;
-            accessMsg.style.display = 'block';
+    function switchRole(role) {
+        if (!canAccess(role)) return;
+        currentRole = role;
+        $('view-donor').classList.toggle('hidden', role !== 'donor');
+        $('view-pharmacy').classList.toggle('hidden', role !== 'pharmacy');
+        $('view-admin').classList.toggle('hidden', role !== 'admin');
+        if (session.role === 'pharmacy' && role === 'pharmacy') {
+            activePharmacyId = session.pharmacyId;
+            renderWorkstation();
         }
-        
-        document.getElementById('selectedReqDetails').innerHTML = `
-            <div class="detail-item"><strong>👤 User Email:</strong> ${req.userEmail}</div>
-            <div class="detail-item"><strong>📝 Title:</strong> ${req.title}</div>
-            <div class="detail-item"><strong>🏢 Department:</strong> ${req.department || 'N/A'}</div>
-            <div class="detail-item"><strong>⚠️ Priority:</strong> ${req.priority || 'Medium'}</div>
-            <div class="detail-item"><strong>📅 Date & Time:</strong> ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}</div>
-            <div class="detail-item"><strong>📋 Description:</strong> ${req.description}</div>
-            <div class="detail-item"><strong>📎 Attachment:</strong> ${req.attachmentUrl ? `<a href="${req.attachmentUrl}" target="_blank" style="color:#f97316;">Download</a>` : '—'}</div>
-            <div class="detail-item"><strong>💬 SSE Remark:</strong> ${req.sseRemark || '—'}</div>
-            <div class="detail-item"><strong>📊 AM Remark:</strong> ${req.amRemark || '—'}</div>
-            <div class="detail-item"><strong>👔 Manager IT Remark:</strong> ${req.managerRemark || '—'}</div>
-            <div class="detail-item"><strong>🏛️ SDH Remark:</strong> ${req.sdhRemark || '—'}</div>
-            <div class="detail-item"><strong>👑 HOD Remark:</strong> ${req.hodRemark || '—'}</div>
-        `;
-        
-        updateTimeline(req.stage);
-        
-        const stagesMeta = [
-            {key:'sse', label:'SSE IT', icon:'💻', stageFlag:'SSE', remarkField:'sseRemark', next:'→ AM IT', roleRequired:'sse'},
-            {key:'am', label:'AM IT', icon:'📊', stageFlag:'AM', remarkField:'amRemark', next:'→ Manager IT', roleRequired:'am'},
-            {key:'manager', label:'Manager IT', icon:'👔', stageFlag:'MANAGER', remarkField:'managerRemark', next:'→ SDH', roleRequired:'manager_it'},
-            {key:'sdh', label:'SDH', icon:'🏛️', stageFlag:'SDH', remarkField:'sdhRemark', next:'→ HOD IT', roleRequired:'sdh'},
-            {key:'hod', label:'HOD IT', icon:'👑', stageFlag:'HOD', remarkField:'hodRemark', next:'Final Approve', roleRequired:'hod'}
-        ];
-        
-        let cardsHtml = '';
-        for(let m of stagesMeta) {
-            const isCompleted = !!req[m.remarkField];
-            const isActive = (req.stage === m.stageFlag) && !isCompleted && req.stage !== 'COMPLETED';
-            const canApprove = canUserApprove(m.key, req.stage, isCompleted);
-            const shouldEnable = isActive && canApprove && req.stage !== 'COMPLETED';
-            const existingRemark = isCompleted ? (req[m.remarkField] || '') : '';
-            
-            let statusText = '', statusClass = '';
-            if(isCompleted) {
-                statusText = '✓ Approved';
-                statusClass = 'background:#d1fae5; color:#065f46;';
-            } else if(isActive) {
-                if(canApprove) {
-                    statusText = '⏳ Pending Your Action';
-                    statusClass = 'background:#fed7aa; color:#9a3412;';
-                } else {
-                    statusText = '🔒 Waiting for ' + m.label;
-                    statusClass = 'background:#f3f4f6; color:#9ca3af;';
-                }
-            } else {
-                const stageOrder = ['SSE', 'AM', 'MANAGER', 'SDH', 'HOD'];
-                const currentStageIndex = stageOrder.indexOf(req.stage);
-                const thisStageIndex = stageOrder.indexOf(m.stageFlag);
-                if(thisStageIndex < currentStageIndex) {
-                    statusText = '✓ Already Completed';
-                    statusClass = 'background:#d1fae5; color:#065f46;';
-                } else {
-                    statusText = '🔒 Locked';
-                    statusClass = 'background:#f3f4f6; color:#9ca3af;';
-                }
-            }
-            
-            const cardDisabledClass = (!shouldEnable && !isCompleted) ? 'disabled-card' : '';
-            cardsHtml += `
-                <div class="workflow-card ${cardDisabledClass}">
-                    <div class="card-header"><span style="font-size:1.6rem;">${m.icon}</span><h3>${m.label}</h3></div>
-                    <div class="status" style="display:inline-block; padding:0.2rem 0.7rem; border-radius:2rem; font-size:0.7rem; margin-bottom:0.7rem; ${statusClass}">
-                        ${statusText}
-                    </div>
-                    <textarea id="remark_${m.key}" rows="2" placeholder="Add your remarks..." ${!shouldEnable ? 'disabled' : ''}>${existingRemark}</textarea>
-                    <button class="action-btn" onclick="submitApprovalForSelected('${m.key}')" ${!shouldEnable ? 'disabled' : ''}>
-                        <i class="fas fa-check-circle"></i> ${m.next}
-                    </button>
-                </div>
-            `;
-        }
-        document.getElementById('workflowGrid').innerHTML = cardsHtml;
+        updateRoleUI();
+        updateUserHeader();
+        if (role === 'admin') renderAdmin();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    window.submitApprovalForSelected = async (level) => {
-        if(!selectedRequest) { alert('No request selected'); return; }
-        const req = selectedRequest;
-        const remarkElem = document.getElementById(`remark_${level}`);
-        if(!remarkElem) return;
-        const remark = remarkElem.value.trim();
-        if(!remark) { alert('Please enter remarks before approving'); return; }
-        
-        let isAuthorized = false;
-        if(currentUser?.role === 'admin') isAuthorized = true;
-        else {
-            if(level === 'sse' && currentUser?.role === 'sse' && req.stage === 'SSE' && !req.sseRemark) isAuthorized = true;
-            else if(level === 'am' && currentUser?.role === 'am' && req.stage === 'AM' && !req.amRemark) isAuthorized = true;
-            else if(level === 'manager' && currentUser?.role === 'manager_it' && req.stage === 'MANAGER' && !req.managerRemark) isAuthorized = true;
-            else if(level === 'sdh' && currentUser?.role === 'sdh' && req.stage === 'SDH' && !req.sdhRemark) isAuthorized = true;
-            else if(level === 'hod' && currentUser?.role === 'hod' && req.stage === 'HOD' && !req.hodRemark) isAuthorized = true;
-        }
-        
-        if(!isAuthorized) {
-            alert(`❌ You are not authorized to approve this stage!`);
+    function updateNavForRole() {
+        if (!session) return;
+        const role = session.role;
+        $('nav-donor-btn').style.display    = (role === 'admin' || role === 'donor') ? '' : 'none';
+        $('nav-pharmacy-btn').style.display = (role === 'admin' || role === 'pharmacy') ? '' : 'none';
+        $('nav-admin-btn').style.display    = (role === 'admin') ? '' : 'none';
+        $('mnav-donor').style.display    = (role === 'admin' || role === 'donor') ? '' : 'none';
+        $('mnav-pharmacy').style.display = (role === 'admin' || role === 'pharmacy') ? '' : 'none';
+        $('mnav-admin').style.display    = (role === 'admin') ? '' : 'none';
+    }
+
+    function updateRoleUI() {
+        const activeCls = 'px-3.5 py-2 rounded-lg text-sm font-semibold transition bg-white text-slate-900 shadow-sm';
+        const idleCls   = 'px-3.5 py-2 rounded-lg text-sm font-semibold transition text-slate-500 hover:text-slate-800';
+        if ($('nav-donor-btn'))    $('nav-donor-btn').className    = currentRole === 'donor'    ? activeCls : idleCls;
+        if ($('nav-pharmacy-btn')) $('nav-pharmacy-btn').className = currentRole === 'pharmacy' ? activeCls : idleCls;
+        if ($('nav-admin-btn'))    $('nav-admin-btn').className    = currentRole === 'admin'    ? activeCls : idleCls;
+        const mActive = 'flex-1 flex flex-col items-center justify-center gap-0.5 text-brand-600 transition';
+        const mIdle   = 'flex-1 flex flex-col items-center justify-center gap-0.5 text-slate-400 transition';
+        if ($('mnav-donor'))    $('mnav-donor').className    = currentRole === 'donor'    ? mActive : mIdle;
+        if ($('mnav-pharmacy')) $('mnav-pharmacy').className = currentRole === 'pharmacy' ? mActive : mIdle;
+        if ($('mnav-admin'))    $('mnav-admin').className    = currentRole === 'admin'    ? mActive : mIdle;
+    }
+
+    function updateUserHeader() {
+        if (!session) return;
+        $('user-display-name').textContent = session.name;
+        const map = {
+            admin:    { text: 'Admin Mode',    cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+            donor:    { text: 'Donor Mode',    cls: 'bg-brand-50 text-brand-700 border-brand-200' },
+            pharmacy: { text: 'Pharmacy Mode', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
+        };
+        const r = map[session.role];
+        $('user-role-badge').textContent = r.text;
+        $('user-role-badge').className = `text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full ${r.cls} font-semibold border self-end`;
+    }
+
+    /* ---------- STATS (derived live) ---------- */
+    function updateStats() {
+        // Derive patients helped from actual ledger records so admin clears/deletes stay consistent.
+        patientsHelped = ledgerRecords.length;
+
+        $('stat-total-funds').textContent    = `PKR ${fmt(totalDonated)}`;
+        $('stat-patients-helped').textContent = fmt(patientsHelped);
+        $('stat-active-stores').textContent  = `${pharmacies.filter(p => p.isOnline).length} Online`;
+        $('stat-needed-funds').textContent   = `PKR ${fmt(pharmacies.reduce((s, p) => s + p.targetMonthly, 0))}`;
+    }
+
+    /* ---------- DONOR GRID ---------- */
+    function renderPharmacies(filter = '') {
+        const grid = $('pharmacies-grid');
+        if (!grid) return;
+        const q = (filter || '').trim().toLowerCase();
+        const list = pharmacies.filter(p =>
+            p.name.toLowerCase().includes(q) || p.area.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q)
+        );
+        if (!list.length) {
+            grid.innerHTML = `<div class="col-span-full card rounded-2xl p-8 text-center text-slate-500 text-sm">
+                <i class="fa-solid fa-magnifying-glass text-2xl mb-2 block text-slate-300"></i>
+                No pharmacy found for "<span class="text-slate-900 font-semibold">${esc(filter)}</span>"
+            </div>`;
             return;
         }
-        
-        let updates = {};
-        if(level === 'sse') { updates = { sseRemark: remark, stage: 'AM' }; addLog(`✅ SSE approved by ${currentUser.name} → AM IT`); }
-        else if(level === 'am') { updates = { amRemark: remark, stage: 'MANAGER' }; addLog(`✅ AM approved by ${currentUser.name} → Manager IT`); }
-        else if(level === 'manager') { updates = { managerRemark: remark, stage: 'SDH' }; addLog(`✅ Manager IT approved by ${currentUser.name} → SDH`); }
-        else if(level === 'sdh') { updates = { sdhRemark: remark, stage: 'HOD' }; addLog(`✅ SDH approved by ${currentUser.name} → HOD IT`); }
-        else if(level === 'hod') { updates = { hodRemark: remark, stage: 'COMPLETED' }; addLog(`🏆 FINAL APPROVAL by HOD - Request Completed!`); }
-        
-        await db.collection('requests').doc(selectedRequest.id).update(updates);
-        await loadAllRequests();
-        await selectRequest(selectedRequest.id);
-        loadStats();
-        alert(`✓ ${level.toUpperCase()} approval submitted!`);
-    };
+        grid.innerHTML = list.map(p => {
+            const covered = p.spentThisMonth + p.allocatedWallet;
+            const pct = Math.min(100, Math.round((covered / p.targetMonthly) * 100));
+            const full = covered >= p.targetMonthly;
+            return `
+            <div class="card p-4 md:p-5 rounded-2xl space-y-4 flex flex-col justify-between hover:border-brand-300 transition">
+                <div class="space-y-3.5">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-slate-900 text-base leading-tight truncate">${esc(p.name)}</h3>
+                            <p class="text-[11px] text-slate-500 truncate"><i class="fa-solid fa-location-dot text-brand-600 mr-1"></i>${esc(p.area)}</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold border shrink-0 ${p.isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+                            ${p.isOnline ? 'ONLINE' : 'OFFLINE'}
+                        </span>
+                    </div>
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-[11px] gap-2">
+                            <span class="text-slate-500">Monthly coverage</span>
+                            <span class="text-slate-900 font-bold whitespace-nowrap">${fmt(covered)} / ${fmt(p.targetMonthly)}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div class="h-1.5 rounded-full ${full ? 'bg-emerald-500' : 'bg-brand-500'}" style="width:${pct}%"></div>
+                        </div>
+                        <span class="text-[10px] ${full ? 'text-emerald-700' : 'text-slate-500'} font-semibold">
+                            ${full ? '✓ Fully funded this month' : `${pct}% covered`}
+                        </span>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-2 gap-2 text-center">
+                        <div class="min-w-0">
+                            <span class="text-[9px] text-slate-500 uppercase tracking-wider block">Wallet</span>
+                            <span class="text-xs font-bold text-emerald-700 truncate block">PKR ${fmt(p.allocatedWallet)}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <span class="text-[9px] text-slate-500 uppercase tracking-wider block">Owner</span>
+                            <span class="text-[11px] font-semibold text-slate-800 truncate block">${esc(p.owner)}</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="openBudgetModal('${p.id}')" class="w-full py-2.5 rounded-xl bg-brand-50 hover:bg-brand-600 text-brand-700 hover:text-white font-bold text-xs transition border border-brand-200 hover:border-brand-600 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Send Funds
+                </button>
+            </div>`;
+        }).join('');
+    }
 
-    window.createRequest = async () => {
-        if(!currentUser) { alert('Please login'); return; }
-        if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
-            alert('Only SSE IT can create requests!');
+    /* ---------- WORKSTATION ---------- */
+    function renderPharmacySelect() {
+        const sel = $('pharmacy-select');
+        if (!sel || !session) return;
+        const list = session.role === 'pharmacy'
+            ? pharmacies.filter(p => p.id === session.pharmacyId)
+            : pharmacies;
+        sel.innerHTML = list.map(p =>
+            `<option value="${p.id}" ${p.id === activePharmacyId ? 'selected' : ''}>${esc(p.name)} — ${esc(p.area)}</option>`
+        ).join('');
+        sel.disabled = session.role === 'pharmacy';
+    }
+
+    function selectPharmacy(id) {
+        if (!session) return;
+        if (session.role === 'pharmacy' && id !== session.pharmacyId) return;
+        activePharmacyId = id;
+        renderWorkstation();
+    }
+
+    function renderWorkstation() {
+        if (!session) return;
+        if (session.role === 'pharmacy') activePharmacyId = session.pharmacyId;
+        const p = pharmacies.find(x => x.id === activePharmacyId) || pharmacies[0];
+        if (!p) return;
+        $('pharma-card-title').textContent = p.name;
+        $('pharma-card-area').innerHTML = `<i class="fa-solid fa-location-dot text-brand-600 mr-1"></i>${esc(p.area)}`;
+        $('pharma-balance').textContent = `PKR ${fmt(p.allocatedWallet)}`;
+        $('pharma-spent').textContent   = `PKR ${fmt(p.spentThisMonth)}`;
+        $('pharma-target').textContent  = `PKR ${fmt(p.targetMonthly)}`;
+        $('preview-pharmacy').textContent = p.name;
+        $('status-toggle').checked = p.isOnline;
+        const dot  = $('status-dot');
+        const text = $('status-text');
+        if (p.isOnline) { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0'; text.textContent = 'ONLINE'; }
+        else { dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0'; text.textContent = 'OFFLINE'; }
+        const sel = $('pharmacy-select');
+        if (sel && !sel.disabled && sel.value !== p.id) sel.value = p.id;
+    }
+
+    function togglePharmacyStatus() {
+        if (!session) return;
+        const p = pharmacies.find(x => x.id === activePharmacyId);
+        if (!p) return;
+        if (session.role === 'pharmacy' && p.id !== session.pharmacyId) return;
+        p.isOnline = $('status-toggle').checked;
+        renderWorkstation();
+        renderPharmacies($('pharmacy-search').value);
+        renderAdmin();
+        updateStats();
+        showToast(p.isOnline ? 'Store is now ONLINE' : 'Store is now OFFLINE');
+    }
+
+    function promptUpdateTarget() {
+        if (!session) return;
+        const p = pharmacies.find(x => x.id === activePharmacyId);
+        if (!p) return;
+        const input = prompt('Enter new monthly target (PKR):', p.targetMonthly);
+        if (input === null) return;
+        const val = parseInt(input, 10);
+        if (!val || val < 1000) { alert('Please enter a valid target (min PKR 1,000).'); return; }
+        p.targetMonthly = val;
+        renderWorkstation();
+        renderPharmacies($('pharmacy-search').value);
+        renderAdmin();
+        updateStats();
+        showToast('Monthly target updated');
+    }
+
+    /* ---------- DISPENSE ---------- */
+    function setupFormPreview() {
+        const nameEl = $('patient-name');
+        const amtEl  = $('medicine-amount');
+        if (nameEl) nameEl.addEventListener('input', e => { $('preview-patient').textContent = e.target.value.trim() || '---'; });
+        if (amtEl)  amtEl.addEventListener('input', e => {
+            const v = parseInt(e.target.value, 10);
+            $('preview-bill').textContent = v > 0 ? `PKR ${fmt(v)}` : 'PKR 0';
+        });
+    }
+
+    function handleDispenseMedicine(e) {
+        e.preventDefault();
+        if (!session) return;
+        const name      = $('patient-name').value.trim();
+        const phone     = $('patient-phone').value.trim();
+        const amount    = parseInt($('medicine-amount').value, 10);
+        const medicines = $('medicine-details').value.trim();
+        const p = pharmacies.find(x => x.id === activePharmacyId);
+        if (!p) return;
+        if (session.role === 'pharmacy' && p.id !== session.pharmacyId) { alert('You can only dispense from your own pharmacy.'); return; }
+        if (!p.isOnline) { alert(`"${p.name}" is OFFLINE. Turn the store online first.`); return; }
+        if (!amount || amount < 10) { alert('Enter a valid bill amount (min PKR 10).'); return; }
+        if (amount > p.allocatedWallet) {
+            alert(`Insufficient wallet balance!\nAvailable: PKR ${fmt(p.allocatedWallet)}\nRequired: PKR ${fmt(amount)}\n\nPlease ask a donor to send more funds.`);
             return;
         }
-        
-        const userEmail = document.getElementById('requestUserEmail').value.trim();
-        const title = document.getElementById('requestTitle').value.trim();
-        const department = document.getElementById('requestDepartment').value.trim();
-        const priority = document.getElementById('requestPriority').value;
-        const description = document.getElementById('requestDesc').value.trim();
-        
-        if(!userEmail) { alert('User Email is required!'); return; }
-        if(!title) { alert('Request Title is required!'); return; }
-        if(!description) { alert('Description is required!'); return; }
-        
-        let attachmentUrl = null;
-        const file = document.getElementById('fileInput').files[0];
-        if(file) {
-            try {
-                const storageRef = storage.ref(`attachments/${Date.now()}_${file.name}`);
-                await storageRef.put(file);
-                attachmentUrl = await storageRef.getDownloadURL();
-                addLog(`📎 Attachment uploaded: ${file.name}`);
-            } catch(e) { console.error('Upload error:', e); }
-        }
-        
-        const now = new Date();
-        const requestDate = now.toLocaleString();
-        
-        try {
-            await db.collection('requests').add({
-                requesterId: currentUser.uid,
-                requesterName: currentUser.name,
-                requesterEmail: currentUser.email,
-                userEmail: userEmail,
-                title: title,
-                department: department || 'N/A',
-                priority: priority,
-                description: description,
-                attachmentUrl: attachmentUrl,
-                requestDate: requestDate,
-                stage: 'SSE',
-                sseRemark: '', amRemark: '', managerRemark: '', sdhRemark: '', hodRemark: '',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            addLog(`✅ New request created by ${currentUser.name} for ${userEmail}`);
-            document.getElementById('requestUserEmail').value = '';
-            document.getElementById('requestTitle').value = '';
-            document.getElementById('requestDepartment').value = '';
-            document.getElementById('requestDesc').value = '';
-            document.getElementById('fileInput').value = '';
-            await loadAllRequests();
-            loadStats();
-            alert('Request submitted successfully!');
-        } catch(e) {
-            console.error('Error:', e);
-            alert('Error submitting request: ' + e.message);
-        }
-    };
+        p.allocatedWallet -= amount;
+        p.spentThisMonth  += amount;
+        ledgerRecords.unshift({
+            id: 'rec-' + Date.now(), time: 'Just now',
+            pharmacyName: p.name, patientName: name, patientCell: phone,
+            medicines: medicines, amount: amount, donorName: session.name
+        });
+        renderWorkstation();
+        renderPharmacies($('pharmacy-search').value);
+        renderLedger();
+        renderAdmin();
+        updateStats();
+        e.target.reset();
+        $('preview-patient').textContent = '---';
+        $('preview-bill').textContent = 'PKR 0';
+        showToast(`PKR ${fmt(amount)} dispensed to ${name}`);
+        const msg = `Assalam-o-Alaikum!\n\nFarazé MedTrust — Sadqah-e-Jariyah Receipt\n\nPatient: ${name}\nPhone: ${phone}\nPharmacy: ${p.name}\nMedicines: ${medicines}\nAmount: PKR ${fmt(amount)}\n\nDelivered successfully. May Allah accept this charity in memory of Nagina Nadeem (Late). Ameen.`;
+        showWhatsAppModal(phone, msg);
+    }
 
-    window.exportAllToPDF = async () => {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF('p', 'mm', 'a4');
-        let y = 20;
-        doc.setFontSize(18);
-        doc.setTextColor(249, 115, 22);
-        doc.text('M&P Express Logistics - IT Request Report', 20, y);
-        y += 8;
-        doc.setFontSize(10);
-        doc.setTextColor(107, 114, 128);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 20, y);
-        y += 10;
-        
-        for(let i=0; i<allRequests.length; i++) {
-            const req = allRequests[i];
-            if(y > 260) { doc.addPage(); y = 20; }
-            doc.setFontSize(10);
-            doc.setTextColor(249, 115, 22);
-            doc.setFont(undefined, 'bold');
-            doc.text(`Request #${req.id.slice(0,8)}`, 20, y);
-            y += 6;
-            doc.setFont(undefined, 'normal');
-            doc.setTextColor(55, 65, 81);
-            doc.setFontSize(9);
-            doc.text(`User Email: ${req.userEmail}`, 20, y);
-            y += 5;
-            doc.text(`Title: ${req.title || 'IT Request'}`, 20, y);
-            y += 5;
-            doc.text(`Department: ${req.department || 'N/A'} | Priority: ${req.priority || 'Medium'}`, 20, y);
-            y += 5;
-            doc.text(`Date: ${req.requestDate || new Date(req.createdAt?.toDate()).toLocaleString()}`, 20, y);
-            y += 5;
-            doc.text(`Description: ${req.description?.substring(0,80) || ''}`, 20, y);
-            y += 5;
-            doc.text(`Status: ${req.stage === 'COMPLETED' ? 'COMPLETED' : req.stage}`, 20, y);
-            y += 5;
-            doc.text(`SSE: ${req.sseRemark || '—'}`, 20, y);
-            y += 4;
-            doc.text(`AM: ${req.amRemark || '—'}`, 20, y);
-            y += 4;
-            doc.text(`Manager IT: ${req.managerRemark || '—'}`, 20, y);
-            y += 4;
-            doc.text(`SDH: ${req.sdhRemark || '—'}`, 20, y);
-            y += 4;
-            doc.text(`HOD: ${req.hodRemark || '—'}`, 20, y);
-            y += 8;
-            doc.setDrawColor(249, 115, 22);
-            doc.line(20, y-2, 190, y-2);
-        }
-        doc.save(`M&P_IT_Requests_${new Date().toISOString().slice(0,19)}.pdf`);
-        addLog(`📄 PDF exported with ${allRequests.length} requests`);
-    };
+    /* ---------- ADMIN: TABS ---------- */
+    function switchAdminTab(tab) {
+        ['pharmacy', 'donor', 'user'].forEach(t => {
+            const formEl = $('admin-form-' + t);
+            const tabBtn = $('admin-tab-' + t);
+            if (!formEl || !tabBtn) return;
+            if (t === tab) {
+                formEl.classList.remove('hidden');
+                tabBtn.className = 'flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-brand-600 text-brand-700 bg-white transition';
+            } else {
+                formEl.classList.add('hidden');
+                tabBtn.className = 'flex items-center gap-2 px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition';
+            }
+        });
+    }
 
-    auth.onAuthStateChanged(async (user) => {
-        if(user) {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if(!userDoc.exists) { await auth.signOut(); return; }
-            currentUser = { uid: user.uid, ...userDoc.data() };
-            document.getElementById('userName').innerHTML = `<i class="fas fa-user"></i> ${currentUser.name}`;
-            document.getElementById('userRole').innerHTML = `<i class="fas fa-tag"></i> ${currentUser.role.toUpperCase()}`;
-            document.getElementById('authContainer').style.display = 'none';
-            document.getElementById('appContainer').style.display = 'block';
-            
-            if(currentUser.role === 'admin') {
-                document.getElementById('adminPanel').style.display = 'block';
-                loadAllUsers();
+    /* ---------- ADMIN: REFRESH & EXPORT ---------- */
+    function refreshAllData() {
+        if (session) {
+            const fresh = users.find(u => u.id === session.id);
+            if (!fresh) { alert('Your account was removed. Please sign in again.'); handleLogout(); return; }
+            if (fresh.role === 'pharmacy' && !pharmacies.find(p => p.id === fresh.pharmacyId)) {
+                alert('Your pharmacy was removed. Please contact the admin.'); handleLogout(); return;
             }
-            if(currentUser.role !== 'sse' && currentUser.role !== 'admin') {
-                document.getElementById('createRequestCard').style.display = 'none';
-            }
-            await loadAllRequests();
-            loadStats();
-            addLog(`Welcome ${currentUser.name} (${getRoleDisplayName(currentUser.role)})`);
-            addLog(`🔒 5-Stage Workflow: SSE → AM → Manager IT → SDH → HOD`);
+            session = fresh;
+        }
+        updateStats();
+        if ($('pharmacy-search')) renderPharmacies($('pharmacy-search').value);
+        renderPharmacySelect();
+        renderWorkstation();
+        renderAdmin();
+        renderLedger();
+        updateUserHeader();
+        showToast('Data refreshed successfully');
+    }
+
+    function exportData() {
+        const data = {
+            exportedAt: new Date().toISOString(),
+            pharmacies: pharmacies.map(p => ({...p})),
+            users: users.map(u => ({...u, pin: '***'})),
+            ledgerRecords: ledgerRecords.map(r => ({...r})),
+            stats: { totalDonated, patientsHelped }
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `medtrust-backup-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Backup exported');
+    }
+
+    function filterAdminUsers(role) {
+        adminUserFilter = role;
+        renderAdmin();
+    }
+
+    function onUserRoleChange() {
+        const role = $('admin-user-role').value;
+        const wrap = $('admin-user-pharmacy-wrap');
+        if (role === 'Pharmacy') {
+            wrap.classList.remove('hidden');
+            $('admin-user-pharmacy').innerHTML = '<option value="">Select pharmacy…</option>' +
+                pharmacies.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.area)}</option>`).join('');
         } else {
-            document.getElementById('authContainer').style.display = 'flex';
-            document.getElementById('appContainer').style.display = 'none';
+            wrap.classList.add('hidden');
+            $('admin-user-pharmacy').innerHTML = '';
         }
+    }
+
+    /* ---------- ADMIN: RENDER ---------- */
+    function renderAdmin() {
+        if (!session || session.role !== 'admin') return;
+
+        const totalWallet = pharmacies.reduce((s, p) => s + p.allocatedWallet, 0);
+        $('admin-stat-stores').textContent    = pharmacies.length;
+        $('admin-stat-online').textContent    = pharmacies.filter(p => p.isOnline).length;
+        $('admin-stat-users').textContent     = users.length;
+        $('admin-stat-allocated').textContent = `PKR ${fmt(totalWallet)}`;
+        $('admin-store-count').textContent    = pharmacies.length;
+        $('admin-user-count').textContent     = users.length;
+        $('admin-ledger-count').textContent   = ledgerRecords.length;
+
+        const storeList = $('admin-stores-list');
+        if (!pharmacies.length) {
+            storeList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No stores yet.</div>`;
+        } else {
+            storeList.innerHTML = pharmacies.map(p => {
+                const owner = users.find(u => u.pharmacyId === p.id);
+                return `
+                <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
+                    <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-sm border border-brand-100 shrink-0">
+                        <i class="fa-solid fa-clinic-medical"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-semibold text-slate-900 text-sm truncate">${esc(p.name)}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded-full border font-bold ${p.isOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+                                ${p.isOnline ? 'ONLINE' : 'OFFLINE'}
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 truncate">${esc(p.owner)} • ${esc(p.area)}</p>
+                        <p class="text-[11px] text-slate-400 font-mono">${esc(p.phone)}</p>
+                        ${owner
+                            ? `<p class="text-[10px] text-brand-700 mt-0.5"><i class="fa-solid fa-key"></i> Login: ${esc(owner.phone)}</p>`
+                            : `<p class="text-[10px] text-rose-500 mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i> No login assigned</p>`}
+                    </div>
+                    <button onclick="deleteStore('${p.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete store">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        const filteredUsers = adminUserFilter === 'all'
+            ? users
+            : users.filter(u => u.role === adminUserFilter);
+
+        const userList = $('admin-users-list');
+        if (!filteredUsers.length) {
+            userList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No ${adminUserFilter === 'all' ? '' : adminUserFilter + ' '}users.</div>`;
+        } else {
+            userList.innerHTML = filteredUsers.map(u => {
+                const roleBadge = u.role === 'admin'    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : u.role === 'pharmacy' ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-brand-50 text-brand-700 border-brand-200';
+                const roleLabel = u.role === 'admin' ? 'Admin' : u.role === 'pharmacy' ? 'Pharmacy' : 'Donor';
+                const isMe = session && session.id === u.id;
+                const linkedStore = u.pharmacyId ? pharmacies.find(p => p.id === u.pharmacyId) : null;
+                return `
+                <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
+                    <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm border border-slate-200 shrink-0 font-bold">
+                        ${esc((u.name || '?').charAt(0).toUpperCase())}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-semibold text-slate-900 text-sm truncate">${esc(u.name)}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded-full border font-bold ${roleBadge}">${roleLabel}</span>
+                            ${isMe ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold border border-slate-200">YOU</span>' : ''}
+                        </div>
+                        <p class="text-[11px] text-slate-500 font-mono">${esc(u.phone)}</p>
+                        ${linkedStore ? `<p class="text-[10px] text-slate-500 mt-0.5"><i class="fa-solid fa-store"></i> ${esc(linkedStore.name)}</p>` : ''}
+                        ${u.city ? `<p class="text-[10px] text-slate-400">${esc(u.city)}</p>` : ''}
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="resetUserPin('${u.id}')" class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center transition" title="Reset PIN">
+                            <i class="fa-solid fa-key text-xs"></i>
+                        </button>
+                        ${isMe ? '' : `
+                        <button onclick="deleteUser('${u.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition" title="Delete user">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>`}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        const ledgerList = $('admin-ledger-list');
+        if (!ledgerRecords.length) {
+            ledgerList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No ledger records.</div>`;
+        } else {
+            ledgerList.innerHTML = ledgerRecords.map(r => `
+                <div class="flex items-start gap-3 py-2.5 border-b border-slate-100 last:border-0">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs text-slate-900 font-semibold truncate">
+                            ${esc(r.patientName)}
+                            <span class="text-emerald-700">· PKR ${fmt(r.amount)}</span>
+                        </p>
+                        <p class="text-[10px] text-slate-500 truncate">${esc(r.pharmacyName)} • ${esc(r.time)} • ${esc(r.donorName)}</p>
+                    </div>
+                    <button onclick="deleteLedgerRecord('${r.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete record">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+    }
+
+    /* ---------- ADMIN: CREATE DONOR ---------- */
+    function addNewDonor(e) {
+        e.preventDefault();
+        const name  = $('admin-donor-name').value.trim();
+        const phone = $('admin-donor-phone').value.trim();
+        const pin   = $('admin-donor-pin').value.trim();
+        const city  = $('admin-donor-city').value.trim();
+
+        if (!name || !phone || !pin) { alert('Please fill name, phone, and PIN.'); return; }
+        if (!/^\d{4,6}$/.test(pin)) { alert('PIN must be 4-6 digits.'); return; }
+        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) {
+            alert('A user already exists with this phone number.'); return;
+        }
+
+        users.push({ id: 'user-' + Date.now(), name, phone, pin, role: 'donor', city, pharmacyId: null });
+        e.target.reset();
+        renderAdmin();
+        showToast(`Donor "${name}" created`);
+    }
+
+    /* ---------- ADMIN: CREATE STORE ---------- */
+    function addNewStore(e) {
+        e.preventDefault();
+        const name   = $('admin-store-name').value.trim();
+        const owner  = $('admin-store-owner').value.trim();
+        const phone  = $('admin-store-phone').value.trim();
+        const area   = $('admin-store-area').value.trim();
+        const target = parseInt($('admin-store-target').value, 10);
+        const pin    = $('admin-store-pin').value.trim();
+
+        if (!name || !owner || !phone || !area || !target || target < 1000) {
+            alert('Fill all store fields. Target must be at least PKR 1,000.'); return;
+        }
+        if (!/^\d{4,6}$/.test(pin)) { alert('Owner PIN must be 4-6 digits.'); return; }
+        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) {
+            alert('A user already exists with this phone number.'); return;
+        }
+
+        const storeId = 'pharma-' + Date.now();
+        pharmacies.push({
+            id: storeId, name, owner, area, phone,
+            isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: target
+        });
+        users.push({
+            id: 'user-' + Date.now(),
+            name: owner, phone, pin, role: 'pharmacy', city: area, pharmacyId: storeId
+        });
+
+        e.target.reset();
+        renderPharmacySelect();
+        renderPharmacies($('pharmacy-search').value);
+        renderAdmin();
+        updateStats();
+        showToast(`Store "${name}" registered with owner login`);
+    }
+
+    /* ---------- ADMIN: CREATE STAFF USER ---------- */
+    function addNewUser(e) {
+        e.preventDefault();
+        const name  = $('admin-user-name').value.trim();
+        const phone = $('admin-user-phone').value.trim();
+        const pin   = $('admin-user-pin').value.trim();
+        const role  = $('admin-user-role').value;
+        const city  = $('admin-user-city').value.trim();
+        const pharmacyId = role === 'Pharmacy' ? $('admin-user-pharmacy').value : null;
+
+        if (!name || !phone || !pin || !role) { alert('Fill name, phone, PIN, and role.'); return; }
+        if (!/^\d{4,6}$/.test(pin)) { alert('PIN must be 4-6 digits.'); return; }
+        if (role === 'Pharmacy' && !pharmacyId) { alert('Please select a pharmacy.'); return; }
+        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) {
+            alert('A user already exists with this phone number.'); return;
+        }
+        if (role === 'Pharmacy') {
+            const existing = users.find(u => u.pharmacyId === pharmacyId);
+            if (existing && !confirm(`"${existing.name}" already manages this pharmacy. Add another login anyway?`)) return;
+        }
+
+        users.push({
+            id: 'user-' + Date.now(), name, phone, pin,
+            role: role.toLowerCase(), city, pharmacyId
+        });
+
+        e.target.reset();
+        onUserRoleChange();
+        renderAdmin();
+        showToast(`User "${name}" created`);
+    }
+
+    /* ---------- ADMIN: DELETE ---------- */
+    function deleteStore(id) {
+        if (pharmacies.length <= 1) { alert('Cannot delete the last store.'); return; }
+        const p = pharmacies.find(x => x.id === id);
+        if (!p) return;
+        const linked = users.find(u => u.pharmacyId === id);
+        if (linked) {
+            alert(`Cannot delete this store — "${linked.name}" is managing it.\n\nDelete or reassign that user first.`);
+            return;
+        }
+        if (!confirm(`Delete store "${p.name}"?\n\nIts ledger history will be preserved.`)) return;
+        pharmacies = pharmacies.filter(x => x.id !== id);
+        if (activePharmacyId === id) activePharmacyId = pharmacies[0].id;
+        renderPharmacySelect();
+        renderPharmacies($('pharmacy-search').value);
+        renderWorkstation();
+        renderAdmin();
+        updateStats();
+        showToast('Store deleted');
+    }
+
+    function deleteUser(id) {
+        const u = users.find(x => x.id === id);
+        if (!u) return;
+        if (session && session.id === id) { alert('You cannot delete your own account.'); return; }
+        if (u.role === 'admin' && users.filter(x => x.role === 'admin').length <= 1) {
+            alert('Cannot delete the last admin account.'); return;
+        }
+        if (!confirm(`Delete user "${u.name}"?`)) return;
+        users = users.filter(x => x.id !== id);
+        renderAdmin();
+        showToast('User deleted');
+    }
+
+    function deleteLedgerRecord(id) {
+        if (!confirm('Delete this audit record? This removes it from the public ledger.')) return;
+        ledgerRecords = ledgerRecords.filter(r => r.id !== id);
+        renderLedger();
+        renderAdmin();
+        updateStats();
+        showToast('Record deleted');
+    }
+
+    function clearAllLedger() {
+        if (!ledgerRecords.length) { alert('Ledger is already empty.'); return; }
+        if (!confirm(`Delete ALL ${ledgerRecords.length} ledger records?\n\nWallet balances and totals will NOT change.`)) return;
+        if (!confirm('Are you absolutely sure? This permanently erases the audit history.')) return;
+        ledgerRecords = [];
+        renderLedger();
+        renderAdmin();
+        updateStats();
+        showToast('All records cleared');
+    }
+
+    function resetUserPin(userId) {
+        const u = users.find(x => x.id === userId);
+        if (!u) return;
+        const newPin = prompt(`Enter new 4-6 digit PIN for ${u.name}:`);
+        if (newPin === null) return;
+        if (!/^\d{4,6}$/.test(newPin)) { alert('PIN must be 4-6 digits.'); return; }
+        u.pin = newPin;
+        showToast(`PIN reset for ${u.name}`);
+    }
+
+    /* ---------- LEDGER ---------- */
+    function renderLedger() {
+        const tbody = $('ledger-tbody');
+        const cards = $('ledger-cards');
+        if (!tbody) return;
+        if (!ledgerRecords.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">No disbursals yet.</td></tr>`;
+            cards.innerHTML = `<div class="card rounded-2xl p-6 text-center text-slate-400 text-sm">No disbursals yet.</div>`;
+            return;
+        }
+        tbody.innerHTML = ledgerRecords.map(r => `
+            <tr class="hover:bg-slate-50 transition">
+                <td class="py-3 px-3 text-[11px] text-slate-500 whitespace-nowrap">${esc(r.time)}</td>
+                <td class="py-3 px-3 font-bold text-slate-900 text-xs whitespace-nowrap">${esc(r.pharmacyName)}</td>
+                <td class="py-3 px-3">
+                    <span class="block text-slate-800 text-xs font-semibold">${esc(r.patientName)}</span>
+                    <span class="text-[10px] text-slate-500 font-mono">${esc(r.patientCell)}</span>
+                </td>
+                <td class="py-3 px-3 text-[11px] text-slate-600 max-w-[220px]">${esc(r.medicines)}</td>
+                <td class="py-3 px-3 font-extrabold text-emerald-700 text-xs whitespace-nowrap">PKR ${fmt(r.amount)}</td>
+                <td class="py-3 px-3 text-[11px] text-brand-700 font-medium whitespace-nowrap">${esc(r.donorName)}</td>
+                <td class="py-3 px-3 text-right">
+                    <button onclick="shareProof('${esc(r.patientName)}', ${r.amount}, '${esc(r.pharmacyName)}')"
+                            class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-semibold border border-emerald-200 transition inline-flex items-center gap-1">
+                        <i class="fa-brands fa-whatsapp"></i> Proof
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        cards.innerHTML = ledgerRecords.map(r => `
+            <div class="bg-white rounded-xl border border-slate-200 p-3.5 space-y-2">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <span class="block text-slate-900 text-sm font-bold truncate">${esc(r.patientName)}</span>
+                        <span class="text-[10px] text-slate-500 font-mono">${esc(r.patientCell)}</span>
+                    </div>
+                    <span class="text-sm font-extrabold text-emerald-700 whitespace-nowrap">PKR ${fmt(r.amount)}</span>
+                </div>
+                <p class="text-[11px] text-slate-600 leading-relaxed">${esc(r.medicines)}</p>
+                <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100">
+                    <div class="min-w-0">
+                        <span class="block text-[10px] text-slate-500 truncate">${esc(r.pharmacyName)}</span>
+                        <span class="block text-[9px] text-slate-400">${esc(r.time)} • ${esc(r.donorName)}</span>
+                    </div>
+                    <button onclick="shareProof('${esc(r.patientName)}', ${r.amount}, '${esc(r.pharmacyName)}')"
+                            class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200 shrink-0">
+                        <i class="fa-brands fa-whatsapp"></i> Proof
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /* ---------- BUDGET ---------- */
+    function openBudgetModal(id) {
+        if (!session || !canAccess('donor')) { alert('Only donors and admins can send funds.'); return; }
+        selectedPharmacyForBudget = pharmacies.find(p => p.id === id);
+        if (!selectedPharmacyForBudget) return;
+        $('modal-pharmacy-name').textContent = `${selectedPharmacyForBudget.name} • ${selectedPharmacyForBudget.area}`;
+        $('custom-budget-input').value = '';
+        $('modal-budget').classList.remove('hidden');
+    }
+    function closeBudgetModal() { $('modal-budget').classList.add('hidden'); }
+    function setBudgetAmount(a) { $('custom-budget-input').value = a; }
+
+    function confirmBudgetAssignment() {
+        if (!session) return;
+        const amount = parseInt($('custom-budget-input').value, 10);
+        if (!amount || amount < 500) { alert('Enter a valid amount (min PKR 500).'); return; }
+        const p = selectedPharmacyForBudget;
+        if (!p) return;
+        p.allocatedWallet += amount;
+        totalDonated      += amount;   // lifetime cumulative
+        closeBudgetModal();
+        renderPharmacies($('pharmacy-search').value);
+        renderWorkstation();
+        renderAdmin();
+        updateStats();
+        showToast(`PKR ${fmt(amount)} sent to ${p.name}`);
+        const msg = `Assalam-o-Alaikum!\n\n${session.name} has sent PKR ${fmt(amount)} to ${p.name} on Farazé MedTrust (Sadqah-e-Jariyah for Nagina Nadeem — Late).\n\nYou can now dispense medicines to poor patients from this wallet balance.`;
+        showWhatsAppModal(p.phone, msg);
+    }
+
+    /* ---------- WHATSAPP ---------- */
+    function showWhatsAppModal(phone, message) {
+        $('whatsapp-message-box').textContent = message;
+        const link = $('whatsapp-direct-link');
+        if (phone) {
+            let clean = cleanPhone(phone);
+            if (clean.startsWith('0')) clean = '92' + clean.slice(1);
+            else if (!clean.startsWith('92')) clean = '92' + clean;
+            link.href = `https://wa.me/${clean}?text=${encodeURIComponent(message)}`;
+            link.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Open';
+        } else {
+            link.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            link.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Share';
+        }
+        $('modal-whatsapp').classList.remove('hidden');
+    }
+    function closeWhatsAppModal() { $('modal-whatsapp').classList.add('hidden'); }
+    function shareProof(patient, amount, pharmacy) {
+        const msg = `Farazé MedTrust — Audit Proof\n\nPatient: ${patient}\nAmount: PKR ${fmt(amount)}\nPharmacy: ${pharmacy}\nIn Memory Of: Nagina Nadeem (Late)`;
+        showWhatsAppModal(null, msg);
+    }
+    function scrollToLedger() { $('ledger-section').scrollIntoView({ behavior: 'smooth' }); }
+
+    /* ---------- BOOT ---------- */
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            const savedId = localStorage.getItem('medtrust_session');
+            if (savedId) {
+                const u = users.find(x => x.id === savedId);
+                if (u) {
+                    if (u.role === 'pharmacy' && !pharmacies.find(p => p.id === u.pharmacyId)) {
+                        localStorage.removeItem('medtrust_session');
+                    } else {
+                        session = u;
+                        startApp();
+                        return;
+                    }
+                }
+            }
+        } catch (_) {}
+        $('login-phone').focus();
     });
-</script>
+    </script>
 </body>
 </html>
