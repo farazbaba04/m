@@ -609,6 +609,20 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                            <label class="flex items-center gap-2 text-[11px] font-semibold text-slate-700 cursor-pointer select-none">
+                                <input type="checkbox" id="users-select-all" onchange="toggleSelectAllUsers(this.checked)" class="w-4 h-4 accent-emerald-600">
+                                Select all
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="selectDuplicateUsers()" class="text-[11px] px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-semibold transition" title="Selects extra accounts that share the same phone number (keeps the oldest one)">
+                                    <i class="fa-solid fa-clone"></i> Select duplicates
+                                </button>
+                                <button type="button" id="bulk-delete-btn" onclick="bulkDeleteUsers()" disabled class="text-[11px] px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold transition disabled:opacity-40 disabled:cursor-not-allowed">
+                                    <i class="fa-solid fa-trash"></i> Delete selected (<span id="bulk-selected-count">0</span>)
+                                </button>
+                            </div>
+                        </div>
                         <div id="admin-users-list" class="max-h-[420px] overflow-y-auto"></div>
                     </div>
                 </div>
@@ -809,6 +823,7 @@
 
     let toastTimer;
     let adminUserFilter = 'all';
+    const selectedUserIds = new Set();
     let auditTab = 'pharmacy';
     let donationFilter = 'all';
     let proofProcessing = false;
@@ -1633,6 +1648,7 @@
                     const isMe = session && session.id === u.id;
                     return `
                     <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
+                        ${isMe ? '<span class="w-4 shrink-0"></span>' : `<input type="checkbox" class="w-4 h-4 mt-2.5 accent-emerald-600 shrink-0 cursor-pointer" ${selectedUserIds.has(u.id) ? 'checked' : ''} onchange="toggleUserSelect('${esc(u.id)}', this.checked)">`}
                         <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-sm border border-slate-200 shrink-0 font-bold">
                             ${esc((u.name || '?').charAt(0).toUpperCase())}
                         </div>
@@ -1657,6 +1673,8 @@
                 }).join('');
             }
         }
+
+        updateBulkUI();
 
         const ledgerList = $('admin-ledger-list');
         if (ledgerList) {
@@ -2045,7 +2063,7 @@
         showToast('Backup exported');
     }
 
-    function filterAdminUsers(role) { adminUserFilter = role; renderAdmin(); }
+    function filterAdminUsers(role) { adminUserFilter = role; selectedUserIds.clear(); renderAdmin(); }
 
     function onUserRoleChange() {
         const role = $('admin-user-role').value;
@@ -2140,6 +2158,78 @@
         batch.delete(db.collection('pharmacies').doc(id));
         linked.forEach(u => batch.delete(db.collection('users').doc(u.id)));
         batch.commit().then(() => showToast('Store deleted')).catch(err => alert('Could not delete: ' + err.message));
+    }
+
+    /* ---------- BULK USER SELECT / DELETE ---------- */
+    function visibleUsers() {
+        return (adminUserFilter === 'all' ? users : users.filter(u => u.role === adminUserFilter))
+            .filter(u => !(session && session.id === u.id));            // your own account is never selectable
+    }
+
+    function updateBulkUI() {
+        // drop ids of users that no longer exist
+        const existing = new Set(users.map(u => u.id));
+        [...selectedUserIds].forEach(id => { if (!existing.has(id)) selectedUserIds.delete(id); });
+        const n = selectedUserIds.size;
+        if ($('bulk-selected-count')) $('bulk-selected-count').textContent = n;
+        if ($('bulk-delete-btn')) $('bulk-delete-btn').disabled = n === 0 || busy.has('bulk-users');
+        const vis = visibleUsers();
+        const all = $('users-select-all');
+        if (all) {
+            const sel = vis.filter(u => selectedUserIds.has(u.id)).length;
+            all.checked = vis.length > 0 && sel === vis.length;
+            all.indeterminate = sel > 0 && sel < vis.length;
+        }
+    }
+
+    function toggleUserSelect(id, checked) {
+        if (checked) selectedUserIds.add(id); else selectedUserIds.delete(id);
+        updateBulkUI();
+    }
+
+    function toggleSelectAllUsers(checked) {
+        visibleUsers().forEach(u => { if (checked) selectedUserIds.add(u.id); else selectedUserIds.delete(u.id); });
+        renderAdmin();
+    }
+
+    // Selects extra accounts that share a phone number; the oldest account of each phone is kept
+    function selectDuplicateUsers() {
+        const groups = {};
+        users.forEach(u => { const k = cleanPhone(u.phone); (groups[k] = groups[k] || []).push(u); });
+        selectedUserIds.clear();
+        let found = 0;
+        Object.values(groups).forEach(list => {
+            if (list.length < 2) return;
+            // keep: your own account if present, otherwise the oldest id
+            list.sort((a, b) => (session && a.id === session.id ? -1 : session && b.id === session.id ? 1 : String(a.id).localeCompare(String(b.id), undefined, { numeric: true })));
+            list.slice(1).forEach(u => { selectedUserIds.add(u.id); found++; });
+        });
+        renderAdmin();
+        showToast(found ? `${found} duplicate account(s) selected — review, then press Delete selected` : 'No duplicate phone numbers found', 4000);
+    }
+
+    async function bulkDeleteUsers() {
+        if (!session || session.role !== 'admin' || busy.has('bulk-users')) return;
+        const ids = [...selectedUserIds].filter(id => id !== session.id && users.some(u => u.id === id));
+        if (!ids.length) return;
+        const picked = users.filter(u => ids.includes(u.id));
+        const preview = picked.slice(0, 8).map(u => `• ${u.name} (${u.phone}) — ${u.role}`).join('\n') + (picked.length > 8 ? `\n…and ${picked.length - 8} more` : '');
+        if (!confirm(`Delete ${ids.length} user(s)?\n\n${preview}\n\nThis cannot be undone. Your own account is not included.`)) return;
+        busy.add('bulk-users'); updateBulkUI();
+        try {
+            for (let i = 0; i < ids.length; i += 400) {
+                const batch = db.batch();
+                ids.slice(i, i + 400).forEach(id => batch.delete(db.collection('users').doc(id)));
+                await batch.commit();
+            }
+            ids.forEach(id => selectedUserIds.delete(id));
+            showToast(`${ids.length} user(s) deleted`);
+        } catch (err) {
+            alert('Could not delete all selected users: ' + (err.message || err));
+        } finally {
+            busy.delete('bulk-users');
+            renderAdmin();
+        }
     }
 
     function deleteUser(id) {
