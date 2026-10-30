@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ur" dir="ltr">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -207,6 +207,18 @@
             </section>
 
             <div id="view-donor" class="space-y-5 md:space-y-6">
+                <section id="my-donations-section" class="hidden card p-4 sm:p-6 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                        <div>
+                            <h3 class="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-hand-holding-heart text-brand-600"></i> My Donations &amp; Impact</h3>
+                            <p class="text-[11px] md:text-xs text-slate-500 mt-0.5">Live status of every donation you sent, and how your money is helping patients.</p>
+                        </div>
+                        <span id="my-donations-count" class="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold whitespace-nowrap">0</span>
+                    </div>
+                    <div id="my-donations-summary" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
+                    <div id="my-donations-list" class="space-y-3 max-h-[560px] overflow-y-auto"></div>
+                </section>
+
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <h2 class="text-lg md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
@@ -282,7 +294,7 @@
                             <h3 class="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <i class="fa-solid fa-hand-holding-medical text-brand-600"></i> Dispense Free Medicine
                             </h3>
-                            <p class="text-[11px] md:text-xs text-slate-500 mt-1">Enter patient details to deduct from the donor wallet and send a receipt.</p>
+                            <p class="text-[11px] md:text-xs text-slate-500 mt-1">Enter patient details to deduct from the donor wallet. Donors can see how their money was used.</p>
                         </div>
                         <form id="dispense-form" onsubmit="handleDispenseMedicine(event)" class="space-y-4">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -320,17 +332,26 @@
                             <div class="bg-slate-50 p-3.5 rounded-xl border border-dashed border-slate-300 space-y-1.5">
                                 <div class="flex items-center justify-between text-[11px] text-slate-500">
                                     <span><i class="fa-solid fa-receipt text-amber-500"></i> Receipt Preview</span>
-                                    <span class="text-[10px] text-slate-400">Auto-sent to donor</span>
+                                    <span class="text-[10px] text-slate-400">WhatsApp receipt to patient</span>
                                 </div>
                                 <p class="text-[11px] text-slate-700 font-mono bg-white p-2.5 rounded-lg border border-slate-200 leading-relaxed">
                                     [Farazé MedTrust] Medicine worth <span id="preview-bill" class="text-emerald-600 font-bold">PKR 0</span> provided to <span id="preview-patient" class="text-slate-900 font-bold">---</span> at <span id="preview-pharmacy" class="text-slate-900 font-bold">—</span>. Donor wallet updated.
                                 </p>
                             </div>
                             <button type="submit" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-check-circle"></i> Confirm Dispense & Notify Donor
+                                <i class="fa-solid fa-check-circle"></i> Confirm Dispense &amp; Send Receipt
                             </button>
                         </form>
                     </div>
+                </div>
+
+                <div class="card p-5 md:p-6 rounded-2xl space-y-4">
+                    <div class="border-b border-slate-200 pb-3">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-inbox text-brand-600"></i> Donations Received</h3>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Funds donors sent to this store. They appear in the wallet once the admin approves.</p>
+                    </div>
+                    <div id="pharma-received-summary" class="grid grid-cols-3 gap-3"></div>
+                    <div id="pharma-received-list" class="max-h-[320px] overflow-y-auto"></div>
                 </div>
             </div>
 
@@ -344,6 +365,7 @@
                         <p class="text-xs md:text-sm text-slate-500 mt-0.5">Approve donations, manage stores, users, and audit log.</p>
                     </div>
                     <div class="flex items-center gap-2">
+                        <button onclick="exportAuditCSV()" class="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm"><i class="fa-solid fa-file-csv"></i> Audit CSV</button>
                         <button onclick="exportData()" class="px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-brand-500 hover:text-brand-700 text-slate-700 text-xs font-semibold transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-download"></i> Export
                         </button>
@@ -361,6 +383,21 @@
                         <span id="admin-pending-count" class="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">0 Pending</span>
                     </div>
                     <div id="admin-pending-donations-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
+                </div>
+
+                <div class="card p-5 rounded-2xl space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2"><i class="fa-solid fa-scale-balanced text-brand-600"></i> Fund Audit</h3>
+                            <p class="text-[11px] text-slate-500 mt-0.5">How much money came in, how much medicine was given, and what balance is left.</p>
+                        </div>
+                        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start">
+                            <button id="audit-tab-pharmacy" onclick="switchAuditTab('pharmacy')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition">Pharmacies</button>
+                            <button id="audit-tab-donor" onclick="switchAuditTab('donor')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition">Donors</button>
+                            <button id="audit-tab-donations" onclick="switchAuditTab('donations')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition">All Donations</button>
+                        </div>
+                    </div>
+                    <div id="audit-body"></div>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -609,7 +646,7 @@
                     <table class="w-full text-left text-sm text-slate-700">
                         <thead class="text-[11px] uppercase bg-slate-50 text-slate-500 border-b border-slate-200">
                             <tr>
-                                <th class="py-3 px-3 font-semibold">Time</th>
+                                <th class="py-3 px-3 font-semibold">Date &amp; Time</th>
                                 <th class="py-3 px-3 font-semibold">Store</th>
                                 <th class="py-3 px-3 font-semibold">Patient</th>
                                 <th class="py-3 px-3 font-semibold">Medicines</th>
@@ -672,8 +709,8 @@
                             <span class="text-[10px] text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">Official</span>
                         </div>
                         <div class="space-y-1 text-[11px] text-slate-700">
-                            <p><b>JazzCash / EasyPaisa:</b> <span class="font-mono bg-white px-1.5 py-0.5 rounded border">0304 4657582</span> (Muhammad Usman)</p>
-                            <p><b>MCB Bank:</b> <span class="font-mono bg-white px-1.5 py-0.5 rounded border">1654729001008305</span></p>
+                            <p><b>JazzCash / EasyPaisa:</b> <span class="font-mono bg-white px-1.5 py-0.5 rounded border">0304 4657582</span> (Muhammad Usman) <button type="button" onclick="copyText('03044657582')" class="ml-1 text-brand-700 hover:text-brand-900" title="Copy"><i class="fa-regular fa-copy"></i></button></p>
+                            <p><b>MCB Bank:</b> <span class="font-mono bg-white px-1.5 py-0.5 rounded border">1654729001008305</span> <button type="button" onclick="copyText('1654729001008305')" class="ml-1 text-brand-700 hover:text-brand-900" title="Copy"><i class="fa-regular fa-copy"></i></button></p>
                         </div>
                     </div>
 
@@ -681,6 +718,12 @@
                         <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Amount Transferred (PKR) *</label>
                         <input type="number" id="custom-budget-input" min="100" placeholder="e.g. 5000" required
                                class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 font-bold placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-700 mb-1.5">Transaction ID / Reference (optional)</label>
+                        <input type="text" id="donation-ref" maxlength="60" placeholder="e.g. TID 1234567890"
+                               class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition">
                     </div>
 
                     <div>
@@ -693,7 +736,7 @@
                         </div>
                     </div>
 
-                    <button onclick="submitDonationForVerification()" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
+                    <button id="donation-submit-btn" onclick="submitDonationForVerification()" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm transition shadow-sm flex items-center justify-center gap-2">
                         <i class="fa-solid fa-paper-plane"></i> Submit Receipt for Verification
                     </button>
                 </div>
@@ -751,8 +794,9 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    firebase.analytics();
+    try { firebase.analytics(); } catch (_) {}
     const db = firebase.firestore();
+    const FV = firebase.firestore.FieldValue;
 
     /* ---------- STATE ---------- */
     let session = null;
@@ -765,11 +809,16 @@
 
     let toastTimer;
     let adminUserFilter = 'all';
+    let auditTab = 'pharmacy';
+    let donationFilter = 'all';
+    let proofProcessing = false;
+    const busy = new Set();
 
     let pharmacies = [];
     let users = [];
     let ledgerRecords = [];
-    let pendingDonations = [];
+    let donations = [];          // role-based: admin = all, donor = own, pharmacy = own store
+    let unsubDonations = null;
 
     /* ---------- INITIAL SEED DATA ---------- */
     const initialPharmacies = [
@@ -789,19 +838,104 @@
 
     /* ---------- HELPERS ---------- */
     const $ = (id) => document.getElementById(id);
-    const fmt = (n) => Number(n).toLocaleString('en-PK');
-    const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const cleanPhone = (p) => String(p).replace(/\D/g, '');
+    const fmt = (n) => Number(n || 0).toLocaleString('en-PK');
+    const esc = (s) => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const digitsOnly = (p) => String(p || '').replace(/\D/g, '');
+    // Same number typed as 0300..., +92300... or 92300... is treated as one login
+    const cleanPhone = (p) => {
+        let d = digitsOnly(p);
+        if (d.startsWith('0092')) d = '0' + d.slice(4);
+        else if (d.startsWith('92') && d.length === 12) d = '0' + d.slice(2);
+        return d;
+    };
+    const sum = (arr, fn) => arr.reduce((s, x) => s + (Number(fn(x)) || 0), 0);
+    const monthKey = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+    const spentNow = (p) => (!p.monthKey || p.monthKey === monthKey()) ? (p.spentThisMonth || 0) : 0;
 
-    function showToast(msg) {
+    const tsToDate = (t) => (t && typeof t.toDate === 'function') ? t.toDate() : (t instanceof Date ? t : null);
+    const fmtDateTime = (t, fallback) => {
+        const d = tsToDate(t);
+        if (!d) return fallback || '—';
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
+               d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    };
+    const fmtDate = (t) => {
+        const d = tsToDate(t);
+        return d ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+    };
+    const byNewest = (a, b) => ((tsToDate(b.timestamp) || 0) - (tsToDate(a.timestamp) || 0));
+    const byApproved = (a, b) => ((tsToDate(a.approvedAt) || tsToDate(a.timestamp) || 0) - (tsToDate(b.approvedAt) || tsToDate(b.timestamp) || 0));
+
+    const maskName = (n) => {
+        const parts = String(n || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length) return '—';
+        return parts.length === 1 ? parts[0] : parts[0] + ' ' + parts[parts.length - 1].charAt(0).toUpperCase() + '.';
+    };
+    const maskPhone = (p) => {
+        const d = digitsOnly(p);
+        return d.length >= 7 ? d.slice(0, 4) + '***' + d.slice(-2) : '***';
+    };
+    const canSeeFullPatientData = () => !!session && (session.role === 'admin' || session.role === 'pharmacy');
+
+    const STATUS = {
+        pending:  { label: 'Pending verification', cls: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'fa-clock' },
+        approved: { label: 'Approved',             cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'fa-circle-check' },
+        rejected: { label: 'Rejected',             cls: 'bg-rose-50 text-rose-700 border-rose-200', icon: 'fa-circle-xmark' }
+    };
+    const statusBadge = (s) => {
+        const m = STATUS[s] || STATUS.pending;
+        return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold ${m.cls}"><i class="fa-solid ${m.icon}"></i>${m.label}</span>`;
+    };
+
+    function showToast(msg, ms) {
         const t = $('toast');
         t.textContent = msg;
         t.classList.remove('hidden');
         clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => t.classList.add('hidden'), 2800);
+        toastTimer = setTimeout(() => t.classList.add('hidden'), ms || 2800);
+    }
+
+    function setBusyBtn(btn, on) {
+        if (!btn) return;
+        if (on) {
+            btn.dataset.html = btn.innerHTML;
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Please wait…';
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('opacity-60', 'cursor-not-allowed');
+            if (btn.dataset.html) btn.innerHTML = btn.dataset.html;
+        }
+    }
+
+    function copyText(text) {
+        const done = () => showToast('Copied: ' + text);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(() => showToast('Copy not supported'));
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta); ta.select();
+            try { document.execCommand('copy'); done(); } catch (_) { showToast('Copy not supported'); }
+            document.body.removeChild(ta);
+        }
     }
 
     /* ---------- FIRESTORE LISTENERS ---------- */
+    function syncError(name) {
+        return (err) => { console.error('Sync error (' + name + '):', err); showToast('Sync problem (' + name + '): ' + (err.code || err.message), 4500); };
+    }
+
+    function renderAll() {
+        renderPharmacies($('pharmacy-search') ? $('pharmacy-search').value : '');
+        renderPharmacySelect();
+        renderWorkstation();
+        renderDonorPanel();
+        renderAdmin();
+        renderLedger();
+        updateStats();
+    }
+
     function initFirebaseSync() {
         db.collection('pharmacies').onSnapshot(snapshot => {
             if (snapshot.empty) {
@@ -809,52 +943,86 @@
             } else {
                 pharmacies = [];
                 snapshot.forEach(doc => pharmacies.push(doc.data()));
-                if (!activePharmacyId && pharmacies.length > 0) activePharmacyId = pharmacies[0].id;
+                if ((!activePharmacyId || !pharmacies.find(p => p.id === activePharmacyId)) && pharmacies.length > 0) activePharmacyId = pharmacies[0].id;
                 renderPharmacies($('pharmacy-search') ? $('pharmacy-search').value : '');
                 renderPharmacySelect();
                 renderWorkstation();
+                renderDonorPanel();
                 renderAdmin();
                 updateStats();
             }
-        });
+        }, syncError('pharmacies'));
 
         db.collection('users').onSnapshot(snapshot => {
             if (snapshot.empty) {
                 initialUsers.forEach(u => db.collection('users').doc(u.id).set(u));
-            } else {
-                users = [];
-                snapshot.forEach(doc => users.push(doc.data()));
-                renderAdmin();
+                return;
             }
-        });
+            users = [];
+            snapshot.forEach(doc => users.push(doc.data()));
+
+            // Keep a signed-in session in step with the account (removed / role changed / PIN reset)
+            if (session) {
+                const me = users.find(u => u.id === session.id);
+                if (!me) { doLogout('Your account was removed by the admin.'); return; }
+                const roleChanged = me.role !== session.role || me.pharmacyId !== session.pharmacyId;
+                session = me;
+                if (roleChanged) startApp(); else updateUserHeader();
+            }
+            renderAdmin();
+        }, syncError('users'));
 
         db.collection('ledgerRecords').orderBy('timestamp', 'desc').onSnapshot(snapshot => {
             ledgerRecords = [];
-            snapshot.forEach(doc => ledgerRecords.push({ id: doc.id, ...doc.data() }));
+            snapshot.forEach(doc => ledgerRecords.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) }));
             renderLedger();
+            renderDonorPanel();
             renderAdmin();
             updateStats();
-        });
-
-        db.collection('pendingDonations').onSnapshot(snapshot => {
-            pendingDonations = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.status === 'pending') {
-                    pendingDonations.push({ id: doc.id, ...data });
-                }
-            });
-            renderAdmin();
-        });
+        }, syncError('ledger'));
 
         db.collection('stats').doc('global').onSnapshot(doc => {
             if (doc.exists) {
                 totalDonated = doc.data().totalDonated || 0;
             } else {
-                db.collection('stats').doc('global').set({ totalDonated: 0 });
+                db.collection('stats').doc('global').set({ totalDonated: 0 }, { merge: true });
             }
             updateStats();
-        });
+        }, syncError('stats'));
+    }
+
+    // Donations are loaded after login, only what the role needs
+    function startDonationsListener() {
+        if (unsubDonations) { unsubDonations(); unsubDonations = null; }
+        donations = [];
+        if (!session) return;
+        let q = db.collection('pendingDonations');
+        if (session.role === 'donor') q = q.where('donorId', '==', session.id);
+        else if (session.role === 'pharmacy') q = q.where('pharmacyId', '==', session.pharmacyId);
+
+        let first = true;
+        unsubDonations = q.onSnapshot(snap => {
+            const prev = {};
+            donations.forEach(d => { prev[d.id] = d.status; });
+            const next = snap.docs.map(d => ({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }));
+
+            if (!first && session) {
+                next.forEach(d => {
+                    if (d.donorId === session.id && prev[d.id] === 'pending' && d.status === 'approved')
+                        showToast(`✓ Your donation of PKR ${fmt(d.amount)} was APPROVED`, 4500);
+                    else if (d.donorId === session.id && prev[d.id] === 'pending' && d.status === 'rejected')
+                        showToast(`Your donation of PKR ${fmt(d.amount)} was rejected${d.rejectReason ? ': ' + d.rejectReason : ''}`, 5500);
+                    else if (session.role === 'admin' && !(d.id in prev) && d.status === 'pending' && d.donorId !== session.id)
+                        showToast(`New donation receipt from ${d.donorName}: PKR ${fmt(d.amount)}`, 4000);
+                });
+            }
+            first = false;
+            donations = next.sort(byNewest);
+            renderDonorPanel();
+            renderPharmacyReceived();
+            renderPharmacies($('pharmacy-search') ? $('pharmacy-search').value : '');
+            renderAdmin();
+        }, syncError('donations'));
     }
 
     /* ---------- AUTH ---------- */
@@ -864,7 +1032,12 @@
         const pin   = $('login-pin').value.trim();
         const err   = $('login-error');
 
-        const user = users.find(u => cleanPhone(u.phone) === phone && u.pin === pin);
+        if (!users.length) {
+            err.textContent = 'Loading data… please wait a moment and try again.';
+            err.classList.remove('hidden');
+            return;
+        }
+        const user = users.find(u => cleanPhone(u.phone) === phone && String(u.pin) === pin);
         if (!user) {
             err.textContent = 'Invalid phone number or PIN. Please try again.';
             err.classList.remove('hidden');
@@ -882,17 +1055,25 @@
         startApp();
     }
 
-    function handleLogout() {
-        if (!confirm('Sign out of your account?')) return;
+    function doLogout(message) {
         session = null;
+        if (unsubDonations) { unsubDonations(); unsubDonations = null; }
+        donations = [];
         try { localStorage.removeItem('medtrust_session'); } catch (_) {}
         $('app-shell').classList.add('hidden');
         $('login-screen').classList.remove('hidden');
         $('login-phone').value = '';
         $('login-pin').value = '';
-        $('login-error').classList.add('hidden');
+        const err = $('login-error');
+        if (message) { err.textContent = message; err.classList.remove('hidden'); } else err.classList.add('hidden');
         closeBudgetModal();
         closeWhatsAppModal();
+        closeProofModal();
+    }
+
+    function handleLogout() {
+        if (!confirm('Sign out of your account?')) return;
+        doLogout();
     }
 
     function startApp() {
@@ -910,12 +1091,8 @@
 
         updateUserHeader();
         updateNavForRole();
-        renderPharmacies();
-        renderPharmacySelect();
-        renderWorkstation();
-        renderAdmin();
-        renderLedger();
-        updateStats();
+        startDonationsListener();
+        renderAll();
         setupFormPreview();
         switchRole(defaultRole);
     }
@@ -937,8 +1114,8 @@
         $('view-admin').classList.toggle('hidden', role !== 'admin');
         if (session.role === 'pharmacy' && role === 'pharmacy') {
             activePharmacyId = session.pharmacyId;
-            renderWorkstation();
         }
+        renderWorkstation();
         updateRoleUI();
         updateUserHeader();
         if (role === 'admin') renderAdmin();
@@ -988,7 +1165,7 @@
         if ($('stat-total-funds')) $('stat-total-funds').textContent = `PKR ${fmt(totalDonated)}`;
         if ($('stat-patients-helped')) $('stat-patients-helped').textContent = fmt(patientsHelped);
         if ($('stat-active-stores')) $('stat-active-stores').textContent = `${pharmacies.filter(p => p.isOnline).length} Online`;
-        if ($('stat-needed-funds')) $('stat-needed-funds').textContent = `PKR ${fmt(pharmacies.reduce((s, p) => s + p.targetMonthly, 0))}`;
+        if ($('stat-needed-funds')) $('stat-needed-funds').textContent = `PKR ${fmt(pharmacies.reduce((s, p) => s + (p.targetMonthly || 0), 0))}`;
     }
 
     /* ---------- DONOR GRID ---------- */
@@ -997,7 +1174,7 @@
         if (!grid) return;
         const q = (filter || '').trim().toLowerCase();
         const list = pharmacies.filter(p =>
-            p.name.toLowerCase().includes(q) || p.area.toLowerCase().includes(q) || p.owner.toLowerCase().includes(q)
+            String(p.name).toLowerCase().includes(q) || String(p.area).toLowerCase().includes(q) || String(p.owner).toLowerCase().includes(q)
         );
         if (!list.length) {
             grid.innerHTML = `<div class="col-span-full card rounded-2xl p-8 text-center text-slate-500 text-sm">
@@ -1007,9 +1184,10 @@
             return;
         }
         grid.innerHTML = list.map(p => {
-            const covered = p.spentThisMonth + p.allocatedWallet;
-            const pct = Math.min(100, Math.round((covered / p.targetMonthly) * 100));
-            const full = covered >= p.targetMonthly;
+            const covered = spentNow(p) + (p.allocatedWallet || 0);
+            const target = p.targetMonthly || 1;
+            const pct = Math.min(100, Math.round((covered / target) * 100));
+            const full = covered >= target;
             return `
             <div class="card p-4 md:p-5 rounded-2xl space-y-4 flex flex-col justify-between hover:border-brand-300 transition">
                 <div class="space-y-3.5">
@@ -1045,9 +1223,118 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="openBudgetModal('${p.id}')" class="w-full py-2.5 rounded-xl bg-brand-50 hover:bg-brand-600 text-brand-700 hover:text-white font-bold text-xs transition border border-brand-200 hover:border-brand-600 flex items-center justify-center gap-2">
+                <button onclick="openBudgetModal('${esc(p.id)}')" class="w-full py-2.5 rounded-xl bg-brand-50 hover:bg-brand-600 text-brand-700 hover:text-white font-bold text-xs transition border border-brand-200 hover:border-brand-600 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-hand-holding-dollar"></i> Send Funds
                 </button>
+            </div>`;
+        }).join('');
+    }
+
+    /* ---------- DONOR: MY DONATIONS & IMPACT ---------- */
+    function donorStats(donorId) {
+        const mine = donations.filter(d => d.donorId === donorId);
+        const approved = mine.filter(d => d.status === 'approved');
+        const tracked = approved.filter(d => typeof d.remaining === 'number');
+        const legacy = approved.filter(d => typeof d.remaining !== 'number');
+        const pending = mine.filter(d => d.status === 'pending');
+        return {
+            count: mine.length,
+            approvedTotal: sum(approved, d => d.amount),
+            used: sum(tracked, d => d.amount - d.remaining),
+            balance: sum(tracked, d => d.remaining),
+            legacyTotal: sum(legacy, d => d.amount),
+            pendingAmt: sum(pending, d => d.amount),
+            pendingCount: pending.length,
+            rejectedCount: mine.filter(d => d.status === 'rejected').length,
+            patients: ledgerRecords.filter(r => (r.fundSources || []).some(s => s.donorId === donorId)).length
+        };
+    }
+
+    function miniStat(label, value, tone) {
+        const tones = {
+            green: 'bg-emerald-50 border-emerald-100 text-emerald-700',
+            sky:   'bg-sky-50 border-sky-100 text-sky-700',
+            amber: 'bg-amber-50 border-amber-100 text-amber-700',
+            slate: 'bg-slate-50 border-slate-200 text-slate-700',
+            violet:'bg-violet-50 border-violet-100 text-violet-700'
+        };
+        return `<div class="rounded-xl border p-3 ${tones[tone] || tones.slate}">
+            <span class="text-[10px] font-semibold block opacity-80">${label}</span>
+            <span class="text-sm md:text-base font-extrabold block text-slate-900 truncate">${value}</span>
+        </div>`;
+    }
+
+    function renderDonorPanel() {
+        const wrap = $('my-donations-section');
+        if (!wrap || !session) return;
+        const mine = donations.filter(d => d.donorId === session.id).sort(byNewest);
+        if (!mine.length) { wrap.classList.add('hidden'); return; }
+        wrap.classList.remove('hidden');
+
+        const st = donorStats(session.id);
+        $('my-donations-count').textContent = `${mine.length} donation${mine.length > 1 ? 's' : ''}`;
+        $('my-donations-summary').innerHTML =
+            miniStat('Total Approved', 'PKR ' + fmt(st.approvedTotal), 'green') +
+            miniStat('Used for Patients', 'PKR ' + fmt(st.used), 'sky') +
+            miniStat('Balance Available', 'PKR ' + fmt(st.balance), 'violet') +
+            miniStat('Patients Helped', fmt(st.patients), 'amber') +
+            miniStat(`Pending (${st.pendingCount})`, 'PKR ' + fmt(st.pendingAmt), 'slate');
+
+        const legacyNote = st.legacyTotal > 0
+            ? `<p class="text-[10px] text-slate-500">PKR ${fmt(st.legacyTotal)} of your approved total was donated before detailed tracking began, so its usage is not itemised below.</p>` : '';
+
+        $('my-donations-list').innerHTML = legacyNote + mine.map(d => {
+            const tracked = typeof d.remaining === 'number';
+            const used = tracked ? d.amount - d.remaining : 0;
+            const usedPct = tracked && d.amount ? Math.round((used / d.amount) * 100) : 0;
+            const uses = ledgerRecords.filter(r => (r.fundSources || []).some(s => s.donationId === d.id));
+            const patientCount = uses.length;
+
+            let body = '';
+            if (d.status === 'pending') {
+                body = `<p class="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2"><i class="fa-solid fa-hourglass-half mr-1"></i>Your receipt has been sent. The admin is verifying it — you will see it turn <b>Approved</b> here.</p>`;
+            } else if (d.status === 'rejected') {
+                body = `<p class="text-[11px] text-rose-700 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Rejected${d.rejectReason ? ': ' + esc(d.rejectReason) : '.'} If you believe this is a mistake, contact the admin with your payment proof.</p>`;
+            } else if (tracked) {
+                body = `
+                <div class="space-y-1.5">
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div class="h-2 rounded-full bg-brand-500" style="width:${usedPct}%"></div></div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg py-1.5"><span class="text-[9px] text-slate-500 block">Used</span><span class="text-xs font-bold text-slate-900">PKR ${fmt(used)}</span></div>
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg py-1.5"><span class="text-[9px] text-slate-500 block">Balance left</span><span class="text-xs font-bold text-emerald-700">PKR ${fmt(d.remaining)}</span></div>
+                        <div class="bg-slate-50 border border-slate-200 rounded-lg py-1.5"><span class="text-[9px] text-slate-500 block">Patients helped</span><span class="text-xs font-bold text-slate-900">${patientCount}</span></div>
+                    </div>
+                </div>
+                ${patientCount ? `<details class="text-[11px] text-slate-600">
+                    <summary class="cursor-pointer font-semibold text-brand-700">See how this donation was used</summary>
+                    <div class="mt-2 space-y-1.5">
+                    ${uses.map(r => {
+                        const src = (r.fundSources || []).filter(s => s.donationId === d.id);
+                        const taken = sum(src, s => s.amount);
+                        return `<div class="flex items-start justify-between gap-2 bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5">
+                            <div class="min-w-0"><span class="font-semibold text-slate-800">${esc(maskName(r.patientName))}</span>
+                            <span class="block text-[10px] text-slate-500 truncate">${esc(r.medicines)}</span>
+                            <span class="block text-[10px] text-slate-400">${esc(r.pharmacyName)} • ${fmtDateTime(r.timestamp, r.time)}</span></div>
+                            <span class="font-bold text-emerald-700 whitespace-nowrap">PKR ${fmt(taken)}</span></div>`;
+                    }).join('')}
+                    </div></details>` : `<p class="text-[11px] text-slate-500">Approved — your full balance is waiting for the next patient.</p>`}`;
+            } else {
+                body = `<p class="text-[11px] text-slate-500">Approved. Detailed usage tracking is not available for this older donation.</p>`;
+            }
+
+            return `
+            <div class="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2.5">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 space-y-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-base font-extrabold text-slate-900">PKR ${fmt(d.amount)}</span>
+                            ${statusBadge(d.status)}
+                        </div>
+                        <p class="text-[11px] text-slate-500">To <b class="text-slate-700">${esc(d.pharmacyName)}</b> • ${fmtDateTime(d.timestamp)}${d.reference ? ' • Ref: ' + esc(d.reference) : ''}</p>
+                    </div>
+                    <button onclick="viewProof('${esc(d.id)}')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition shrink-0"><i class="fa-solid fa-image mr-1"></i>Receipt</button>
+                </div>
+                ${body}
             </div>`;
         }).join('');
     }
@@ -1060,7 +1347,7 @@
             ? pharmacies.filter(p => p.id === session.pharmacyId)
             : pharmacies;
         sel.innerHTML = list.map(p =>
-            `<option value="${p.id}" ${p.id === activePharmacyId ? 'selected' : ''}>${esc(p.name)} — ${esc(p.area)}</option>`
+            `<option value="${esc(p.id)}" ${p.id === activePharmacyId ? 'selected' : ''}>${esc(p.name)} — ${esc(p.area)}</option>`
         ).join('');
         sel.disabled = session.role === 'pharmacy';
     }
@@ -1080,16 +1367,42 @@
         $('pharma-card-title').textContent = p.name;
         $('pharma-card-area').innerHTML = `<i class="fa-solid fa-location-dot text-brand-600 mr-1"></i>${esc(p.area)}`;
         $('pharma-balance').textContent = `PKR ${fmt(p.allocatedWallet)}`;
-        $('pharma-spent').textContent   = `PKR ${fmt(p.spentThisMonth)}`;
+        $('pharma-spent').textContent   = `PKR ${fmt(spentNow(p))}`;
         $('pharma-target').textContent  = `PKR ${fmt(p.targetMonthly)}`;
         $('preview-pharmacy').textContent = p.name;
-        $('status-toggle').checked = p.isOnline;
+        $('status-toggle').checked = !!p.isOnline;
         const dot  = $('status-dot');
         const text = $('status-text');
         if (p.isOnline) { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0'; text.textContent = 'ONLINE'; }
         else { dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0'; text.textContent = 'OFFLINE'; }
         const sel = $('pharmacy-select');
         if (sel && !sel.disabled && sel.value !== p.id) sel.value = p.id;
+        renderPharmacyReceived();
+    }
+
+    function renderPharmacyReceived() {
+        const listEl = $('pharma-received-list');
+        if (!listEl || !session) return;
+        const pid = session.role === 'pharmacy' ? session.pharmacyId : activePharmacyId;
+        const list = donations.filter(d => d.pharmacyId === pid && d.status !== 'rejected').sort(byNewest);
+        const approved = list.filter(d => d.status === 'approved');
+        const pending = list.filter(d => d.status === 'pending');
+        $('pharma-received-summary').innerHTML =
+            miniStat('Received (approved)', 'PKR ' + fmt(sum(approved, d => d.amount)), 'green') +
+            miniStat('Awaiting approval', 'PKR ' + fmt(sum(pending, d => d.amount)), 'amber') +
+            miniStat('Donations', fmt(list.length), 'slate');
+        if (!list.length) {
+            listEl.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">No donations received yet.</p>`;
+            return;
+        }
+        listEl.innerHTML = list.map(d => `
+            <div class="flex items-center justify-between gap-3 py-2.5 border-b border-slate-100 last:border-0">
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold text-slate-900 truncate">${esc(d.donorName)} <span class="text-emerald-700">· PKR ${fmt(d.amount)}</span></p>
+                    <p class="text-[10px] text-slate-500">${fmtDateTime(d.timestamp)}${typeof d.remaining === 'number' && d.status === 'approved' ? ' • Left: PKR ' + fmt(d.remaining) : ''}</p>
+                </div>
+                ${statusBadge(d.status)}
+            </div>`).join('');
     }
 
     function togglePharmacyStatus() {
@@ -1097,9 +1410,10 @@
         const p = pharmacies.find(x => x.id === activePharmacyId);
         if (!p) return;
         if (session.role === 'pharmacy' && p.id !== session.pharmacyId) return;
-        p.isOnline = $('status-toggle').checked;
-        db.collection('pharmacies').doc(p.id).update({ isOnline: p.isOnline });
-        showToast(p.isOnline ? 'Store is now ONLINE' : 'Store is now OFFLINE');
+        const val = $('status-toggle').checked;
+        db.collection('pharmacies').doc(p.id).update({ isOnline: val })
+            .then(() => showToast(val ? 'Store is now ONLINE' : 'Store is now OFFLINE'))
+            .catch(err => { alert('Could not update status: ' + err.message); renderWorkstation(); });
     }
 
     function promptUpdateTarget() {
@@ -1110,24 +1424,37 @@
         if (input === null) return;
         const val = parseInt(input, 10);
         if (!val || val < 1000) { alert('Please enter a valid target (min PKR 1,000).'); return; }
-        db.collection('pharmacies').doc(p.id).update({ targetMonthly: val });
-        showToast('Monthly target updated');
+        db.collection('pharmacies').doc(p.id).update({ targetMonthly: val })
+            .then(() => showToast('Monthly target updated'))
+            .catch(err => alert('Could not update target: ' + err.message));
     }
 
-    /* ---------- DISPENSE ---------- */
+    /* ---------- DISPENSE (atomic: wallet + donor funds + ledger in one transaction) ---------- */
     function setupFormPreview() {
         const nameEl = $('patient-name');
         const amtEl  = $('medicine-amount');
-        if (nameEl) nameEl.addEventListener('input', e => { $('preview-patient').textContent = e.target.value.trim() || '---'; });
-        if (amtEl)  amtEl.addEventListener('input', e => {
-            const v = parseInt(e.target.value, 10);
-            $('preview-bill').textContent = v > 0 ? `PKR ${fmt(v)}` : 'PKR 0';
-        });
+        if (nameEl && !nameEl.dataset.bound) {
+            nameEl.dataset.bound = '1';
+            nameEl.addEventListener('input', e => { $('preview-patient').textContent = e.target.value.trim() || '---'; });
+        }
+        if (amtEl && !amtEl.dataset.bound) {
+            amtEl.dataset.bound = '1';
+            amtEl.addEventListener('input', e => {
+                const v = parseInt(e.target.value, 10);
+                $('preview-bill').textContent = v > 0 ? `PKR ${fmt(v)}` : 'PKR 0';
+            });
+        }
     }
 
-    function handleDispenseMedicine(e) {
+    function joinDonorNames(sources) {
+        const names = [...new Set(sources.map(s => s.donorName))];
+        return names.length <= 2 ? names.join(', ') : names.slice(0, 2).join(', ') + ` +${names.length - 2} more`;
+    }
+
+    async function handleDispenseMedicine(e) {
         e.preventDefault();
-        if (!session) return;
+        if (!session || busy.has('dispense')) return;
+        const form      = e.target;
         const name      = $('patient-name').value.trim();
         const phone     = $('patient-phone').value.trim();
         const amount    = parseInt($('medicine-amount').value, 10);
@@ -1142,38 +1469,86 @@
             return;
         }
 
-        const updatedWallet = p.allocatedWallet - amount;
-        const updatedSpent  = p.spentThisMonth + amount;
+        const btn = form.querySelector('button[type=submit]');
+        busy.add('dispense'); setBusyBtn(btn, true);
 
-        db.collection('pharmacies').doc(p.id).update({
-            allocatedWallet: updatedWallet,
-            spentThisMonth: updatedSpent
-        });
+        const pRef = db.collection('pharmacies').doc(p.id);
+        const ledgerRef = db.collection('ledgerRecords').doc();
+        const candidates = donations
+            .filter(d => d.pharmacyId === p.id && d.status === 'approved' && typeof d.remaining === 'number' && d.remaining > 0)
+            .sort(byApproved);
 
-        db.collection('ledgerRecords').add({
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            pharmacyName: p.name,
-            patientName: name,
-            patientCell: phone,
-            medicines: medicines,
-            amount: amount,
-            donorName: session.name
-        });
+        try {
+            const sources = await db.runTransaction(async tx => {
+                const pSnap = await tx.get(pRef);
+                if (!pSnap.exists) throw new Error('This pharmacy no longer exists.');
+                const pd = pSnap.data();
+                if (!pd.isOnline) throw new Error('This store is OFFLINE.');
+                if (amount > (pd.allocatedWallet || 0)) throw new Error(`Insufficient wallet balance. Available: PKR ${fmt(pd.allocatedWallet)}`);
 
-        e.target.reset();
-        $('preview-patient').textContent = '---';
-        $('preview-bill').textContent = 'PKR 0';
-        showToast(`PKR ${fmt(amount)} dispensed to ${name}`);
-        const msg = `Assalam-o-Alaikum!\n\nFarazé MedTrust — Sadqah-e-Jariyah Receipt\n\nPatient: ${name}\nPhone: ${phone}\nPharmacy: ${p.name}\nMedicines: ${medicines}\nAmount: PKR ${fmt(amount)}\n\nDelivered successfully. May Allah accept this charity in memory of Nagina Nadeem (Late). Ameen.`;
-        showWhatsAppModal(phone, msg);
+                // re-read the donations we are about to draw from (fresh values)
+                const fresh = [];
+                for (const c of candidates) {
+                    const s = await tx.get(db.collection('pendingDonations').doc(c.id));
+                    if (s.exists) {
+                        const sd = s.data();
+                        if (sd.status === 'approved' && typeof sd.remaining === 'number' && sd.remaining > 0) fresh.push({ ref: s.ref, ...sd });
+                    }
+                }
+
+                // FIFO: oldest approved donation is used first
+                let need = amount;
+                const used = [];
+                const writes = [];
+                for (const f of fresh) {
+                    if (need <= 0) break;
+                    const take = Math.min(f.remaining, need);
+                    need -= take;
+                    used.push({ donationId: f.ref.id, donorId: f.donorId, donorName: f.donorName, amount: take });
+                    writes.push([f.ref, f.remaining - take]);
+                }
+                if (need > 0) used.push({ donationId: null, donorId: null, donorName: 'Earlier donations (pooled)', amount: need });
+
+                const cur = monthKey();
+                const spent = (!pd.monthKey || pd.monthKey === cur) ? (pd.spentThisMonth || 0) : 0;
+                tx.update(pRef, { allocatedWallet: pd.allocatedWallet - amount, spentThisMonth: spent + amount, monthKey: cur });
+                writes.forEach(([ref, rem]) => tx.update(ref, { remaining: rem }));
+                tx.set(ledgerRef, {
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: FV.serverTimestamp(),
+                    pharmacyId: p.id,
+                    pharmacyName: p.name,
+                    patientName: name,
+                    patientCell: phone,
+                    medicines: medicines,
+                    amount: amount,
+                    donorName: joinDonorNames(used),
+                    fundSources: used,
+                    recordedBy: session.name,
+                    recordedById: session.id
+                });
+                return used;
+            });
+
+            form.reset();
+            $('preview-patient').textContent = '---';
+            $('preview-bill').textContent = 'PKR 0';
+            showToast(`PKR ${fmt(amount)} dispensed to ${name}`);
+            const msg = `Assalam-o-Alaikum!\n\nFarazé MedTrust — Sadqah-e-Jariyah Receipt\n\nPatient: ${name}\nPhone: ${phone}\nPharmacy: ${p.name}\nMedicines: ${medicines}\nAmount: PKR ${fmt(amount)}\n\nDelivered successfully. May Allah accept this charity in memory of Nagina Nadeem (Late). Ameen.`;
+            showWhatsAppModal(phone, msg);
+        } catch (err) {
+            console.error(err);
+            alert('Could not dispense: ' + (err.message || err));
+        } finally {
+            busy.delete('dispense'); setBusyBtn(btn, false);
+        }
     }
 
-    /* ---------- ADMIN RENDER & APPROVAL SYSTEM ---------- */
+    /* ---------- ADMIN RENDER ---------- */
     function renderAdmin() {
         if (!session || session.role !== 'admin') return;
 
-        const totalWallet = pharmacies.reduce((s, p) => s + p.allocatedWallet, 0);
+        const totalWallet = pharmacies.reduce((s, p) => s + (p.allocatedWallet || 0), 0);
         if ($('admin-stat-stores')) $('admin-stat-stores').textContent    = pharmacies.length;
         if ($('admin-stat-online')) $('admin-stat-online').textContent    = pharmacies.filter(p => p.isOnline).length;
         if ($('admin-stat-users')) $('admin-stat-users').textContent     = users.length;
@@ -1182,6 +1557,7 @@
         if ($('admin-user-count')) $('admin-user-count').textContent     = users.length;
         if ($('admin-ledger-count')) $('admin-ledger-count').textContent   = ledgerRecords.length;
 
+        const pendingDonations = donations.filter(d => d.status === 'pending').sort(byNewest);
         const pendingList = $('admin-pending-donations-list');
         if ($('admin-pending-count')) $('admin-pending-count').textContent = `${pendingDonations.length} Pending`;
         if (pendingList) {
@@ -1190,21 +1566,22 @@
             } else {
                 pendingList.innerHTML = pendingDonations.map(item => `
                     <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-2">
+                        <div class="space-y-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <span class="font-bold text-slate-900 text-sm">${esc(item.donorName)}</span>
                                 <span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">PKR ${fmt(item.amount)}</span>
                             </div>
-                            <p class="text-[11px] text-slate-500">Target Pharmacy: <b>${esc(item.pharmacyName)}</b></p>
+                            <p class="text-[11px] text-slate-500">To <b>${esc(item.pharmacyName)}</b> • ${fmtDateTime(item.timestamp)}</p>
+                            ${item.reference ? `<p class="text-[11px] text-slate-500">Txn ref: <span class="font-mono text-slate-700">${esc(item.reference)}</span></p>` : ''}
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
-                            <button onclick="viewProofModal('${item.proofUrl}')" class="px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition flex items-center gap-1">
-                                <i class="fa-solid fa-image"></i> View Receipt
+                            <button onclick="viewProof('${esc(item.id)}')" class="px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-semibold transition flex items-center gap-1">
+                                <i class="fa-solid fa-image"></i> Receipt
                             </button>
-                            <button onclick="approveDonation('${item.id}', '${item.pharmacyId}', ${item.amount})" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1">
+                            <button onclick="approveDonation('${esc(item.id)}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1">
                                 <i class="fa-solid fa-check"></i> Approve
                             </button>
-                            <button onclick="rejectDonation('${item.id}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition">
+                            <button onclick="rejectDonation('${esc(item.id)}')" class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition" title="Reject">
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
@@ -1213,14 +1590,14 @@
             }
         }
 
+        renderAudit();
+
         const storeList = $('admin-stores-list');
         if (storeList) {
             if (!pharmacies.length) {
                 storeList.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">No stores yet.</div>`;
             } else {
-                storeList.innerHTML = pharmacies.map(p => {
-                    const owner = users.find(u => u.pharmacyId === p.id);
-                    return `
+                storeList.innerHTML = pharmacies.map(p => `
                     <div class="flex items-start gap-3 py-3 border-b border-slate-100 last:border-0">
                         <div class="w-9 h-9 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center text-sm border border-brand-100 shrink-0">
                             <i class="fa-solid fa-clinic-medical"></i>
@@ -1233,13 +1610,12 @@
                                 </span>
                             </div>
                             <p class="text-[11px] text-slate-500 truncate">${esc(p.owner)} • ${esc(p.area)}</p>
-                            <p class="text-[11px] text-slate-400 font-mono">${esc(p.phone)}</p>
+                            <p class="text-[11px] text-slate-400 font-mono">${esc(p.phone)} • Wallet PKR ${fmt(p.allocatedWallet)}</p>
                         </div>
-                        <button onclick="deleteStore('${p.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete store">
+                        <button onclick="deleteStore('${esc(p.id)}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete store">
                             <i class="fa-solid fa-trash text-xs"></i>
                         </button>
-                    </div>`;
-                }).join('');
+                    </div>`).join('');
             }
         }
 
@@ -1269,11 +1645,11 @@
                             <p class="text-[11px] text-slate-500 font-mono">${esc(u.phone)}</p>
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
-                            <button onclick="resetUserPin('${u.id}')" class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center transition" title="Reset PIN">
+                            <button onclick="resetUserPin('${esc(u.id)}')" class="w-8 h-8 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center transition" title="Reset PIN">
                                 <i class="fa-solid fa-key text-xs"></i>
                             </button>
                             ${isMe ? '' : `
-                            <button onclick="deleteUser('${u.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition" title="Delete user">
+                            <button onclick="deleteUser('${esc(u.id)}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center transition" title="Delete user">
                                 <i class="fa-solid fa-trash text-xs"></i>
                             </button>`}
                         </div>
@@ -1294,9 +1670,9 @@
                                 ${esc(r.patientName)}
                                 <span class="text-emerald-700">· PKR ${fmt(r.amount)}</span>
                             </p>
-                            <p class="text-[10px] text-slate-500 truncate">${esc(r.pharmacyName)} • ${esc(r.time)} • ${esc(r.donorName)}</p>
+                            <p class="text-[10px] text-slate-500 truncate">${esc(r.pharmacyName)} • ${fmtDateTime(r.timestamp, r.time)} • Funded by ${esc(r.donorName)}</p>
                         </div>
-                        <button onclick="deleteLedgerRecord('${r.id}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete record">
+                        <button onclick="deleteLedgerRecord('${esc(r.id)}')" class="w-8 h-8 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 flex items-center justify-center shrink-0 transition" title="Delete record">
                             <i class="fa-solid fa-trash text-xs"></i>
                         </button>
                     </div>
@@ -1305,13 +1681,160 @@
         }
     }
 
-    /* ---------- DONATION SUBMISSION & APPROVAL LOGIC ---------- */
+    /* ---------- ADMIN: FUND AUDIT ---------- */
+    function computeAudit() {
+        const approved = donations.filter(d => d.status === 'approved');
+        const perPharmacy = pharmacies.map(p => {
+            const rec = approved.filter(d => d.pharmacyId === p.id);
+            const led = ledgerRecords.filter(r => r.pharmacyId ? r.pharmacyId === p.id : r.pharmacyName === p.name);
+            const received = sum(rec, d => d.amount);
+            const dispensed = sum(led, r => r.amount);
+            const pending = sum(donations.filter(d => d.pharmacyId === p.id && d.status === 'pending'), d => d.amount);
+            const expected = received - dispensed;
+            return { p, received, dispensed, pending, patients: led.length, wallet: p.allocatedWallet || 0, diff: (p.allocatedWallet || 0) - expected };
+        });
+        const donorMap = {};
+        donations.forEach(d => { if (!donorMap[d.donorId]) donorMap[d.donorId] = d.donorName; });
+        const perDonor = Object.keys(donorMap).map(id => ({ id, name: donorMap[id], ...donorStats(id) }))
+            .sort((a, b) => b.approvedTotal - a.approvedTotal);
+        return { perPharmacy, perDonor };
+    }
+
+    function switchAuditTab(tab) { auditTab = tab; renderAudit(); }
+    function setDonationFilter(v) { donationFilter = v; renderAudit(); }
+
+    function renderAudit() {
+        const body = $('audit-body');
+        if (!body || !session || session.role !== 'admin') return;
+        ['pharmacy', 'donor', 'donations'].forEach(t => {
+            const b = $('audit-tab-' + t);
+            if (b) b.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition ' + (t === auditTab ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800');
+        });
+        const A = computeAudit();
+        const th = 'py-2.5 px-3 font-semibold';
+        const td = 'py-2.5 px-3 text-xs whitespace-nowrap';
+
+        if (auditTab === 'pharmacy') {
+            const t = { received: 0, dispensed: 0, wallet: 0, patients: 0, pending: 0 };
+            A.perPharmacy.forEach(r => { t.received += r.received; t.dispensed += r.dispensed; t.wallet += r.wallet; t.patients += r.patients; t.pending += r.pending; });
+            body.innerHTML = `
+            <div class="overflow-x-auto"><table class="w-full text-left text-slate-700">
+                <thead class="text-[11px] uppercase bg-slate-50 text-slate-500 border-b border-slate-200"><tr>
+                    <th class="${th}">Pharmacy</th><th class="${th}">Money received</th><th class="${th}">Medicine given</th><th class="${th}">Balance in wallet</th><th class="${th}">Patients</th><th class="${th}">Pending</th><th class="${th}">Check</th>
+                </tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                ${A.perPharmacy.map(r => `<tr>
+                    <td class="${td} font-bold text-slate-900">${esc(r.p.name)}</td>
+                    <td class="${td} text-emerald-700 font-bold">PKR ${fmt(r.received)}</td>
+                    <td class="${td} font-bold">PKR ${fmt(r.dispensed)}</td>
+                    <td class="${td} font-bold text-sky-700">PKR ${fmt(r.wallet)}</td>
+                    <td class="${td}">${fmt(r.patients)}</td>
+                    <td class="${td} text-amber-700">PKR ${fmt(r.pending)}</td>
+                    <td class="${td}">${r.diff === 0 ? '<span class="text-emerald-700 font-semibold"><i class="fa-solid fa-circle-check"></i> Matched</span>' : `<span class="text-rose-600 font-semibold" title="Wallet differs from (received − dispensed). Can happen with older data or deleted ledger records."><i class="fa-solid fa-triangle-exclamation"></i> Diff PKR ${fmt(r.diff)}</span>`}</td>
+                </tr>`).join('')}
+                </tbody>
+                <tfoot class="bg-slate-50 border-t border-slate-200 font-bold text-slate-900"><tr>
+                    <td class="${td}">TOTAL</td><td class="${td}">PKR ${fmt(t.received)}</td><td class="${td}">PKR ${fmt(t.dispensed)}</td><td class="${td}">PKR ${fmt(t.wallet)}</td><td class="${td}">${fmt(t.patients)}</td><td class="${td}">PKR ${fmt(t.pending)}</td><td class="${td}"></td>
+                </tr></tfoot>
+            </table></div>
+            <p class="text-[10px] text-slate-400 mt-2">Money received = approved donations. Balance should equal received − medicine given.</p>`;
+        } else if (auditTab === 'donor') {
+            body.innerHTML = A.perDonor.length ? `
+            <div class="overflow-x-auto"><table class="w-full text-left text-slate-700">
+                <thead class="text-[11px] uppercase bg-slate-50 text-slate-500 border-b border-slate-200"><tr>
+                    <th class="${th}">Donor</th><th class="${th}">Donations</th><th class="${th}">Approved total</th><th class="${th}">Used</th><th class="${th}">Balance left</th><th class="${th}">Patients helped</th><th class="${th}">Pending</th>
+                </tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                ${A.perDonor.map(r => `<tr>
+                    <td class="${td} font-bold text-slate-900">${esc(r.name)}</td>
+                    <td class="${td}">${r.count}${r.rejectedCount ? ` <span class="text-rose-500">(${r.rejectedCount} rejected)</span>` : ''}</td>
+                    <td class="${td} text-emerald-700 font-bold">PKR ${fmt(r.approvedTotal)}</td>
+                    <td class="${td}">PKR ${fmt(r.used)}</td>
+                    <td class="${td} text-sky-700 font-bold">PKR ${fmt(r.balance)}${r.legacyTotal ? ` <span class="text-slate-400 font-normal" title="Older donations without usage tracking">+${fmt(r.legacyTotal)} older</span>` : ''}</td>
+                    <td class="${td}">${fmt(r.patients)}</td>
+                    <td class="${td} text-amber-700">${r.pendingCount ? 'PKR ' + fmt(r.pendingAmt) + ' (' + r.pendingCount + ')' : '—'}</td>
+                </tr>`).join('')}
+                </tbody>
+            </table></div>` : `<p class="text-center text-xs text-slate-400 py-6">No donations yet.</p>`;
+        } else {
+            const list = donations.filter(d => donationFilter === 'all' || d.status === donationFilter).sort(byNewest);
+            body.innerHTML = `
+            <div class="flex items-center justify-end mb-2">
+                <select onchange="setDonationFilter(this.value)" class="text-[11px] bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-semibold">
+                    ${['all','pending','approved','rejected'].map(v => `<option value="${v}" ${donationFilter === v ? 'selected' : ''}>${v === 'all' ? 'All statuses' : v.charAt(0).toUpperCase() + v.slice(1)}</option>`).join('')}
+                </select>
+            </div>
+            ${list.length ? `<div class="overflow-x-auto max-h-[420px] overflow-y-auto"><table class="w-full text-left text-slate-700">
+                <thead class="text-[11px] uppercase bg-slate-50 text-slate-500 border-b border-slate-200 sticky top-0"><tr>
+                    <th class="${th}">Date</th><th class="${th}">Donor</th><th class="${th}">Pharmacy</th><th class="${th}">Amount</th><th class="${th}">Used / Left</th><th class="${th}">Status</th><th class="${th}">Reviewed by</th><th class="${th}">Receipt</th>
+                </tr></thead>
+                <tbody class="divide-y divide-slate-100">
+                ${list.map(d => `<tr>
+                    <td class="${td}">${fmtDateTime(d.timestamp)}</td>
+                    <td class="${td} font-semibold text-slate-900">${esc(d.donorName)}</td>
+                    <td class="${td}">${esc(d.pharmacyName)}</td>
+                    <td class="${td} font-bold text-emerald-700">PKR ${fmt(d.amount)}</td>
+                    <td class="${td}">${d.status === 'approved' && typeof d.remaining === 'number' ? `PKR ${fmt(d.amount - d.remaining)} / PKR ${fmt(d.remaining)}` : '—'}</td>
+                    <td class="${td}">${statusBadge(d.status)}</td>
+                    <td class="${td} text-[11px] text-slate-500">${esc(d.approvedBy || d.rejectedBy || '—')}</td>
+                    <td class="${td}"><button onclick="viewProof('${esc(d.id)}')" class="px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold"><i class="fa-solid fa-image"></i> View</button></td>
+                </tr>`).join('')}
+                </tbody>
+            </table></div>` : `<p class="text-center text-xs text-slate-400 py-6">No donations in this view.</p>`}`;
+        }
+    }
+
+    function csvCell(v) {
+        if (v === null || v === undefined) return '';
+        if (typeof v === 'string' && /^[=+\-@]/.test(v)) v = "'" + v;   // block spreadsheet formula injection
+        v = String(v);
+        return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    }
+
+    function exportAuditCSV() {
+        if (!session || session.role !== 'admin') return;
+        const A = computeAudit();
+        const rows = [];
+        const add = (...r) => rows.push(r.map(csvCell).join(','));
+        add('Farazé MedTrust — Audit Report');
+        add('Generated', new Date().toLocaleString('en-GB'));
+        add('In memory of', 'Nagina Nadeem (Late)');
+        add('');
+        add('1. PHARMACY SUMMARY');
+        add('Pharmacy', 'Money received (approved)', 'Medicine given', 'Wallet balance', 'Patients helped', 'Pending', 'Difference (wallet - (received - given))');
+        A.perPharmacy.forEach(r => add(r.p.name, r.received, r.dispensed, r.wallet, r.patients, r.pending, r.diff));
+        add('');
+        add('2. DONOR SUMMARY');
+        add('Donor', 'Donations', 'Approved total', 'Used', 'Balance left', 'Older (untracked)', 'Patients helped', 'Pending');
+        A.perDonor.forEach(r => add(r.name, r.count, r.approvedTotal, r.used, r.balance, r.legacyTotal, r.patients, r.pendingAmt));
+        add('');
+        add('3. ALL DONATIONS');
+        add('Date', 'Donor', 'Pharmacy', 'Amount', 'Txn reference', 'Status', 'Used', 'Balance left', 'Reviewed by', 'Reject reason');
+        donations.slice().sort(byNewest).forEach(d => add(fmtDateTime(d.timestamp), d.donorName, d.pharmacyName, d.amount, d.reference || '', d.status,
+            d.status === 'approved' && typeof d.remaining === 'number' ? d.amount - d.remaining : '', d.status === 'approved' && typeof d.remaining === 'number' ? d.remaining : '',
+            d.approvedBy || d.rejectedBy || '', d.rejectReason || ''));
+        add('');
+        add('4. MEDICINE DISPENSED (LEDGER)');
+        add('Date', 'Pharmacy', 'Patient', 'Patient phone', 'Medicines', 'Amount', 'Funded by', 'Fund breakdown', 'Recorded by');
+        ledgerRecords.forEach(r => add(fmtDateTime(r.timestamp, r.time), r.pharmacyName, r.patientName, r.patientCell, r.medicines, r.amount, r.donorName,
+            (r.fundSources || []).map(s => `${s.donorName}: ${s.amount}`).join(' | '), r.recordedBy || ''));
+        const blob = new Blob(['﻿' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `medtrust-audit-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Audit report downloaded (open in Excel)');
+    }
+
+    /* ---------- DONATION SUBMISSION ---------- */
     function openBudgetModal(id) {
         if (!session || !canAccess('donor')) { alert('Only donors and admins can send funds.'); return; }
         selectedPharmacyForBudget = pharmacies.find(p => p.id === id);
         if (!selectedPharmacyForBudget) return;
         $('modal-pharmacy-name').textContent = `${selectedPharmacyForBudget.name} • ${selectedPharmacyForBudget.area}`;
         $('custom-budget-input').value = '';
+        $('donation-ref').value = '';
         $('donation-proof-file').value = '';
         $('donation-proof-base64').value = '';
         $('proof-preview-container').classList.add('hidden');
@@ -1319,74 +1842,170 @@
     }
     function closeBudgetModal() { $('modal-budget').classList.add('hidden'); }
 
-    function handleProofImageUpload(e) {
+    // Shrinks the screenshot so it always fits Firestore's 1 MB document limit
+    function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onerror = () => reject(new Error('Could not read the file.'));
+            fr.onload = () => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('This file is not a valid image.'));
+                img.onload = () => {
+                    let maxDim = 1100, q = 0.72, out = '';
+                    for (let i = 0; i < 6; i++) {
+                        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                        const c = document.createElement('canvas');
+                        c.width = Math.max(1, Math.round(img.width * scale));
+                        c.height = Math.max(1, Math.round(img.height * scale));
+                        const ctx = c.getContext('2d');
+                        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+                        ctx.drawImage(img, 0, 0, c.width, c.height);
+                        out = c.toDataURL('image/jpeg', q);
+                        if (out.length < 600000) break;
+                        maxDim = Math.round(maxDim * 0.8); q = Math.max(0.45, q - 0.08);
+                    }
+                    if (out.length > 900000) reject(new Error('Image is too detailed. Please use a smaller screenshot.'));
+                    else resolve(out);
+                };
+                img.src = fr.result;
+            };
+            fr.readAsDataURL(file);
+        });
+    }
+
+    async function handleProofImageUpload(e) {
         const file = e.target.files[0];
+        $('donation-proof-base64').value = '';
+        $('proof-preview-container').classList.add('hidden');
         if (!file) return;
-        if (file.size > 3 * 1024 * 1024) {
-            alert('File size too large. Please select an image smaller than 3MB.');
+        if (file.size > 12 * 1024 * 1024) {
+            alert('File size too large. Please select an image smaller than 12MB.');
             e.target.value = '';
             return;
         }
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            $('donation-proof-base64').value = evt.target.result;
-            $('proof-preview-img').src = evt.target.result;
+        proofProcessing = true;
+        try {
+            const data = await compressImage(file);
+            $('donation-proof-base64').value = data;
+            $('proof-preview-img').src = data;
             $('proof-preview-container').classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+            alert(err.message || 'Could not process the image.');
+            e.target.value = '';
+        } finally {
+            proofProcessing = false;
+        }
     }
 
-    function submitDonationForVerification() {
-        if (!session) return;
+    async function submitDonationForVerification() {
+        if (!session || busy.has('donate')) return;
         const amount = parseInt($('custom-budget-input').value, 10);
         const proof = $('donation-proof-base64').value;
+        const ref = $('donation-ref').value.trim();
         const p = selectedPharmacyForBudget;
 
+        if (proofProcessing) { alert('Please wait — the screenshot is still being prepared.'); return; }
         if (!amount || amount < 100) { alert('Enter a valid amount (min PKR 100).'); return; }
         if (!proof) { alert('Please upload payment screenshot/receipt image.'); return; }
         if (!p) return;
 
-        db.collection('pendingDonations').add({
+        const btn = $('donation-submit-btn');
+        busy.add('donate'); setBusyBtn(btn, true);
+
+        const dRef = db.collection('pendingDonations').doc();
+        const base = {
             donorId: session.id,
             donorName: session.name,
             pharmacyId: p.id,
             pharmacyName: p.name,
             amount: amount,
-            proofUrl: proof,
+            reference: ref,
             status: 'pending',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        closeBudgetModal();
-        showToast(`Receipt submitted! Pending Admin approval.`);
+            timestamp: FV.serverTimestamp()
+        };
+        try {
+            try {
+                const batch = db.batch();
+                batch.set(db.collection('donationProofs').doc(dRef.id), { proof: proof, donorId: session.id, timestamp: FV.serverTimestamp() });
+                batch.set(dRef, { ...base, hasProof: true });
+                await batch.commit();
+            } catch (err) {
+                // If the database rules do not allow the proofs collection, keep the image on the donation itself
+                if (err && err.code === 'permission-denied') await dRef.set({ ...base, hasProof: false, proofUrl: proof });
+                else throw err;
+            }
+            closeBudgetModal();
+            showToast('Receipt submitted! Status: Pending admin approval', 4000);
+            setTimeout(() => { const s = $('my-donations-section'); if (s && !s.classList.contains('hidden')) s.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 400);
+        } catch (err) {
+            console.error(err);
+            alert('Could not submit your donation: ' + (err.message || err));
+        } finally {
+            busy.delete('donate'); setBusyBtn(btn, false);
+        }
     }
 
-    function viewProofModal(proofUrl) {
-        $('full-proof-img').src = proofUrl;
+    async function viewProof(id) {
+        const d = donations.find(x => x.id === id);
+        if (!d) return;
+        let src = d.proofUrl || '';
+        if (!src && d.hasProof) {
+            showToast('Loading receipt…', 1500);
+            try {
+                const s = await db.collection('donationProofs').doc(id).get();
+                src = s.exists ? (s.data().proof || '') : '';
+            } catch (err) { console.error(err); }
+        }
+        if (!src) { showToast('No receipt image found for this donation'); return; }
+        $('full-proof-img').src = src;
         $('modal-proof-view').classList.remove('hidden');
     }
-    function closeProofModal() { $('modal-proof-view').classList.add('hidden'); }
+    function closeProofModal() { $('modal-proof-view').classList.add('hidden'); $('full-proof-img').src = ''; }
 
-    function approveDonation(docId, pharmacyId, amount) {
-        const p = pharmacies.find(x => x.id === pharmacyId);
-        if (!p) return;
-
-        const updatedWallet = p.allocatedWallet + amount;
-        db.collection('pharmacies').doc(pharmacyId).update({ allocatedWallet: updatedWallet });
-
-        db.collection('stats').doc('global').get().then(doc => {
-            const currentTotal = doc.exists ? (doc.data().totalDonated || 0) : 0;
-            db.collection('stats').doc('global').update({ totalDonated: currentTotal + amount });
-        });
-
-        db.collection('pendingDonations').doc(docId).update({ status: 'approved' });
-        showToast(`Donation of PKR ${fmt(amount)} Approved!`);
+    async function approveDonation(docId) {
+        if (!session || session.role !== 'admin' || busy.has('d-' + docId)) return;
+        busy.add('d-' + docId);
+        const dRef = db.collection('pendingDonations').doc(docId);
+        try {
+            const result = await db.runTransaction(async tx => {
+                const d = await tx.get(dRef);
+                if (!d.exists) throw new Error('This donation no longer exists.');
+                const data = d.data();
+                if (data.status !== 'pending') throw new Error('This donation was already ' + data.status + '.');
+                const pRef = db.collection('pharmacies').doc(data.pharmacyId);
+                const pSnap = await tx.get(pRef);
+                if (!pSnap.exists) throw new Error('The target pharmacy no longer exists.');
+                tx.update(pRef, { allocatedWallet: FV.increment(data.amount) });
+                tx.set(db.collection('stats').doc('global'), { totalDonated: FV.increment(data.amount) }, { merge: true });
+                tx.update(dRef, { status: 'approved', remaining: data.amount, approvedAt: FV.serverTimestamp(), approvedBy: session.name });
+                return data.amount;
+            });
+            showToast(`Donation of PKR ${fmt(result)} Approved!`);
+        } catch (err) {
+            alert('Could not approve: ' + (err.message || err));
+        } finally {
+            busy.delete('d-' + docId);
+        }
     }
 
-    function rejectDonation(docId) {
-        if (!confirm('Reject this donation proof?')) return;
-        db.collection('pendingDonations').doc(docId).update({ status: 'rejected' });
-        showToast('Donation proof rejected');
+    async function rejectDonation(docId) {
+        if (!session || session.role !== 'admin' || busy.has('d-' + docId)) return;
+        const reason = prompt('Reason for rejecting (shown to the donor, optional):', '');
+        if (reason === null) return;
+        busy.add('d-' + docId);
+        try {
+            await db.runTransaction(async tx => {
+                const dRef = db.collection('pendingDonations').doc(docId);
+                const d = await tx.get(dRef);
+                if (!d.exists || d.data().status !== 'pending') throw new Error('This donation was already processed.');
+                tx.update(dRef, { status: 'rejected', rejectReason: reason.trim(), rejectedAt: FV.serverTimestamp(), rejectedBy: session.name });
+            });
+            showToast('Donation proof rejected');
+        } catch (err) {
+            alert('Could not reject: ' + (err.message || err));
+        } finally {
+            busy.delete('d-' + docId);
+        }
     }
 
     /* ---------- ADMIN TABS & MANAGEMENT ---------- */
@@ -1405,14 +2024,15 @@
         });
     }
 
-    function refreshAllData() { showToast('Data synced with Cloud Firestore'); }
+    function refreshAllData() { renderAll(); showToast('Data synced with Cloud Firestore'); }
 
     function exportData() {
         const data = {
             exportedAt: new Date().toISOString(),
             pharmacies: pharmacies,
             users: users.map(u => ({...u, pin: '***'})),
-            ledgerRecords: ledgerRecords,
+            donations: donations.map(d => { const { proofUrl, ...rest } = d; return { ...rest, timestamp: tsToDate(rest.timestamp), approvedAt: tsToDate(rest.approvedAt), rejectedAt: tsToDate(rest.rejectedAt) }; }),
+            ledgerRecords: ledgerRecords.map(r => ({ ...r, timestamp: tsToDate(r.timestamp) })),
             stats: { totalDonated, patientsHelped }
         };
         const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
@@ -1433,12 +2053,15 @@
         if (role === 'Pharmacy') {
             wrap.classList.remove('hidden');
             $('admin-user-pharmacy').innerHTML = '<option value="">Select pharmacy…</option>' +
-                pharmacies.map(p => `<option value="${p.id}">${esc(p.name)} — ${esc(p.area)}</option>`).join('');
+                pharmacies.map(p => `<option value="${esc(p.id)}">${esc(p.name)} — ${esc(p.area)}</option>`).join('');
         } else {
             wrap.classList.add('hidden');
             $('admin-user-pharmacy').innerHTML = '';
         }
     }
+
+    function phoneTaken(phone) { return users.some(u => cleanPhone(u.phone) === cleanPhone(phone)); }
+    function uid() { return 'user-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6); }
 
     function addNewDonor(e) {
         e.preventDefault();
@@ -1449,12 +2072,13 @@
 
         if (!name || !phone || !pin) { alert('Please fill name, phone, and PIN.'); return; }
         if (!/^\d{4,6}$/.test(pin)) { alert('PIN must be 4-6 digits.'); return; }
-        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) { alert('A user already exists with this phone number.'); return; }
+        if (phoneTaken(phone)) { alert('A user already exists with this phone number.'); return; }
 
-        const newId = 'user-' + Date.now();
-        db.collection('users').doc(newId).set({ id: newId, name, phone, pin, role: 'donor', city, pharmacyId: null });
-        e.target.reset();
-        showToast(`Donor "${name}" created`);
+        const newId = uid();
+        const form = e.target;
+        db.collection('users').doc(newId).set({ id: newId, name, phone, pin, role: 'donor', city, pharmacyId: null })
+            .then(() => { form.reset(); showToast(`Donor "${name}" created`); })
+            .catch(err => alert('Could not create donor: ' + err.message));
     }
 
     function addNewStore(e) {
@@ -1468,14 +2092,18 @@
 
         if (!name || !owner || !phone || !area || !target || target < 1000) { alert('Fill all store fields. Target must be at least PKR 1,000.'); return; }
         if (!/^\d{4,6}$/.test(pin)) { alert('Owner PIN must be 4-6 digits.'); return; }
-        if (users.some(u => cleanPhone(u.phone) === cleanPhone(phone))) { alert('A user already exists with this phone number.'); return; }
+        if (phoneTaken(phone)) { alert('A user already exists with this phone number.'); return; }
 
-        const storeId = 'pharma-' + Date.now();
-        db.collection('pharmacies').doc(storeId).set({ id: storeId, name, owner, area, phone, isOnline: true, allocatedWallet: 0, spentThisMonth: 0, targetMonthly: target });
-        db.collection('users').doc('user-' + Date.now()).set({ id: 'user-' + Date.now(), name: owner, phone, pin, role: 'pharmacy', city: area, pharmacyId: storeId });
-
-        e.target.reset();
-        showToast(`Store "${name}" registered with owner login`);
+        const stamp = Date.now();
+        const storeId = 'pharma-' + stamp;
+        const userId = 'user-' + stamp;     // one id used for both the document and its id field
+        const batch = db.batch();
+        batch.set(db.collection('pharmacies').doc(storeId), { id: storeId, name, owner, area, phone, isOnline: true, allocatedWallet: 0, spentThisMonth: 0, monthKey: monthKey(), targetMonthly: target });
+        batch.set(db.collection('users').doc(userId), { id: userId, name: owner, phone, pin, role: 'pharmacy', city: area, pharmacyId: storeId });
+        const form = e.target;
+        batch.commit()
+            .then(() => { form.reset(); showToast(`Store "${name}" registered with owner login`); })
+            .catch(err => alert('Could not register store: ' + err.message));
     }
 
     function addNewUser(e) {
@@ -1490,49 +2118,66 @@
         if (!name || !phone || !pin || !role) { alert('Fill name, phone, PIN, and role.'); return; }
         if (!/^\d{4,6}$/.test(pin)) { alert('PIN must be 4-6 digits.'); return; }
         if (role === 'Pharmacy' && !pharmacyId) { alert('Please select a pharmacy.'); return; }
+        if (phoneTaken(phone)) { alert('A user already exists with this phone number.'); return; }
 
-        const userId = 'user-' + Date.now();
-        db.collection('users').doc(userId).set({ id: userId, name, phone, pin, role: role.toLowerCase(), city, pharmacyId });
-
-        e.target.reset();
-        onUserRoleChange();
-        showToast(`User "${name}" created`);
+        const userId = uid();
+        const form = e.target;
+        db.collection('users').doc(userId).set({ id: userId, name, phone, pin, role: role.toLowerCase(), city, pharmacyId })
+            .then(() => { form.reset(); onUserRoleChange(); showToast(`User "${name}" created`); })
+            .catch(err => alert('Could not create user: ' + err.message));
     }
 
     function deleteStore(id) {
+        const p = pharmacies.find(x => x.id === id);
+        if (!p) return;
         if (pharmacies.length <= 1) { alert('Cannot delete the last store.'); return; }
-        if (!confirm(`Delete store?`)) return;
-        db.collection('pharmacies').doc(id).delete();
-        showToast('Store deleted');
+        const linked = users.filter(u => u.pharmacyId === id);
+        let msg = `Delete "${p.name}"?`;
+        if (linked.length) msg += `\n\n${linked.length} pharmacy login(s) linked to this store will also be removed.`;
+        if (p.allocatedWallet > 0) msg += `\n\nWARNING: this store still holds PKR ${fmt(p.allocatedWallet)} of donor funds in its wallet.`;
+        if (!confirm(msg)) return;
+        const batch = db.batch();
+        batch.delete(db.collection('pharmacies').doc(id));
+        linked.forEach(u => batch.delete(db.collection('users').doc(u.id)));
+        batch.commit().then(() => showToast('Store deleted')).catch(err => alert('Could not delete: ' + err.message));
     }
 
     function deleteUser(id) {
         if (session && session.id === id) { alert('You cannot delete your own account.'); return; }
-        if (!confirm(`Delete user?`)) return;
-        db.collection('users').doc(id).delete();
-        showToast('User deleted');
+        const u = users.find(x => x.id === id);
+        if (!confirm(`Delete user${u ? ' "' + u.name + '"' : ''}?`)) return;
+        db.collection('users').doc(id).delete().then(() => showToast('User deleted')).catch(err => alert('Could not delete: ' + err.message));
     }
 
     function deleteLedgerRecord(id) {
-        if (!confirm('Delete this audit record?')) return;
-        db.collection('ledgerRecords').doc(id).delete();
-        showToast('Record deleted');
+        if (!confirm('Delete this audit record?\n\nThis removes it from the public ledger and the audit totals (the wallet is NOT changed).')) return;
+        db.collection('ledgerRecords').doc(id).delete().then(() => showToast('Record deleted')).catch(err => alert('Could not delete: ' + err.message));
     }
 
-    function clearAllLedger() {
+    async function clearAllLedger() {
         if (!ledgerRecords.length) return;
-        if (!confirm(`Delete ALL ledger records?`)) return;
-        ledgerRecords.forEach(r => db.collection('ledgerRecords').doc(r.id).delete());
-        showToast('All records cleared');
+        const typed = prompt(`This permanently deletes ALL ${ledgerRecords.length} ledger records and breaks the audit trail.\n\nTip: press Export / Audit CSV first.\n\nType DELETE to confirm:`);
+        if (typed !== 'DELETE') { if (typed !== null) alert('Cancelled — you must type DELETE exactly.'); return; }
+        try {
+            const ids = ledgerRecords.map(r => r.id);
+            for (let i = 0; i < ids.length; i += 400) {
+                const batch = db.batch();
+                ids.slice(i, i + 400).forEach(id => batch.delete(db.collection('ledgerRecords').doc(id)));
+                await batch.commit();
+            }
+            showToast('All records cleared');
+        } catch (err) { alert('Could not clear: ' + err.message); }
     }
 
     function resetUserPin(userId) {
         const u = users.find(x => x.id === userId);
         if (!u) return;
         const newPin = prompt(`Enter new 4-6 digit PIN for ${u.name}:`);
-        if (!newPin || !/^\d{4,6}$/.test(newPin)) { alert('PIN must be 4-6 digits.'); return; }
-        db.collection('users').doc(userId).update({ pin: newPin });
-        showToast(`PIN reset for ${u.name}`);
+        if (newPin === null) return;
+        if (!/^\d{4,6}$/.test(newPin.trim())) { alert('PIN must be 4-6 digits.'); return; }
+        db.collection('users').doc(userId).update({ pin: newPin.trim() })
+            .then(() => showToast(`PIN reset for ${u.name}`))
+            .catch(err => alert('Could not reset PIN: ' + err.message));
     }
 
     /* ---------- LEDGER RENDER ---------- */
@@ -1545,19 +2190,23 @@
             cards.innerHTML = `<div class="card rounded-2xl p-6 text-center text-slate-400 text-sm">No disbursals yet.</div>`;
             return;
         }
+        const full = canSeeFullPatientData();
+        const pName = (r) => full ? r.patientName : maskName(r.patientName);
+        const pCell = (r) => full ? r.patientCell : maskPhone(r.patientCell);
+
         tbody.innerHTML = ledgerRecords.map(r => `
             <tr class="hover:bg-slate-50 transition">
-                <td class="py-3 px-3 text-[11px] text-slate-500 whitespace-nowrap">${esc(r.time)}</td>
+                <td class="py-3 px-3 text-[11px] text-slate-500 whitespace-nowrap">${esc(fmtDateTime(r.timestamp, r.time))}</td>
                 <td class="py-3 px-3 font-bold text-slate-900 text-xs whitespace-nowrap">${esc(r.pharmacyName)}</td>
                 <td class="py-3 px-3">
-                    <span class="block text-slate-800 text-xs font-semibold">${esc(r.patientName)}</span>
-                    <span class="text-[10px] text-slate-500 font-mono">${esc(r.patientCell)}</span>
+                    <span class="block text-slate-800 text-xs font-semibold">${esc(pName(r))}</span>
+                    <span class="text-[10px] text-slate-500 font-mono">${esc(pCell(r))}</span>
                 </td>
                 <td class="py-3 px-3 text-[11px] text-slate-600 max-w-[220px]">${esc(r.medicines)}</td>
                 <td class="py-3 px-3 font-extrabold text-emerald-700 text-xs whitespace-nowrap">PKR ${fmt(r.amount)}</td>
-                <td class="py-3 px-3 text-[11px] text-brand-700 font-medium whitespace-nowrap">${esc(r.donorName)}</td>
+                <td class="py-3 px-3 text-[11px] text-brand-700 font-medium">${esc(r.donorName)}</td>
                 <td class="py-3 px-3 text-right">
-                    <button onclick="shareProof('${esc(r.patientName)}', ${r.amount}, '${esc(r.pharmacyName)}')"
+                    <button onclick="shareProof('${esc(r.id)}')"
                             class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-semibold border border-emerald-200 transition inline-flex items-center gap-1">
                         <i class="fa-brands fa-whatsapp"></i> Proof
                     </button>
@@ -1569,8 +2218,8 @@
             <div class="bg-white rounded-xl border border-slate-200 p-3.5 space-y-2">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
-                        <span class="block text-slate-900 text-sm font-bold truncate">${esc(r.patientName)}</span>
-                        <span class="text-[10px] text-slate-500 font-mono">${esc(r.patientCell)}</span>
+                        <span class="block text-slate-900 text-sm font-bold truncate">${esc(pName(r))}</span>
+                        <span class="text-[10px] text-slate-500 font-mono">${esc(pCell(r))}</span>
                     </div>
                     <span class="text-sm font-extrabold text-emerald-700 whitespace-nowrap">PKR ${fmt(r.amount)}</span>
                 </div>
@@ -1578,9 +2227,9 @@
                 <div class="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100">
                     <div class="min-w-0">
                         <span class="block text-[10px] text-slate-500 truncate">${esc(r.pharmacyName)}</span>
-                        <span class="block text-[9px] text-slate-400">${esc(r.time)} • ${esc(r.donorName)}</span>
+                        <span class="block text-[9px] text-slate-400">${esc(fmtDateTime(r.timestamp, r.time))} • ${esc(r.donorName)}</span>
                     </div>
-                    <button onclick="shareProof('${esc(r.patientName)}', ${r.amount}, '${esc(r.pharmacyName)}')"
+                    <button onclick="shareProof('${esc(r.id)}')"
                             class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200 shrink-0">
                         <i class="fa-brands fa-whatsapp"></i> Proof
                     </button>
@@ -1594,7 +2243,7 @@
         $('whatsapp-message-box').textContent = message;
         const link = $('whatsapp-direct-link');
         if (phone) {
-            let clean = cleanPhone(phone);
+            let clean = digitsOnly(phone);
             if (clean.startsWith('0')) clean = '92' + clean.slice(1);
             else if (!clean.startsWith('92')) clean = '92' + clean;
             link.href = `https://wa.me/${clean}?text=${encodeURIComponent(message)}`;
@@ -1606,8 +2255,11 @@
         $('modal-whatsapp').classList.remove('hidden');
     }
     function closeWhatsAppModal() { $('modal-whatsapp').classList.add('hidden'); }
-    function shareProof(patient, amount, pharmacy) {
-        const msg = `Farazé MedTrust — Audit Proof\n\nPatient: ${patient}\nAmount: PKR ${fmt(amount)}\nPharmacy: ${pharmacy}\nIn Memory Of: Nagina Nadeem (Late)`;
+    function shareProof(recordId) {
+        const r = ledgerRecords.find(x => x.id === recordId);
+        if (!r) return;
+        const patient = canSeeFullPatientData() ? r.patientName : maskName(r.patientName);
+        const msg = `Farazé MedTrust — Audit Proof\n\nPatient: ${patient}\nAmount: PKR ${fmt(r.amount)}\nPharmacy: ${r.pharmacyName}\nDate: ${fmtDateTime(r.timestamp, r.time)}\nIn Memory Of: Nagina Nadeem (Late)`;
         showWhatsAppModal(null, msg);
     }
     function scrollToLedger() { $('ledger-section').scrollIntoView({ behavior: 'smooth' }); }
@@ -1618,14 +2270,20 @@
         try {
             const savedId = localStorage.getItem('medtrust_session');
             if (savedId) {
+                let tries = 0;
                 const checkUser = setInterval(() => {
+                    tries++;
                     if (users.length > 0) {
                         clearInterval(checkUser);
                         const u = users.find(x => x.id === savedId);
-                        if (u) {
+                        if (u && !session && !(u.role === 'pharmacy' && !pharmacies.find(p => p.id === u.pharmacyId))) {
                             session = u;
                             startApp();
+                        } else if (!u) {
+                            try { localStorage.removeItem('medtrust_session'); } catch (_) {}
                         }
+                    } else if (tries > 100) {
+                        clearInterval(checkUser);   // give up after ~10s (offline / blocked)
                     }
                 }, 100);
             }
