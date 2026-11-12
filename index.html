@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#121212">
     <title>Farazé Cloud Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -14,11 +15,65 @@
             }
         }
     </script>
+
+    <style>
+        html, body { overscroll-behavior: none; }
+
+        /* Camera area */
+        #reader-wrap { position: relative; width: 100%; border-radius: 10px; overflow: hidden; background: #000; min-height: 260px; }
+        #reader { width: 100%; border: none !important; }
+        #reader video { width: 100% !important; object-fit: cover; display: block; }
+        /* hide the library's own shaded box, we draw our own laser box */
+        #reader #qr-shaded-region { border-color: rgba(0,0,0,0.55) !important; }
+        #reader #qr-shaded-region > div { display: none !important; }
+
+        /* Laser targeting box */
+        #laser-box {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid rgba(212,175,55,0.9);
+            border-radius: 10px;
+            pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.35), 0 0 18px rgba(212,175,55,0.5) inset;
+            transition: width .25s ease, height .25s ease, border-color .2s ease;
+            overflow: hidden;
+        }
+        #laser-box .corner { position: absolute; width: 22px; height: 22px; border: 4px solid #D4AF37; }
+        #laser-box .tl { top: -2px; left: -2px; border-right: none; border-bottom: none; border-top-left-radius: 10px; }
+        #laser-box .tr { top: -2px; right: -2px; border-left: none; border-bottom: none; border-top-right-radius: 10px; }
+        #laser-box .bl { bottom: -2px; left: -2px; border-right: none; border-top: none; border-bottom-left-radius: 10px; }
+        #laser-box .br { bottom: -2px; right: -2px; border-left: none; border-top: none; border-bottom-right-radius: 10px; }
+        #laser-line {
+            position: absolute; left: 4%; width: 92%; height: 3px; top: 0;
+            background: linear-gradient(90deg, transparent, #ff2a2a 20%, #ff6b6b 50%, #ff2a2a 80%, transparent);
+            box-shadow: 0 0 12px 3px rgba(255,42,42,0.85), 0 0 28px 6px rgba(255,42,42,0.45);
+            border-radius: 3px;
+            animation: laserMove 1.6s ease-in-out infinite alternate;
+        }
+        @keyframes laserMove { from { top: 4%; } to { top: 94%; } }
+        #laser-box.success { border-color: #22c55e; box-shadow: 0 0 0 9999px rgba(0,0,0,0.35), 0 0 30px rgba(34,197,94,0.9) inset; }
+        #laser-box.success #laser-line { background: #22c55e; box-shadow: 0 0 14px 4px rgba(34,197,94,0.9); animation-play-state: paused; }
+
+        /* Flash on success */
+        #flash { position: absolute; inset: 0; background: rgba(34,197,94,0.35); opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+        #flash.on { opacity: 1; transition: none; }
+
+        /* Library UI (permission / file buttons) */
+        #reader__dashboard_section_csr span button,
+        #reader button { background-color: #D4AF37 !important; color: #121212 !important; padding: 10px 20px !important; border-radius: 6px !important; border: none !important; font-weight: bold !important; margin-top: 12px !important; }
+        #reader a { color: #D4AF37 !important; }
+        #reader select { background-color: #222; color: #fff; padding: 5px; border-radius: 4px; border: 1px solid #D4AF37; }
+
+        .ctrl-btn { background: #1c1c1c; border: 1px solid #3f3f46; color: #e5e7eb; border-radius: 8px; padding: 8px 4px; font-size: 12px; font-weight: 600; transition: .15s; }
+        .ctrl-btn:active { transform: scale(0.96); }
+        .ctrl-btn.active { background: #D4AF37; color: #121212; border-color: #D4AF37; }
+        input[type=range] { accent-color: #D4AF37; }
+    </style>
 </head>
-<body class="bg-farazeDark text-white h-screen flex flex-col items-center pt-10 font-sans">
+<body class="bg-farazeDark text-white min-h-screen flex flex-col items-center pt-8 pb-8 font-sans">
 
     <!-- Header -->
-    <div class="text-center mb-6">
+    <div class="text-center mb-5">
         <h1 class="text-3xl font-bold text-farazeGold tracking-widest">FARAZÉ</h1>
         <p class="text-gray-400 text-sm mt-1">CLOUD SCANNER</p>
     </div>
@@ -27,17 +82,48 @@
     <div id="pairing-screen" class="w-11/12 max-w-sm bg-zinc-900 border border-farazeGold rounded-lg p-6 shadow-[0_0_15px_rgba(212,175,55,0.2)] text-center">
         <h2 class="text-xl mb-4 text-gray-200">Connect to PC</h2>
         <p class="text-sm text-gray-400 mb-4">PC par chalne wali script ka 4-digit code yahan likhein</p>
-        <input type="text" id="pc-code" placeholder="e.g., 1234" class="w-full p-3 rounded bg-black border border-gray-600 text-center text-xl font-bold text-farazeGold focus:border-farazeGold outline-none mb-4 tracking-widest">
+        <input type="tel" inputmode="numeric" maxlength="4" id="pc-code" placeholder="e.g., 1234" class="w-full p-3 rounded bg-black border border-gray-600 text-center text-xl font-bold text-farazeGold focus:border-farazeGold outline-none mb-4 tracking-widest">
         <button id="connect-btn" class="w-full bg-farazeGold text-black font-bold py-3 rounded hover:bg-yellow-500 transition">Connect Scanner</button>
         <p id="pair-error" class="text-red-500 text-sm mt-2 hidden">Invalid Code or PC not active</p>
     </div>
 
     <!-- Step 2: Scanner Screen -->
-    <div id="scanner-screen" class="w-11/12 max-w-md bg-zinc-900 border border-farazeGold rounded-lg p-4 shadow-[0_0_15px_rgba(212,175,55,0.2)] hidden text-center">
+    <div id="scanner-screen" class="w-11/12 max-w-md bg-zinc-900 border border-farazeGold rounded-lg p-3 shadow-[0_0_15px_rgba(212,175,55,0.2)] hidden text-center">
         <p class="text-xs text-yellow-500 mb-2 font-semibold">Target box ke andar sirf wohi code rakhein jo scan krwana hai</p>
-        <div id="reader" class="w-full rounded overflow-hidden bg-black"></div>
-        <div id="scan-status" class="mt-4 text-center text-gray-300 font-bold">
-            Ready to scan...
+
+        <div id="reader-wrap">
+            <div id="reader"></div>
+            <div id="laser-box" style="width:260px;height:130px;">
+                <span class="corner tl"></span><span class="corner tr"></span>
+                <span class="corner bl"></span><span class="corner br"></span>
+                <div id="laser-line"></div>
+            </div>
+            <div id="flash"></div>
+        </div>
+
+        <div id="scan-status" class="mt-3 text-center text-gray-300 font-bold min-h-[24px]">Starting camera...</div>
+        <div id="scan-type" class="text-xs text-gray-500 min-h-[16px]"></div>
+
+        <!-- Controls -->
+        <div class="grid grid-cols-4 gap-2 mt-3">
+            <button id="btn-torch" class="ctrl-btn">🔦 Torch</button>
+            <button id="btn-switch" class="ctrl-btn">🔄 Camera</button>
+            <button id="btn-mode" class="ctrl-btn">▭ Wide</button>
+            <button id="btn-sound" class="ctrl-btn active">🔊 Beep</button>
+        </div>
+
+        <div id="zoom-wrap" class="mt-3 hidden">
+            <label class="text-xs text-gray-400 flex justify-between"><span>Zoom</span><span id="zoom-val">1x</span></label>
+            <input id="zoom-range" type="range" min="1" max="1" step="0.1" value="1" class="w-full">
+        </div>
+
+        <!-- History -->
+        <div class="mt-4 text-left">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-gray-400 font-semibold">RECENT SCANS</span>
+                <button id="clear-history" class="text-xs text-gray-500 underline">Clear</button>
+            </div>
+            <ul id="history" class="text-xs space-y-1 max-h-32 overflow-y-auto"></ul>
         </div>
     </div>
 
@@ -46,6 +132,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+        // ================= FIREBASE (UNCHANGED) =================
         const firebaseConfig = {
             apiKey: "AIzaSyDtQ9lQoAZj3A53vTptIDgjHZ-o1amWgZY",
             authDomain: "cloudscanner-19972.firebaseapp.com",
@@ -59,13 +146,14 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        
+
         let currentSessionCode = "";
-        let html5QrcodeScanner = null;
 
         document.getElementById('connect-btn').addEventListener('click', async () => {
             const code = document.getElementById('pc-code').value.trim();
             if(code.length !== 4) return alert("Please enter a valid 4-digit code");
+
+            unlockAudio(); // user gesture: beep ke liye audio enable
 
             const sessionRef = ref(db, 'sessions/' + code);
             const snapshot = await get(sessionRef);
@@ -73,7 +161,7 @@
             if (snapshot.exists() && snapshot.val().status === "waiting") {
                 currentSessionCode = code;
                 await update(sessionRef, { status: "connected" });
-                
+
                 document.getElementById('pairing-screen').classList.add('hidden');
                 document.getElementById('scanner-screen').classList.remove('hidden');
                 startScanner();
@@ -82,48 +170,309 @@
             }
         });
 
-        // Small, Precise Laser-Style Targeting Box Function
-        function startScanner() {
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader", 
-                { 
-                    fps: 25, 
-                    // Box ka size chota (240px width aur 120px height) kar diya hai ta ke specific code target ho
-                    qrbox: { width: 240, height: 120 },
-                    videoConstraints: { facingMode: "environment" }
-                }, 
-                false
-            );
-            
-            html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {});
+        // Firebase send (same logic: update sessions/<code> { barcode })
+        function sendToPC(decodedText) {
+            const sessionRef = ref(db, 'sessions/' + currentSessionCode);
+            return update(sessionRef, { barcode: decodedText });
+        }
+        // ================= END FIREBASE =================
+
+
+        // ================= AUDIO (beep) =================
+        let audioCtx = null;
+        let soundOn = true;
+
+        function unlockAudio() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            } catch (e) {}
         }
 
+        function beep(ok = true) {
+            if (!soundOn) return;
+            try {
+                unlockAudio();
+                const now = audioCtx.currentTime;
+                const tones = ok ? [[2400, 0, 0.09], [3000, 0.09, 0.11]] : [[300, 0, 0.25]];
+                tones.forEach(([freq, start, dur]) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = ok ? 'square' : 'sawtooth';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.0001, now + start);
+                    gain.gain.exponentialRampToValueAtTime(0.35, now + start + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+                    osc.connect(gain).connect(audioCtx.destination);
+                    osc.start(now + start);
+                    osc.stop(now + start + dur + 0.02);
+                });
+            } catch (e) {}
+            if (navigator.vibrate) navigator.vibrate(ok ? 60 : [80, 40, 80]);
+        }
+
+        // ================= SCANNER =================
+        const readerId = "reader";
+        let scanner = null;
+        let cameras = [];
+        let camIndex = 0;
+        let boxMode = "wide";      // wide (1D barcodes) | square (QR / DataMatrix)
+        let torchOn = false;
         let isSending = false;
-        function onScanSuccess(decodedText) {
-            if(isSending) return;
+        let lastText = "", lastTime = 0;
+
+        // Saare supported formats (1D + 2D)
+        function allFormats() {
+            const F = Html5QrcodeSupportedFormats;
+            return Object.values(F).filter(v => typeof v === "number");
+        }
+
+        function qrboxFn(vw, vh) {
+            let w, h;
+            if (boxMode === "wide") {
+                w = Math.floor(Math.min(vw * 0.92, 520));
+                h = Math.floor(Math.min(vh * 0.45, 170));
+            } else {
+                const s = Math.floor(Math.min(vw, vh) * 0.7);
+                w = s; h = s;
+            }
+            w = Math.max(w, 50); h = Math.max(h, 50);
+            // laser box overlay ko isi size par rakho
+            const lb = document.getElementById('laser-box');
+            lb.style.width = w + "px";
+            lb.style.height = h + "px";
+            return { width: w, height: h };
+        }
+
+        async function startScanner() {
+            const status = document.getElementById('scan-status');
+            try {
+                cameras = await Html5Qrcode.getCameras();
+            } catch (e) {
+                status.innerHTML = '<span class="text-red-500">Camera permission allow karein</span>';
+                cameras = [];
+            }
+
+            // Back camera dhoondo
+            if (cameras.length) {
+                const backIdx = cameras.findIndex(c => /back|rear|environment/i.test(c.label));
+                camIndex = backIdx >= 0 ? backIdx : cameras.length - 1;
+            }
+            await launchCamera();
+        }
+
+        async function launchCamera() {
+            const status = document.getElementById('scan-status');
+            if (scanner) {
+                try { if (scanner.isScanning) await scanner.stop(); } catch (e) {}
+                try { scanner.clear(); } catch (e) {}
+            }
+            scanner = new Html5Qrcode(readerId, {
+                formatsToSupport: allFormats(),
+                useBarCodeDetectorIfSupported: true,   // native fast detector (Chrome/Android)
+                verbose: false
+            });
+
+            const camConfig = cameras.length
+                ? { deviceId: { exact: cameras[camIndex].id } }
+                : { facingMode: "environment" };
+
+            const config = {
+                fps: 30,
+                qrbox: qrboxFn,
+                disableFlip: false,
+                aspectRatio: 1.3333,
+                experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+            };
+
+            try {
+                await scanner.start(camConfig, config, onScanSuccess, () => {});
+                status.textContent = "Ready to scan...";
+                setTimeout(setupCameraTuning, 600);
+            } catch (err) {
+                // fallback: simple facingMode
+                try {
+                    await scanner.start({ facingMode: "environment" }, config, onScanSuccess, () => {});
+                    status.textContent = "Ready to scan...";
+                    setTimeout(setupCameraTuning, 600);
+                } catch (e2) {
+                    status.innerHTML = '<span class="text-red-500">Camera start nahi hua: ' + escapeHtml(String(e2)) + '</span>';
+                }
+            }
+        }
+
+        // Autofocus / HD resolution / zoom / torch
+        function getTrack() {
+            const v = document.querySelector('#reader video');
+            return v && v.srcObject ? v.srcObject.getVideoTracks()[0] : null;
+        }
+
+        async function setupCameraTuning() {
+            const track = getTrack();
+            if (!track) return;
+            const caps = track.getCapabilities ? track.getCapabilities() : {};
+            const adv = {};
+
+            try { await track.applyConstraints({ width: { ideal: 1920 }, height: { ideal: 1080 } }); } catch (e) {}
+
+            if (caps.focusMode && caps.focusMode.includes('continuous')) adv.focusMode = 'continuous';
+            if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.exposureMode = 'continuous';
+            if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.whiteBalanceMode = 'continuous';
+            if (Object.keys(adv).length) {
+                try { await track.applyConstraints({ advanced: [adv] }); } catch (e) {}
+            }
+
+            // Zoom slider
+            const zoomWrap = document.getElementById('zoom-wrap');
+            const zoomRange = document.getElementById('zoom-range');
+            if (caps.zoom) {
+                zoomRange.min = caps.zoom.min;
+                zoomRange.max = caps.zoom.max;
+                zoomRange.step = caps.zoom.step || 0.1;
+                // thoda zoom default small barcodes ke liye
+                const startZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min, 1.5));
+                zoomRange.value = startZoom;
+                document.getElementById('zoom-val').textContent = Number(startZoom).toFixed(1) + "x";
+                try { await track.applyConstraints({ advanced: [{ zoom: startZoom }] }); } catch (e) {}
+                zoomWrap.classList.remove('hidden');
+            } else {
+                zoomWrap.classList.add('hidden');
+            }
+
+            // Torch button
+            const torchBtn = document.getElementById('btn-torch');
+            torchBtn.style.display = caps.torch ? '' : 'none';
+            torchOn = false;
+            torchBtn.classList.remove('active');
+        }
+
+        document.getElementById('zoom-range').addEventListener('input', async (e) => {
+            const track = getTrack();
+            const z = parseFloat(e.target.value);
+            document.getElementById('zoom-val').textContent = z.toFixed(1) + "x";
+            if (track) { try { await track.applyConstraints({ advanced: [{ zoom: z }] }); } catch (err) {} }
+        });
+
+        document.getElementById('btn-torch').addEventListener('click', async (e) => {
+            const track = getTrack();
+            if (!track) return;
+            torchOn = !torchOn;
+            try {
+                await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+                e.currentTarget.classList.toggle('active', torchOn);
+            } catch (err) { torchOn = !torchOn; }
+        });
+
+        document.getElementById('btn-switch').addEventListener('click', async () => {
+            if (cameras.length < 2) return;
+            camIndex = (camIndex + 1) % cameras.length;
+            await launchCamera();
+        });
+
+        document.getElementById('btn-mode').addEventListener('click', async (e) => {
+            boxMode = boxMode === "wide" ? "square" : "wide";
+            e.currentTarget.textContent = boxMode === "wide" ? "▭ Wide" : "▢ Square";
+            await launchCamera();
+        });
+
+        document.getElementById('btn-sound').addEventListener('click', (e) => {
+            soundOn = !soundOn;
+            e.currentTarget.classList.toggle('active', soundOn);
+            e.currentTarget.textContent = soundOn ? "🔊 Beep" : "🔇 Mute";
+            unlockAudio();
+            if (soundOn) beep(true);
+        });
+
+        // Tap on camera = refocus
+        document.getElementById('reader-wrap').addEventListener('click', async () => {
+            const track = getTrack();
+            if (!track) return;
+            const caps = track.getCapabilities ? track.getCapabilities() : {};
+            if (caps.focusMode && caps.focusMode.includes('single-shot')) {
+                try {
+                    await track.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] });
+                    setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(()=>{}), 700);
+                } catch (e) {}
+            }
+        });
+
+        // ================= ON SCAN =================
+        function onScanSuccess(decodedText, decodedResult) {
+            if (isSending) return;
+
+            // same code ko 1.5 sec tak dobara na bhejein
+            const now = Date.now();
+            if (decodedText === lastText && now - lastTime < 1500) return;
+
             isSending = true;
-            
+            lastText = decodedText;
+            lastTime = now;
+
             const statusDiv = document.getElementById('scan-status');
-            const sessionRef = ref(db, 'sessions/' + currentSessionCode);
-            
-            update(sessionRef, { barcode: decodedText }).then(() => {
-                statusDiv.innerHTML = `<span class="text-green-500">Sent: ${decodedText}</span>`;
-                new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3').play();
-                
-                setTimeout(() => { 
-                    statusDiv.innerHTML = "Ready for next scan...";
+            const typeDiv = document.getElementById('scan-type');
+            const fmt = decodedResult && decodedResult.result && decodedResult.result.format
+                ? decodedResult.result.format.formatName : "";
+
+            // Instant feedback: beep + laser green + flash
+            beep(true);
+            const lb = document.getElementById('laser-box');
+            const flash = document.getElementById('flash');
+            lb.classList.add('success');
+            flash.classList.add('on');
+            setTimeout(() => flash.classList.remove('on'), 60);
+
+            sendToPC(decodedText).then(() => {
+                statusDiv.innerHTML = '<span class="text-green-500">Sent: ' + escapeHtml(decodedText) + '</span>';
+                typeDiv.textContent = fmt ? "Type: " + fmt.replace(/_/g, " ") : "";
+                addHistory(decodedText, fmt);
+
+                setTimeout(() => {
+                    statusDiv.textContent = "Ready for next scan...";
+                    lb.classList.remove('success');
                     isSending = false;
-                }, 1200); 
+                }, 900);
+            }).catch(() => {
+                beep(false);
+                statusDiv.innerHTML = '<span class="text-red-500">Send failed - internet check karein</span>';
+                setTimeout(() => {
+                    statusDiv.textContent = "Ready for next scan...";
+                    lb.classList.remove('success');
+                    lastText = "";
+                    isSending = false;
+                }, 1500);
             });
         }
+
+        // ================= HISTORY =================
+        const historyEl = document.getElementById('history');
+        function addHistory(text, fmt) {
+            const li = document.createElement('li');
+            li.className = "flex justify-between gap-2 bg-black/40 border border-zinc-800 rounded px-2 py-1";
+            const left = document.createElement('span');
+            left.className = "text-gray-200 break-all";
+            left.textContent = text;
+            const right = document.createElement('span');
+            right.className = "text-gray-500 whitespace-nowrap";
+            right.textContent = fmt ? fmt.replace(/_/g, " ") : "";
+            li.append(left, right);
+            historyEl.prepend(li);
+            while (historyEl.children.length > 15) historyEl.lastChild.remove();
+        }
+        document.getElementById('clear-history').addEventListener('click', () => { historyEl.innerHTML = ""; });
+
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        }
+
+        // Tab hide ho to camera band, wapis aaye to chalu
+        document.addEventListener('visibilitychange', async () => {
+            if (!scanner) return;
+            if (document.hidden) {
+                try { if (scanner.isScanning) await scanner.stop(); } catch (e) {}
+            } else if (currentSessionCode) {
+                await launchCamera();
+            }
+        });
     </script>
-    
-    <style>
-        #reader__dashboard_section_csr span button { background-color: #D4AF37 !important; color: #121212 !important; padding: 10px 20px !important; border-radius: 6px !important; border: none !important; font-weight: bold !important; margin-top: 12px !important; }
-        #reader a { color: #D4AF37 !important; }
-        #reader select { background-color: #222; color: #fff; padding: 5px; border-radius: 4px; border: 1px solid #D4AF37; }
-        /* Scanner viewfinder box styling for precise targeting */
-        #reader__scan_region { background: rgba(0,0,0,0.2); }
-    </style>
 </body>
 </html>
