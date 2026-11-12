@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M&P Cloud Scanner By Faraz Lahore</title>
+    <title>Farazé Cloud Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
@@ -32,24 +32,29 @@
         <p id="pair-error" class="text-red-500 text-sm mt-2 hidden">Invalid Code or PC not active</p>
     </div>
 
-    <!-- Step 2: Scanner Screen (Hidden by default) -->
+    <!-- Step 2: Scanner Screen -->
     <div id="scanner-screen" class="w-11/12 max-w-md bg-zinc-900 border border-farazeGold rounded-lg p-4 shadow-[0_0_15px_rgba(212,175,55,0.2)] hidden">
-        <div id="reader" class="w-full rounded overflow-hidden"></div>
+        <div id="reader" class="w-full rounded overflow-hidden bg-black"></div>
         <div id="scan-status" class="mt-4 text-center text-gray-300 font-bold">
             Ready to scan...
         </div>
     </div>
 
-    <!-- Firebase & Logic -->
+    <!-- Firebase Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // YAHAN APNI FIREBASE DETAILS DALEIN
+        // Aapki integrated Firebase Config
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com", // Lazmi change karein
-            projectId: "YOUR_PROJECT_ID",
+            apiKey: "AIzaSyDtQ9lQoAZj3A53vTptIDgjHZ-o1amWgZY",
+            authDomain: "cloudscanner-19972.firebaseapp.com",
+            projectId: "cloudscanner-19972",
+            storageBucket: "cloudscanner-19972.firebasestorage.app",
+            messagingSenderId: "638553139845",
+            appId: "1:638553139845:web:3cf43e9f6121243df717ec",
+            measurementId: "G-W5178WF80C",
+            databaseURL: "https://cloudscanner-19972-default-rtdb.firebaseio.com" // Added manually for RTDB
         };
 
         const app = initializeApp(firebaseConfig);
@@ -58,7 +63,6 @@
         let currentSessionCode = "";
         let html5QrcodeScanner = null;
 
-        // Connect Button Logic
         document.getElementById('connect-btn').addEventListener('click', async () => {
             const code = document.getElementById('pc-code').value.trim();
             if(code.length !== 4) return alert("Please enter a valid 4-digit code");
@@ -67,11 +71,9 @@
             const snapshot = await get(sessionRef);
 
             if (snapshot.exists() && snapshot.val().status === "waiting") {
-                // Connected successfully
                 currentSessionCode = code;
                 await update(sessionRef, { status: "connected" });
                 
-                // UI update
                 document.getElementById('pairing-screen').classList.add('hidden');
                 document.getElementById('scanner-screen').classList.remove('hidden');
                 startScanner();
@@ -80,7 +82,6 @@
             }
         });
 
-        // Start Camera Scanner
         function startScanner() {
             html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} });
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
@@ -101,11 +102,11 @@
                 setTimeout(() => { 
                     statusDiv.innerHTML = "Ready for next scan...";
                     isSending = false;
-                }, 1500); // 1.5 second delay before next scan
+                }, 1500); 
             });
         }
 
-        function onScanFailure(error) { /* Ignore background errors */ }
+        function onScanFailure(error) { }
     </script>
     
     <style>
