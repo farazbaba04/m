@@ -40,12 +40,12 @@
         </div>
     </div>
 
-    <!-- Firebase Integration -->
+    <!-- Firebase & Scanner Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Aapki integrated Firebase Config
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDtQ9lQoAZj3A53vTptIDgjHZ-o1amWgZY",
             authDomain: "cloudscanner-19972.firebaseapp.com",
@@ -54,7 +54,7 @@
             messagingSenderId: "638553139845",
             appId: "1:638553139845:web:3cf43e9f6121243df717ec",
             measurementId: "G-W5178WF80C",
-            databaseURL: "https://cloudscanner-19972-default-rtdb.firebaseio.com" // Added manually for RTDB
+            databaseURL: "https://cloudscanner-19972-default-rtdb.firebaseio.com"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -82,8 +82,29 @@
             }
         });
 
+        // Optimized Fast Scanner Function
         function startScanner() {
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 150} });
+            const config = {
+                fps: 30, // High speed scanning
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    return {
+                        width: viewfinderWidth * 0.85,
+                        height: 250 // Wide box to fit long shipping barcodes easily
+                    };
+                },
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.CODE_39,
+                    Html5QrcodeSupportedFormats.CODE_128,
+                    Html5QrcodeSupportedFormats.EAN_13
+                ],
+                videoConstraints: {
+                    facingMode: "environment",
+                    advanced: [{ focusMode: "continuous" }]
+                }
+            };
+
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", config, false);
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
         }
 
@@ -102,7 +123,7 @@
                 setTimeout(() => { 
                     statusDiv.innerHTML = "Ready for next scan...";
                     isSending = false;
-                }, 1500); 
+                }, 1200); 
             });
         }
 
@@ -110,8 +131,9 @@
     </script>
     
     <style>
-        #reader__dashboard_section_csr span button { background-color: #D4AF37 !important; color: #121212 !important; padding: 8px 16px !important; border-radius: 4px !important; border: none !important; font-weight: bold !important; margin-top: 10px !important; }
+        #reader__dashboard_section_csr span button { background-color: #D4AF37 !important; color: #121212 !important; padding: 10px 20px !important; border-radius: 6px !important; border: none !important; font-weight: bold !important; margin-top: 12px !important; }
         #reader a { color: #D4AF37 !important; }
+        #reader select { background-color: #222; color: #fff; padding: 5px; border-radius: 4px; border: 1px solid #D4AF37; }
     </style>
 </body>
 </html>
