@@ -6,7 +6,6 @@
     <meta name="theme-color" content="#121212">
     <title>Farazé Cloud Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <script>
         tailwind.config = {
@@ -19,13 +18,9 @@
     <style>
         html, body { overscroll-behavior: none; }
 
-        /* Camera area */
-        #reader-wrap { position: relative; width: 100%; border-radius: 10px; overflow: hidden; background: #000; min-height: 260px; }
-        #reader { width: 100%; border: none !important; }
-        #reader video { width: 100% !important; object-fit: cover; display: block; }
-        /* hide the library's own shaded box, we draw our own laser box */
-        #reader #qr-shaded-region { border-color: rgba(0,0,0,0.55) !important; }
-        #reader #qr-shaded-region > div { display: none !important; }
+        /* Camera area (own video element, no heavy library UI) */
+        #reader-wrap { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #000; }
+        #video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #000; }
 
         /* Laser targeting box */
         #laser-box {
@@ -34,7 +29,7 @@
             border: 2px solid rgba(212,175,55,0.9);
             border-radius: 10px;
             pointer-events: none;
-            box-shadow: 0 0 0 9999px rgba(0,0,0,0.35), 0 0 18px rgba(212,175,55,0.5) inset;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.38);
             transition: width .25s ease, height .25s ease, border-color .2s ease;
             overflow: hidden;
         }
@@ -48,23 +43,16 @@
             background: linear-gradient(90deg, transparent, #ff2a2a 20%, #ff6b6b 50%, #ff2a2a 80%, transparent);
             box-shadow: 0 0 12px 3px rgba(255,42,42,0.85), 0 0 28px 6px rgba(255,42,42,0.45);
             border-radius: 3px;
-            animation: laserMove 1.6s ease-in-out infinite alternate;
+            animation: laserMove 1.4s ease-in-out infinite alternate;
         }
         @keyframes laserMove { from { top: 4%; } to { top: 94%; } }
-        #laser-box.success { border-color: #22c55e; box-shadow: 0 0 0 9999px rgba(0,0,0,0.35), 0 0 30px rgba(34,197,94,0.9) inset; }
+        #laser-box.success { border-color: #22c55e; }
         #laser-box.success #laser-line { background: #22c55e; box-shadow: 0 0 14px 4px rgba(34,197,94,0.9); animation-play-state: paused; }
 
-        /* Flash on success */
-        #flash { position: absolute; inset: 0; background: rgba(34,197,94,0.35); opacity: 0; pointer-events: none; transition: opacity .35s ease; }
+        #flash { position: absolute; inset: 0; background: rgba(34,197,94,0.4); opacity: 0; pointer-events: none; transition: opacity .35s ease; }
         #flash.on { opacity: 1; transition: none; }
 
-        /* Library UI (permission / file buttons) */
-        #reader__dashboard_section_csr span button,
-        #reader button { background-color: #D4AF37 !important; color: #121212 !important; padding: 10px 20px !important; border-radius: 6px !important; border: none !important; font-weight: bold !important; margin-top: 12px !important; }
-        #reader a { color: #D4AF37 !important; }
-        #reader select { background-color: #222; color: #fff; padding: 5px; border-radius: 4px; border: 1px solid #D4AF37; }
-
-        .ctrl-btn { background: #1c1c1c; border: 1px solid #3f3f46; color: #e5e7eb; border-radius: 8px; padding: 8px 4px; font-size: 12px; font-weight: 600; transition: .15s; }
+        .ctrl-btn { background: #1c1c1c; border: 1px solid #3f3f46; color: #e5e7eb; border-radius: 8px; padding: 8px 2px; font-size: 12px; font-weight: 600; transition: .15s; }
         .ctrl-btn:active { transform: scale(0.96); }
         .ctrl-btn.active { background: #D4AF37; color: #121212; border-color: #D4AF37; }
         input[type=range] { accent-color: #D4AF37; }
@@ -92,8 +80,8 @@
         <p class="text-xs text-yellow-500 mb-2 font-semibold">Target box ke andar sirf wohi code rakhein jo scan krwana hai</p>
 
         <div id="reader-wrap">
-            <div id="reader"></div>
-            <div id="laser-box" style="width:260px;height:130px;">
+            <video id="video" playsinline muted autoplay></video>
+            <div id="laser-box" style="width:90%;height:38%;">
                 <span class="corner tl"></span><span class="corner tr"></span>
                 <span class="corner bl"></span><span class="corner br"></span>
                 <div id="laser-line"></div>
@@ -103,13 +91,16 @@
 
         <div id="scan-status" class="mt-3 text-center text-gray-300 font-bold min-h-[24px]">Starting camera...</div>
         <div id="scan-type" class="text-xs text-gray-500 min-h-[16px]"></div>
+        <div id="engine-info" class="text-[10px] text-zinc-600 min-h-[14px]"></div>
 
         <!-- Controls -->
-        <div class="grid grid-cols-4 gap-2 mt-3">
+        <div class="grid grid-cols-3 gap-2 mt-3">
             <button id="btn-torch" class="ctrl-btn">🔦 Torch</button>
             <button id="btn-switch" class="ctrl-btn">🔄 Camera</button>
-            <button id="btn-mode" class="ctrl-btn">▭ Wide</button>
+            <button id="btn-quality" class="ctrl-btn">📷 1080p</button>
+            <button id="btn-mode" class="ctrl-btn">▭ Wide Box</button>
             <button id="btn-sound" class="ctrl-btn active">🔊 Beep</button>
+            <button id="btn-focus" class="ctrl-btn">🎯 Focus</button>
         </div>
 
         <div id="zoom-wrap" class="mt-3 hidden">
@@ -211,141 +202,306 @@
             if (navigator.vibrate) navigator.vibrate(ok ? 60 : [80, 40, 80]);
         }
 
+        // ================= DECODER ENGINES =================
+        // 1) Native BarcodeDetector (hardware/GPU accelerated, Chrome Android / macOS) - sabse fast
+        // 2) ZXing WebAssembly (C++ ZXing-cpp compiled) - har browser par (iPhone Safari, Windows, Firefox)
+        let nativeDetector = null;
+        let engine = "none";          // 'native' | 'wasm'
+        let zxingReady = null;
+
+        async function initNative() {
+            if (!("BarcodeDetector" in window)) return false;
+            try {
+                const supported = await BarcodeDetector.getSupportedFormats();
+                if (!supported.length) return false;
+                nativeDetector = new BarcodeDetector({ formats: supported });
+                return true;
+            } catch (e) { return false; }
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = src; s.async = true;
+                s.onload = resolve; s.onerror = reject;
+                document.head.appendChild(s);
+            });
+        }
+
+        function loadZXing() {
+            if (zxingReady) return zxingReady;
+            zxingReady = (async () => {
+                if (window.ZXingWASM) return true;
+                const urls = [
+                    "https://cdn.jsdelivr.net/npm/zxing-wasm@2/dist/iife/reader/index.js",
+                    "https://fastly.jsdelivr.net/npm/zxing-wasm@2/dist/iife/reader/index.js",
+                    "https://unpkg.com/zxing-wasm@2/dist/iife/reader/index.js",
+                    "https://cdn.jsdelivr.net/npm/zxing-wasm@latest/dist/iife/reader/index.js"
+                ];
+                for (const u of urls) {
+                    try { await loadScript(u); if (window.ZXingWASM) return true; } catch (e) {}
+                }
+                return false;
+            })();
+            return zxingReady;
+        }
+
         // ================= SCANNER =================
-        const readerId = "reader";
-        let scanner = null;
-        let cameras = [];
-        let camIndex = 0;
-        let boxMode = "wide";      // wide (1D barcodes) | square (QR / DataMatrix)
+        const video = document.getElementById('video');
+        const wrap = document.getElementById('reader-wrap');
+        const laserBox = document.getElementById('laser-box');
+        const statusDiv = document.getElementById('scan-status');
+        const typeDiv = document.getElementById('scan-type');
+        const infoDiv = document.getElementById('engine-info');
+
+        const MODES = ['wide', 'square', 'full'];
+        const MODE_LABEL = { wide: '▭ Wide Box', square: '▢ Square Box', full: '⛶ Full Frame' };
+        const BOX = { wide: { w: 0.9, h: 0.38 }, square: { w: 0.62, h: 0.62 }, full: { w: 1, h: 1 } };
+        const QUALITY = [
+            { label: '720p',  w: 1280, h: 720 },
+            { label: '1080p', w: 1920, h: 1080 },
+            { label: '4K',    w: 3840, h: 2160 }
+        ];
+
+        let modeIdx = 0;
+        let qIdx = 1;
+        let stream = null;
+        let devices = [];
+        let devIdx = -1;               // -1 = facingMode environment (default)
+        let running = false;
+        let busy = false;
+        let frameNo = 0;
         let torchOn = false;
         let isSending = false;
         let lastText = "", lastTime = 0;
 
-        // Saare supported formats (1D + 2D)
-        function allFormats() {
-            const F = Html5QrcodeSupportedFormats;
-            return Object.values(F).filter(v => typeof v === "number");
-        }
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        function qrboxFn(vw, vh) {
-            let w, h;
-            if (boxMode === "wide") {
-                w = Math.floor(Math.min(vw * 0.92, 520));
-                h = Math.floor(Math.min(vh * 0.45, 170));
-            } else {
-                const s = Math.floor(Math.min(vw, vh) * 0.7);
-                w = s; h = s;
-            }
-            w = Math.max(w, 50); h = Math.max(h, 50);
-            // laser box overlay ko isi size par rakho
-            const lb = document.getElementById('laser-box');
-            lb.style.width = w + "px";
-            lb.style.height = h + "px";
-            return { width: w, height: h };
+        function applyBox() {
+            const m = MODES[modeIdx];
+            laserBox.style.width = (BOX[m].w * 100) + "%";
+            laserBox.style.height = (BOX[m].h * 100) + "%";
+            laserBox.style.borderRadius = m === 'full' ? '0' : '10px';
+            document.getElementById('btn-mode').textContent = MODE_LABEL[m];
         }
 
         async function startScanner() {
-            const status = document.getElementById('scan-status');
-            try {
-                cameras = await Html5Qrcode.getCameras();
-            } catch (e) {
-                status.innerHTML = '<span class="text-red-500">Camera permission allow karein</span>';
-                cameras = [];
+            applyBox();
+            const hasNative = await initNative();
+            if (hasNative) {
+                engine = "native";
+            } else {
+                statusDiv.textContent = "Loading fast engine...";
+                const ok = await loadZXing();
+                if (!ok) {
+                    statusDiv.innerHTML = '<span class="text-red-500">Scanner engine load nahi hua - internet check karein</span>';
+                    return;
+                }
+                engine = "wasm";
             }
-
-            // Back camera dhoondo
-            if (cameras.length) {
-                const backIdx = cameras.findIndex(c => /back|rear|environment/i.test(c.label));
-                camIndex = backIdx >= 0 ? backIdx : cameras.length - 1;
-            }
-            await launchCamera();
+            await startCamera();
         }
 
-        async function launchCamera() {
-            const status = document.getElementById('scan-status');
-            if (scanner) {
-                try { if (scanner.isScanning) await scanner.stop(); } catch (e) {}
-                try { scanner.clear(); } catch (e) {}
-            }
-            scanner = new Html5Qrcode(readerId, {
-                formatsToSupport: allFormats(),
-                useBarCodeDetectorIfSupported: true,   // native fast detector (Chrome/Android)
-                verbose: false
-            });
-
-            const camConfig = cameras.length
-                ? { deviceId: { exact: cameras[camIndex].id } }
-                : { facingMode: "environment" };
-
-            const config = {
-                fps: 30,
-                qrbox: qrboxFn,
-                disableFlip: false,
-                aspectRatio: 1.3333,
-                experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+        async function startCamera() {
+            stopCamera();
+            const q = QUALITY[qIdx];
+            const videoC = {
+                width: { ideal: q.w },
+                height: { ideal: q.h },
+                frameRate: { ideal: 30 }
             };
+            if (devIdx >= 0 && devices[devIdx]) videoC.deviceId = { exact: devices[devIdx].deviceId };
+            else videoC.facingMode = { ideal: "environment" };
 
             try {
-                await scanner.start(camConfig, config, onScanSuccess, () => {});
-                status.textContent = "Ready to scan...";
-                setTimeout(setupCameraTuning, 600);
-            } catch (err) {
-                // fallback: simple facingMode
+                stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: videoC });
+            } catch (e) {
                 try {
-                    await scanner.start({ facingMode: "environment" }, config, onScanSuccess, () => {});
-                    status.textContent = "Ready to scan...";
-                    setTimeout(setupCameraTuning, 600);
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
                 } catch (e2) {
-                    status.innerHTML = '<span class="text-red-500">Camera start nahi hua: ' + escapeHtml(String(e2)) + '</span>';
+                    statusDiv.innerHTML = '<span class="text-red-500">Camera permission allow karein</span>';
+                    return;
                 }
             }
+
+            video.srcObject = stream;
+            try { await video.play(); } catch (e) {}
+
+            try {
+                const all = await navigator.mediaDevices.enumerateDevices();
+                devices = all.filter(d => d.kind === 'videoinput');
+            } catch (e) {}
+
+            await tuneCamera();
+
+            running = true;
+            statusDiv.textContent = "Ready to scan...";
+            const eng = engine === "native" ? "Native BarcodeDetector" : "ZXing WASM";
+            infoDiv.textContent = eng + " • " + video.videoWidth + "x" + video.videoHeight;
+            scheduleLoop();
         }
 
-        // Autofocus / HD resolution / zoom / torch
-        function getTrack() {
-            const v = document.querySelector('#reader video');
-            return v && v.srcObject ? v.srcObject.getVideoTracks()[0] : null;
+        function stopCamera() {
+            running = false;
+            if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+            video.srcObject = null;
         }
 
-        async function setupCameraTuning() {
+        function getTrack() { return stream ? stream.getVideoTracks()[0] : null; }
+
+        async function tuneCamera() {
             const track = getTrack();
             if (!track) return;
             const caps = track.getCapabilities ? track.getCapabilities() : {};
             const adv = {};
-
-            try { await track.applyConstraints({ width: { ideal: 1920 }, height: { ideal: 1080 } }); } catch (e) {}
-
             if (caps.focusMode && caps.focusMode.includes('continuous')) adv.focusMode = 'continuous';
             if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.exposureMode = 'continuous';
             if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.whiteBalanceMode = 'continuous';
-            if (Object.keys(adv).length) {
-                try { await track.applyConstraints({ advanced: [adv] }); } catch (e) {}
-            }
+            if (Object.keys(adv).length) { try { await track.applyConstraints({ advanced: [adv] }); } catch (e) {} }
 
-            // Zoom slider
             const zoomWrap = document.getElementById('zoom-wrap');
             const zoomRange = document.getElementById('zoom-range');
             if (caps.zoom) {
                 zoomRange.min = caps.zoom.min;
                 zoomRange.max = caps.zoom.max;
                 zoomRange.step = caps.zoom.step || 0.1;
-                // thoda zoom default small barcodes ke liye
-                const startZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min, 1.5));
-                zoomRange.value = startZoom;
-                document.getElementById('zoom-val').textContent = Number(startZoom).toFixed(1) + "x";
-                try { await track.applyConstraints({ advanced: [{ zoom: startZoom }] }); } catch (e) {}
+                zoomRange.value = caps.zoom.min;
+                document.getElementById('zoom-val').textContent = Number(caps.zoom.min).toFixed(1) + "x";
                 zoomWrap.classList.remove('hidden');
             } else {
                 zoomWrap.classList.add('hidden');
             }
 
-            // Torch button
             const torchBtn = document.getElementById('btn-torch');
             torchBtn.style.display = caps.torch ? '' : 'none';
             torchOn = false;
             torchBtn.classList.remove('active');
         }
 
+        // ---- ROI: laser box ko camera pixels me convert karo (object-fit: cover math) ----
+        function getROI() {
+            const vw = video.videoWidth, vh = video.videoHeight;
+            if (!vw || !vh) return null;
+            const m = MODES[modeIdx];
+            if (m === 'full') return { sx: 0, sy: 0, sw: vw, sh: vh };
+
+            const cw = wrap.clientWidth, ch = wrap.clientHeight;
+            const scale = Math.max(cw / vw, ch / vh);
+            const ox = (vw * scale - cw) / 2;
+            const oy = (vh * scale - ch) / 2;
+            const bw = cw * BOX[m].w, bh = ch * BOX[m].h;
+            const bx = (cw - bw) / 2, by = (ch - bh) / 2;
+
+            let sx = (bx + ox) / scale, sy = (by + oy) / scale;
+            let sw = bw / scale, sh = bh / scale;
+            sx = Math.max(0, sx); sy = Math.max(0, sy);
+            sw = Math.min(vw - sx, sw); sh = Math.min(vh - sy, sh);
+            return { sx, sy, sw, sh };
+        }
+
+        // ---- Decode loop: har camera frame par, ek waqt me ek decode ----
+        function scheduleLoop() {
+            if (!running) return;
+            if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(loop);
+            else requestAnimationFrame(loop);
+        }
+
+        async function loop() {
+            if (!running) return;
+            if (!busy && !isSending && video.readyState >= 2) {
+                busy = true;
+                try { await tick(); } catch (e) {}
+                busy = false;
+            }
+            scheduleLoop();
+        }
+
+        async function tick() {
+            const roi = getROI();
+            if (!roi || roi.sw < 20 || roi.sh < 20) return;
+            frameNo++;
+
+            // Full resolution use hota hai (native: 2560 px tak, wasm: 1600 px tak)
+            const maxW = engine === "native" ? 2560 : 1600;
+            const k = Math.min(1, maxW / roi.sw);
+            const cw = Math.max(1, Math.round(roi.sw * k));
+            const ch = Math.max(1, Math.round(roi.sh * k));
+            if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+            ctx.drawImage(video, roi.sx, roi.sy, roi.sw, roi.sh, 0, 0, cw, ch);
+
+            let text = "", fmt = "";
+
+            if (engine === "native") {
+                try {
+                    const codes = await nativeDetector.detect(canvas);
+                    if (codes.length) { text = codes[0].rawValue; fmt = codes[0].format; }
+                } catch (e) {
+                    // native fail -> wasm par switch
+                    engine = "wasm";
+                    infoDiv.textContent = "ZXing WASM • " + video.videoWidth + "x" + video.videoHeight;
+                    loadZXing();
+                    return;
+                }
+            } else {
+                if (!window.ZXingWASM) return;
+                const img = ctx.getImageData(0, 0, cw, ch);
+                const results = await window.ZXingWASM.readBarcodes(img, {
+                    formats: [],                        // saare formats
+                    tryHarder: frameNo % 3 === 0,       // har 3rd frame deep scan, baqi fast
+                    tryRotate: true,
+                    tryInvert: frameNo % 6 === 0,
+                    maxNumberOfSymbols: 1
+                });
+                const r = results.find(x => x.isValid !== false && x.text);
+                if (r) { text = r.text; fmt = r.format; }
+            }
+
+            if (text) onScanSuccess(text, fmt);
+        }
+
+        // ================= ON SCAN =================
+        function onScanSuccess(decodedText, fmt) {
+            if (isSending) return;
+
+            // same code ko 1.2 sec tak dobara na bhejein
+            const now = Date.now();
+            if (decodedText === lastText && now - lastTime < 1200) return;
+
+            isSending = true;
+            lastText = decodedText;
+            lastTime = now;
+
+            // Instant feedback: beep + laser green + flash
+            beep(true);
+            laserBox.classList.add('success');
+            const flash = document.getElementById('flash');
+            flash.classList.add('on');
+            setTimeout(() => flash.classList.remove('on'), 60);
+
+            sendToPC(decodedText).then(() => {
+                statusDiv.innerHTML = '<span class="text-green-500">Sent: ' + escapeHtml(decodedText) + '</span>';
+                typeDiv.textContent = fmt ? "Type: " + String(fmt).replace(/_/g, " ") : "";
+                addHistory(decodedText, fmt);
+
+                setTimeout(() => {
+                    statusDiv.textContent = "Ready for next scan...";
+                    laserBox.classList.remove('success');
+                    isSending = false;
+                }, 700);
+            }).catch(() => {
+                beep(false);
+                statusDiv.innerHTML = '<span class="text-red-500">Send failed - internet check karein</span>';
+                setTimeout(() => {
+                    statusDiv.textContent = "Ready for next scan...";
+                    laserBox.classList.remove('success');
+                    lastText = "";
+                    isSending = false;
+                }, 1500);
+            });
+        }
+
+        // ================= CONTROLS =================
         document.getElementById('zoom-range').addEventListener('input', async (e) => {
             const track = getTrack();
             const z = parseFloat(e.target.value);
@@ -364,15 +520,20 @@
         });
 
         document.getElementById('btn-switch').addEventListener('click', async () => {
-            if (cameras.length < 2) return;
-            camIndex = (camIndex + 1) % cameras.length;
-            await launchCamera();
+            if (devices.length < 2) return;
+            devIdx = (devIdx + 1) % devices.length;
+            await startCamera();
         });
 
-        document.getElementById('btn-mode').addEventListener('click', async (e) => {
-            boxMode = boxMode === "wide" ? "square" : "wide";
-            e.currentTarget.textContent = boxMode === "wide" ? "▭ Wide" : "▢ Square";
-            await launchCamera();
+        document.getElementById('btn-quality').addEventListener('click', async (e) => {
+            qIdx = (qIdx + 1) % QUALITY.length;
+            e.currentTarget.textContent = "📷 " + QUALITY[qIdx].label;
+            await startCamera();
+        });
+
+        document.getElementById('btn-mode').addEventListener('click', () => {
+            modeIdx = (modeIdx + 1) % MODES.length;
+            applyBox();
         });
 
         document.getElementById('btn-sound').addEventListener('click', (e) => {
@@ -383,65 +544,24 @@
             if (soundOn) beep(true);
         });
 
-        // Tap on camera = refocus
-        document.getElementById('reader-wrap').addEventListener('click', async () => {
+        async function refocus() {
             const track = getTrack();
             if (!track) return;
             const caps = track.getCapabilities ? track.getCapabilities() : {};
             if (caps.focusMode && caps.focusMode.includes('single-shot')) {
                 try {
                     await track.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] });
-                    setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(()=>{}), 700);
+                    setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}), 800);
+                } catch (e) {}
+            } else if (caps.focusMode && caps.focusMode.includes('continuous')) {
+                try {
+                    await track.applyConstraints({ advanced: [{ focusMode: 'manual' }] });
+                    setTimeout(() => track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {}), 300);
                 } catch (e) {}
             }
-        });
-
-        // ================= ON SCAN =================
-        function onScanSuccess(decodedText, decodedResult) {
-            if (isSending) return;
-
-            // same code ko 1.5 sec tak dobara na bhejein
-            const now = Date.now();
-            if (decodedText === lastText && now - lastTime < 1500) return;
-
-            isSending = true;
-            lastText = decodedText;
-            lastTime = now;
-
-            const statusDiv = document.getElementById('scan-status');
-            const typeDiv = document.getElementById('scan-type');
-            const fmt = decodedResult && decodedResult.result && decodedResult.result.format
-                ? decodedResult.result.format.formatName : "";
-
-            // Instant feedback: beep + laser green + flash
-            beep(true);
-            const lb = document.getElementById('laser-box');
-            const flash = document.getElementById('flash');
-            lb.classList.add('success');
-            flash.classList.add('on');
-            setTimeout(() => flash.classList.remove('on'), 60);
-
-            sendToPC(decodedText).then(() => {
-                statusDiv.innerHTML = '<span class="text-green-500">Sent: ' + escapeHtml(decodedText) + '</span>';
-                typeDiv.textContent = fmt ? "Type: " + fmt.replace(/_/g, " ") : "";
-                addHistory(decodedText, fmt);
-
-                setTimeout(() => {
-                    statusDiv.textContent = "Ready for next scan...";
-                    lb.classList.remove('success');
-                    isSending = false;
-                }, 900);
-            }).catch(() => {
-                beep(false);
-                statusDiv.innerHTML = '<span class="text-red-500">Send failed - internet check karein</span>';
-                setTimeout(() => {
-                    statusDiv.textContent = "Ready for next scan...";
-                    lb.classList.remove('success');
-                    lastText = "";
-                    isSending = false;
-                }, 1500);
-            });
         }
+        document.getElementById('btn-focus').addEventListener('click', refocus);
+        wrap.addEventListener('click', refocus);
 
         // ================= HISTORY =================
         const historyEl = document.getElementById('history');
@@ -453,7 +573,7 @@
             left.textContent = text;
             const right = document.createElement('span');
             right.className = "text-gray-500 whitespace-nowrap";
-            right.textContent = fmt ? fmt.replace(/_/g, " ") : "";
+            right.textContent = fmt ? String(fmt).replace(/_/g, " ") : "";
             li.append(left, right);
             historyEl.prepend(li);
             while (historyEl.children.length > 15) historyEl.lastChild.remove();
@@ -466,12 +586,9 @@
 
         // Tab hide ho to camera band, wapis aaye to chalu
         document.addEventListener('visibilitychange', async () => {
-            if (!scanner) return;
-            if (document.hidden) {
-                try { if (scanner.isScanning) await scanner.stop(); } catch (e) {}
-            } else if (currentSessionCode) {
-                await launchCamera();
-            }
+            if (!currentSessionCode) return;
+            if (document.hidden) stopCamera();
+            else await startCamera();
         });
     </script>
 </body>
