@@ -45,7 +45,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyDtQ9lQoAZj3A53vTptIDgjHZ-o1amWgZY",
             authDomain: "cloudscanner-19972.firebaseapp.com",
@@ -82,19 +81,21 @@
             }
         });
 
-        // Universal Error-Free Scanner Function
+        // Fixed Scanner Function with Direct Camera Force
         function startScanner() {
-            const config = {
-                fps: 20,
-                qrbox: { width: 300, height: 200 },
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true
-                }
-            };
-
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", config, false);
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", 
+                { 
+                    fps: 20, 
+                    qrbox: { width: 280, height: 180 },
+                    // Environment constraint forces the back camera directly
+                    videoConstraints: { facingMode: "environment" }
+                }, 
+                false
+            );
+            
             html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
-                // Background scan errors ko chup-chap ignore karega ta ke screen clean rahe
+                // Ignore frame-by-frame read errors
             });
         }
 
