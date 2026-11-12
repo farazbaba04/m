@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#121212">
-    <title>M&P Cloud Scanner</title>
+    <title>M&amp;P Cloud Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script>
@@ -62,14 +62,14 @@
 
     <!-- Header -->
     <div class="text-center mb-5">
-        <h1 class="text-3xl font-bold text-farazeGold tracking-widest">M&P LHE</h1>
+        <h1 class="text-3xl font-bold text-farazeGold tracking-widest">M&amp;P</h1>
         <p class="text-gray-400 text-sm mt-1">CLOUD SCANNER</p>
     </div>
 
     <!-- Step 1: Pairing Screen -->
     <div id="pairing-screen" class="w-11/12 max-w-sm bg-zinc-900 border border-farazeGold rounded-lg p-6 shadow-[0_0_15px_rgba(212,175,55,0.2)] text-center">
         <h2 class="text-xl mb-4 text-gray-200">Connect to PC</h2>
-        <p class="text-sm text-gray-400 mb-4">Please enter 4 Digit Code for Wireless Scanner</p>
+        <p class="text-sm text-gray-400 mb-4">PC par chalne wali script ka 4-digit code yahan likhein</p>
         <input type="tel" inputmode="numeric" maxlength="4" id="pc-code" placeholder="e.g., 1234" class="w-full p-3 rounded bg-black border border-gray-600 text-center text-xl font-bold text-farazeGold focus:border-farazeGold outline-none mb-4 tracking-widest">
         <button id="connect-btn" class="w-full bg-farazeGold text-black font-bold py-3 rounded hover:bg-yellow-500 transition">Connect Scanner</button>
         <p id="pair-error" class="text-red-500 text-sm mt-2 hidden">Invalid Code or PC not active</p>
@@ -101,6 +101,7 @@
             <button id="btn-mode" class="ctrl-btn">▭ Wide Box</button>
             <button id="btn-sound" class="ctrl-btn active">🔊 Beep</button>
             <button id="btn-focus" class="ctrl-btn">🎯 Focus</button>
+            <button id="btn-formats" class="ctrl-btn col-span-3">🌐 All Code Types</button>
         </div>
 
         <div id="zoom-wrap" class="mt-3 hidden">
@@ -206,6 +207,10 @@
         // 1) Native BarcodeDetector (hardware/GPU accelerated, Chrome Android / macOS) - sabse fast
         // 2) ZXing WebAssembly (C++ ZXing-cpp compiled) - har browser par (iPhone Safari, Windows, Firefox)
         let nativeDetector = null;
+        let nativeFast = null;         // sirf common formats (zyada fast)
+        let fastFormats = false;       // false = All code types, true = Fast common codes
+        let avgDecode = 0, cloudMs = 0;
+        const FAST_ZX = ["QRCode", "Code128", "Code39", "EAN-13", "EAN-8", "UPC-A", "UPC-E", "ITF", "DataMatrix"];
         let engine = "none";          // 'native' | 'wasm'
         let zxingReady = null;
 
@@ -215,6 +220,9 @@
                 const supported = await BarcodeDetector.getSupportedFormats();
                 if (!supported.length) return false;
                 nativeDetector = new BarcodeDetector({ formats: supported });
+                const common = ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'data_matrix']
+                    .filter(f => supported.includes(f));
+                nativeFast = common.length ? new BarcodeDetector({ formats: common }) : nativeDetector;
                 return true;
             } catch (e) { return false; }
         }
@@ -309,7 +317,7 @@
             const videoC = {
                 width: { ideal: q.w },
                 height: { ideal: q.h },
-                frameRate: { ideal: 30 }
+                frameRate: { ideal: 60 }
             };
             if (devIdx >= 0 && devices[devIdx]) videoC.deviceId = { exact: devices[devIdx].deviceId };
             else videoC.facingMode = { ideal: "environment" };
@@ -417,38 +425,54 @@
             scheduleLoop();
         }
 
+        const canvasFast = document.createElement('canvas');
+        const ctxFast = canvasFast.getContext('2d', { willReadFrequently: true });
+
+        function updateInfo() {
+            const eng = engine === "native" ? "Native" : "WASM";
+            let t = eng + " • " + video.videoWidth + "x" + video.videoHeight;
+            if (avgDecode) t += " • decode " + Math.round(avgDecode) + " ms";
+            if (cloudMs) t += " • cloud " + cloudMs + " ms";
+            infoDiv.textContent = t;
+        }
+
         async function tick() {
             const roi = getROI();
             if (!roi || roi.sw < 20 || roi.sh < 20) return;
             frameNo++;
 
-            // Full resolution use hota hai (native: 2560 px tak, wasm: 1600 px tak)
-            const maxW = engine === "native" ? 2560 : 1600;
+            // Multi-scale: har frame chhota/fast pass, har 3rd frame full-resolution deep pass
+            const deep = frameNo % 3 === 0;
+            const maxW = engine === "native" ? (deep ? 2560 : 1280) : (deep ? 1600 : 800);
+            const cv = deep ? canvas : canvasFast;
+            const cx = deep ? ctx : ctxFast;
             const k = Math.min(1, maxW / roi.sw);
             const cw = Math.max(1, Math.round(roi.sw * k));
             const ch = Math.max(1, Math.round(roi.sh * k));
-            if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
-            ctx.drawImage(video, roi.sx, roi.sy, roi.sw, roi.sh, 0, 0, cw, ch);
+            if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
+            cx.drawImage(video, roi.sx, roi.sy, roi.sw, roi.sh, 0, 0, cw, ch);
 
             let text = "", fmt = "";
+            const t0 = performance.now();
 
             if (engine === "native") {
                 try {
-                    const codes = await nativeDetector.detect(canvas);
+                    const det = fastFormats && nativeFast ? nativeFast : nativeDetector;
+                    const codes = await det.detect(cv);
                     if (codes.length) { text = codes[0].rawValue; fmt = codes[0].format; }
                 } catch (e) {
                     // native fail -> wasm par switch
                     engine = "wasm";
-                    infoDiv.textContent = "ZXing WASM • " + video.videoWidth + "x" + video.videoHeight;
                     loadZXing();
+                    updateInfo();
                     return;
                 }
             } else {
                 if (!window.ZXingWASM) return;
-                const img = ctx.getImageData(0, 0, cw, ch);
+                const img = cx.getImageData(0, 0, cw, ch);
                 const results = await window.ZXingWASM.readBarcodes(img, {
-                    formats: [],                        // saare formats
-                    tryHarder: frameNo % 3 === 0,       // har 3rd frame deep scan, baqi fast
+                    formats: fastFormats ? FAST_ZX : [],   // [] = saare formats
+                    tryHarder: deep,
                     tryRotate: true,
                     tryInvert: frameNo % 6 === 0,
                     maxNumberOfSymbols: 1
@@ -457,12 +481,33 @@
                 if (r) { text = r.text; fmt = r.format; }
             }
 
+            const dt = performance.now() - t0;
+            avgDecode = avgDecode ? avgDecode * 0.85 + dt * 0.15 : dt;
+            if (frameNo % 15 === 0) updateInfo();
+
             if (text) onScanSuccess(text, fmt);
         }
 
         // ================= ON SCAN =================
+        // Company rule: tracking QR/barcodes me alphabet (letters) nahi hote.
+        // Agar scan hone wale code me koi bhi letter ho to usay ignore karo (PC ko nahi bhejna).
+        const HAS_LETTERS = /\p{L}/u;
+        let lastRejected = "", lastRejectedTime = 0;
+
         function onScanSuccess(decodedText, fmt) {
             if (isSending) return;
+
+            if (HAS_LETTERS.test(decodedText)) {
+                const t = Date.now();
+                if (decodedText !== lastRejected || t - lastRejectedTime > 1500) {
+                    lastRejected = decodedText;
+                    lastRejectedTime = t;
+                    statusDiv.innerHTML = '<span class="text-red-500">Ignored: is code me alphabet hain</span>';
+                    typeDiv.textContent = "";
+                    setTimeout(() => { if (!isSending) statusDiv.textContent = "Ready for next scan..."; }, 1200);
+                }
+                return;
+            }
 
             // same code ko 1.2 sec tak dobara na bhejein
             const now = Date.now();
@@ -479,26 +524,24 @@
             flash.classList.add('on');
             setTimeout(() => flash.classList.remove('on'), 60);
 
+            const tSend = performance.now();
             sendToPC(decodedText).then(() => {
+                cloudMs = Math.round(performance.now() - tSend);
+                updateInfo();
                 statusDiv.innerHTML = '<span class="text-green-500">Sent: ' + escapeHtml(decodedText) + '</span>';
                 typeDiv.textContent = fmt ? "Type: " + String(fmt).replace(/_/g, " ") : "";
                 addHistory(decodedText, fmt);
-
-                setTimeout(() => {
-                    statusDiv.textContent = "Ready for next scan...";
-                    laserBox.classList.remove('success');
-                    isSending = false;
-                }, 700);
             }).catch(() => {
                 beep(false);
                 statusDiv.innerHTML = '<span class="text-red-500">Send failed - internet check karein</span>';
-                setTimeout(() => {
-                    statusDiv.textContent = "Ready for next scan...";
-                    laserBox.classList.remove('success');
-                    lastText = "";
-                    isSending = false;
-                }, 1500);
+                lastText = "";
             });
+
+            // Scanner cloud ack ka intezar nahi karta: agla code turant scan ho sakta hai
+            setTimeout(() => {
+                laserBox.classList.remove('success');
+                isSending = false;
+            }, 250);
         }
 
         // ================= CONTROLS =================
@@ -561,6 +604,11 @@
             }
         }
         document.getElementById('btn-focus').addEventListener('click', refocus);
+        document.getElementById('btn-formats').addEventListener('click', (e) => {
+            fastFormats = !fastFormats;
+            e.currentTarget.textContent = fastFormats ? "⚡ Fast: Common Codes Only" : "🌐 All Code Types";
+            e.currentTarget.classList.toggle('active', fastFormats);
+        });
         wrap.addEventListener('click', refocus);
 
         // ================= HISTORY =================
