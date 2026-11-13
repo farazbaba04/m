@@ -101,7 +101,6 @@
             <button id="btn-mode" class="ctrl-btn">▭ Wide Box</button>
             <button id="btn-sound" class="ctrl-btn active">🔊 Beep</button>
             <button id="btn-focus" class="ctrl-btn">🎯 Focus</button>
-            <button id="btn-formats" class="ctrl-btn col-span-3">🌐 All Code Types</button>
         </div>
 
         <div id="zoom-wrap" class="mt-3 hidden">
@@ -207,10 +206,6 @@
         // 1) Native BarcodeDetector (hardware/GPU accelerated, Chrome Android / macOS) - sabse fast
         // 2) ZXing WebAssembly (C++ ZXing-cpp compiled) - har browser par (iPhone Safari, Windows, Firefox)
         let nativeDetector = null;
-        let nativeFast = null;         // sirf common formats (zyada fast)
-        let fastFormats = false;       // false = All code types, true = Fast common codes
-        let avgDecode = 0, cloudMs = 0;
-        const FAST_ZX = ["QRCode", "Code128", "Code39", "EAN-13", "EAN-8", "UPC-A", "UPC-E", "ITF", "DataMatrix"];
         let engine = "none";          // 'native' | 'wasm'
         let zxingReady = null;
 
@@ -220,9 +215,6 @@
                 const supported = await BarcodeDetector.getSupportedFormats();
                 if (!supported.length) return false;
                 nativeDetector = new BarcodeDetector({ formats: supported });
-                const common = ['qr_code', 'code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e', 'itf', 'data_matrix']
-                    .filter(f => supported.includes(f));
-                nativeFast = common.length ? new BarcodeDetector({ formats: common }) : nativeDetector;
                 return true;
             } catch (e) { return false; }
         }
@@ -317,7 +309,7 @@
             const videoC = {
                 width: { ideal: q.w },
                 height: { ideal: q.h },
-                frameRate: { ideal: 60 }
+                frameRate: { ideal: 30 }
             };
             if (devIdx >= 0 && devices[devIdx]) videoC.deviceId = { exact: devices[devIdx].deviceId };
             else videoC.facingMode = { ideal: "environment" };
@@ -425,54 +417,38 @@
             scheduleLoop();
         }
 
-        const canvasFast = document.createElement('canvas');
-        const ctxFast = canvasFast.getContext('2d', { willReadFrequently: true });
-
-        function updateInfo() {
-            const eng = engine === "native" ? "Native" : "WASM";
-            let t = eng + " • " + video.videoWidth + "x" + video.videoHeight;
-            if (avgDecode) t += " • decode " + Math.round(avgDecode) + " ms";
-            if (cloudMs) t += " • cloud " + cloudMs + " ms";
-            infoDiv.textContent = t;
-        }
-
         async function tick() {
             const roi = getROI();
             if (!roi || roi.sw < 20 || roi.sh < 20) return;
             frameNo++;
 
-            // Multi-scale: har frame chhota/fast pass, har 3rd frame full-resolution deep pass
-            const deep = frameNo % 3 === 0;
-            const maxW = engine === "native" ? (deep ? 2560 : 1280) : (deep ? 1600 : 800);
-            const cv = deep ? canvas : canvasFast;
-            const cx = deep ? ctx : ctxFast;
+            // Full resolution use hota hai (native: 2560 px tak, wasm: 1600 px tak)
+            const maxW = engine === "native" ? 2560 : 1600;
             const k = Math.min(1, maxW / roi.sw);
             const cw = Math.max(1, Math.round(roi.sw * k));
             const ch = Math.max(1, Math.round(roi.sh * k));
-            if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
-            cx.drawImage(video, roi.sx, roi.sy, roi.sw, roi.sh, 0, 0, cw, ch);
+            if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
+            ctx.drawImage(video, roi.sx, roi.sy, roi.sw, roi.sh, 0, 0, cw, ch);
 
             let text = "", fmt = "";
-            const t0 = performance.now();
 
             if (engine === "native") {
                 try {
-                    const det = fastFormats && nativeFast ? nativeFast : nativeDetector;
-                    const codes = await det.detect(cv);
+                    const codes = await nativeDetector.detect(canvas);
                     if (codes.length) { text = codes[0].rawValue; fmt = codes[0].format; }
                 } catch (e) {
                     // native fail -> wasm par switch
                     engine = "wasm";
+                    infoDiv.textContent = "ZXing WASM • " + video.videoWidth + "x" + video.videoHeight;
                     loadZXing();
-                    updateInfo();
                     return;
                 }
             } else {
                 if (!window.ZXingWASM) return;
-                const img = cx.getImageData(0, 0, cw, ch);
+                const img = ctx.getImageData(0, 0, cw, ch);
                 const results = await window.ZXingWASM.readBarcodes(img, {
-                    formats: fastFormats ? FAST_ZX : [],   // [] = saare formats
-                    tryHarder: deep,
+                    formats: [],                        // saare formats
+                    tryHarder: frameNo % 3 === 0,       // har 3rd frame deep scan, baqi fast
                     tryRotate: true,
                     tryInvert: frameNo % 6 === 0,
                     maxNumberOfSymbols: 1
@@ -480,10 +456,6 @@
                 const r = results.find(x => x.isValid !== false && x.text);
                 if (r) { text = r.text; fmt = r.format; }
             }
-
-            const dt = performance.now() - t0;
-            avgDecode = avgDecode ? avgDecode * 0.85 + dt * 0.15 : dt;
-            if (frameNo % 15 === 0) updateInfo();
 
             if (text) onScanSuccess(text, fmt);
         }
@@ -524,24 +496,26 @@
             flash.classList.add('on');
             setTimeout(() => flash.classList.remove('on'), 60);
 
-            const tSend = performance.now();
             sendToPC(decodedText).then(() => {
-                cloudMs = Math.round(performance.now() - tSend);
-                updateInfo();
                 statusDiv.innerHTML = '<span class="text-green-500">Sent: ' + escapeHtml(decodedText) + '</span>';
                 typeDiv.textContent = fmt ? "Type: " + String(fmt).replace(/_/g, " ") : "";
                 addHistory(decodedText, fmt);
+
+                setTimeout(() => {
+                    statusDiv.textContent = "Ready for next scan...";
+                    laserBox.classList.remove('success');
+                    isSending = false;
+                }, 700);
             }).catch(() => {
                 beep(false);
                 statusDiv.innerHTML = '<span class="text-red-500">Send failed - internet check karein</span>';
-                lastText = "";
+                setTimeout(() => {
+                    statusDiv.textContent = "Ready for next scan...";
+                    laserBox.classList.remove('success');
+                    lastText = "";
+                    isSending = false;
+                }, 1500);
             });
-
-            // Scanner cloud ack ka intezar nahi karta: agla code turant scan ho sakta hai
-            setTimeout(() => {
-                laserBox.classList.remove('success');
-                isSending = false;
-            }, 250);
         }
 
         // ================= CONTROLS =================
@@ -604,11 +578,6 @@
             }
         }
         document.getElementById('btn-focus').addEventListener('click', refocus);
-        document.getElementById('btn-formats').addEventListener('click', (e) => {
-            fastFormats = !fastFormats;
-            e.currentTarget.textContent = fastFormats ? "⚡ Fast: Common Codes Only" : "🌐 All Code Types";
-            e.currentTarget.classList.toggle('active', fastFormats);
-        });
         wrap.addEventListener('click', refocus);
 
         // ================= HISTORY =================
