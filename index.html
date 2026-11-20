@@ -145,6 +145,7 @@
             if(code.length !== 4) return alert("Please enter a valid 4-digit code");
 
             unlockAudio(); // user gesture: beep ke liye audio enable
+            prewarmCamera(); // camera abhi se on ho jaye, Firebase check ke saath saath
 
             const sessionRef = ref(db, 'sessions/' + code);
             const snapshot = await get(sessionRef);
@@ -158,13 +159,14 @@
                 startScanner();
             } else {
                 document.getElementById('pair-error').classList.remove('hidden');
+                if (prewarm) { prewarm.then(s => s && s.getTracks().forEach(t => t.stop())); prewarm = null; }
             }
         });
 
         // Firebase send (same logic: update sessions/<code> { barcode })
         function sendToPC(decodedText) {
             const sessionRef = ref(db, 'sessions/' + currentSessionCode);
-            return update(sessionRef, { barcode: decodedText });
+            return update(sessionRef, { barcode: decodedText, ts: Date.now() });
         }
         // ================= END FIREBASE =================
 
@@ -286,21 +288,41 @@
             document.getElementById('btn-mode').textContent = MODE_LABEL[m];
         }
 
+        let prewarm = null;
+        function prewarmCamera() {
+            if (!navigator.mediaDevices) return;
+            const q = QUALITY[qIdx];
+            prewarm = navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: { facingMode: { ideal: "environment" }, width: { ideal: q.w }, height: { ideal: q.h }, frameRate: { ideal: 30 } }
+            }).catch(() => null);
+        }
+
+        function updateInfo() {
+            const eng = engine === "native" ? "Native BarcodeDetector" : "ZXing WASM";
+            infoDiv.textContent = eng + " • " + video.videoWidth + "x" + video.videoHeight;
+        }
+
         async function startScanner() {
             applyBox();
-            const hasNative = await initNative();
+            statusDiv.textContent = "Starting camera...";
+            // camera foran start, engine load saath saath hota hai
+            const nativeP = initNative();
+            const camP = startCamera();
+            const hasNative = await nativeP;
             if (hasNative) {
                 engine = "native";
             } else {
-                statusDiv.textContent = "Loading fast engine...";
+                engine = "wasm";
                 const ok = await loadZXing();
                 if (!ok) {
                     statusDiv.innerHTML = '<span class="text-red-500">Scanner engine load nahi hua - internet check karein</span>';
                     return;
                 }
-                engine = "wasm";
             }
-            await startCamera();
+            await camP;
+            updateInfo();
+            if (!isSending) statusDiv.textContent = "Ready to scan...";
         }
 
         async function startCamera() {
@@ -314,32 +336,33 @@
             if (devIdx >= 0 && devices[devIdx]) videoC.deviceId = { exact: devices[devIdx].deviceId };
             else videoC.facingMode = { ideal: "environment" };
 
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: videoC });
-            } catch (e) {
+            if (prewarm) { stream = await prewarm; prewarm = null; }
+            if (!stream) {
                 try {
-                    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
-                } catch (e2) {
-                    statusDiv.innerHTML = '<span class="text-red-500">Camera permission allow karein</span>';
-                    return;
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: videoC });
+                } catch (e) {
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+                    } catch (e2) {
+                        statusDiv.innerHTML = '<span class="text-red-500">Camera permission allow karein</span>';
+                        return;
+                    }
                 }
             }
 
             video.srcObject = stream;
             try { await video.play(); } catch (e) {}
 
-            try {
-                const all = await navigator.mediaDevices.enumerateDevices();
-                devices = all.filter(d => d.kind === 'videoinput');
-            } catch (e) {}
-
-            await tuneCamera();
-
+            // scanning foran shuru, focus tuning background me
             running = true;
             statusDiv.textContent = "Ready to scan...";
-            const eng = engine === "native" ? "Native BarcodeDetector" : "ZXing WASM";
-            infoDiv.textContent = eng + " • " + video.videoWidth + "x" + video.videoHeight;
+            updateInfo();
             scheduleLoop();
+
+            tuneCamera();
+            navigator.mediaDevices.enumerateDevices().then(all => {
+                devices = all.filter(d => d.kind === 'videoinput');
+            }).catch(() => {});
         }
 
         function stopCamera() {
@@ -358,7 +381,14 @@
             if (caps.focusMode && caps.focusMode.includes('continuous')) adv.focusMode = 'continuous';
             if (caps.exposureMode && caps.exposureMode.includes('continuous')) adv.exposureMode = 'continuous';
             if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) adv.whiteBalanceMode = 'continuous';
-            if (Object.keys(adv).length) { try { await track.applyConstraints({ advanced: [adv] }); } catch (e) {} }
+            if (caps.pointsOfInterest) adv.pointsOfInterest = [{ x: 0.5, y: 0.5 }]; // box ke center par focus
+            if (Object.keys(adv).length) {
+                try { await track.applyConstraints({ advanced: [adv] }); }
+                catch (e) {
+                    // combined fail ho to ek ek karke try karo
+                    for (const k of Object.keys(adv)) { try { await track.applyConstraints({ advanced: [{ [k]: adv[k] }] }); } catch (e2) {} }
+                }
+            }
 
             const zoomWrap = document.getElementById('zoom-wrap');
             const zoomRange = document.getElementById('zoom-range');
@@ -481,9 +511,9 @@
                 return;
             }
 
-            // same code ko 1.2 sec tak dobara na bhejein
+            // same code ko 1 sec tak dobara na bhejein
             const now = Date.now();
-            if (decodedText === lastText && now - lastTime < 1200) return;
+            if (decodedText === lastText && now - lastTime < 1000) return;
 
             isSending = true;
             lastText = decodedText;
@@ -496,25 +526,25 @@
             flash.classList.add('on');
             setTimeout(() => flash.classList.remove('on'), 60);
 
-            sendToPC(decodedText).then(() => {
-                statusDiv.innerHTML = '<span class="text-green-500">Sent: ' + escapeHtml(decodedText) + '</span>';
-                typeDiv.textContent = fmt ? "Type: " + String(fmt).replace(/_/g, " ") : "";
-                addHistory(decodedText, fmt);
+            // Send background me, scanner foran next scan ke liye ready
+            const sendP = sendToPC(decodedText);
+            statusDiv.innerHTML = '<span class="text-green-500">Sent: ' + escapeHtml(decodedText) + '</span>';
+            typeDiv.textContent = fmt ? "Type: " + String(fmt).replace(/_/g, " ") : "";
+            addHistory(decodedText, fmt);
 
-                setTimeout(() => {
-                    statusDiv.textContent = "Ready for next scan...";
-                    laserBox.classList.remove('success');
-                    isSending = false;
-                }, 700);
-            }).catch(() => {
+            setTimeout(() => {
+                laserBox.classList.remove('success');
+                isSending = false;
+            }, 300);
+            setTimeout(() => {
+                if (!isSending && statusDiv.textContent.startsWith("Sent")) statusDiv.textContent = "Ready for next scan...";
+            }, 900);
+
+            sendP.catch(() => {
                 beep(false);
+                lastText = "";
                 statusDiv.innerHTML = '<span class="text-red-500">Send failed - internet check karein</span>';
-                setTimeout(() => {
-                    statusDiv.textContent = "Ready for next scan...";
-                    laserBox.classList.remove('success');
-                    lastText = "";
-                    isSending = false;
-                }, 1500);
+                setTimeout(() => { statusDiv.textContent = "Ready for next scan..."; }, 1500);
             });
         }
 
