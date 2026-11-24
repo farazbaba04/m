@@ -3,1327 +3,1117 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kate Inventory Software — Auto Repair & Maintenance System</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="description" content="MingTu Nameplate creates custom metal nameplates, perfume labels, tags, and accessories." />
+  <title>MingTu Nameplate Kate | Custom Metal Nameplates</title>
+  <!--
+  ================================================================================
+  中文操作指南（GitHub 托管 + 添加产品与图片说明 - MingTu Nameplate）
+  1. 文件夹结构（注意大小写，GitHub 区分大小写）：
+       - index.html
+       - images/perfume-bottle-label.jpg
+       - images/zinc-hang-tag.jpg
+     （建议使用全小写字母、数字和短横线命名图片，避免空格和中文文件名。）
+  2. 如何上传新产品图片：
+       第一步：将产品照片上传到 GitHub 仓库的 "images" 文件夹中。
+       第二步：打开 index.html，找到 <script> 中的 PRODUCTS_DATA 数组。
+       第三步：复制一个 {...} 产品块，修改 name、category、material、image 路径和 desc，保存并 Commit。
+  3. 网页端快捷生成代码：
+       点击页面右上角 "+ Add Product" 按钮，选择本地图片可实时预览并自动生成 JSON 代码，
+       复制生成的代码粘贴到 PRODUCTS_DATA 中即可永久保存。
+  ================================================================================
+  -->
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
-    .tab-active { background-color: #0f172a; color: #ffffff; }
-    .badge-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-    @media print {
-      body * { visibility: hidden; }
-      #printable-invoice, #printable-invoice * { visibility: visible; }
-      #printable-invoice { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
-      .no-print { display: none !important; }
+    :root {
+      --ink: #39253b;
+      --muted: #786879;
+      --pink: #bd6489;
+      --pink-dark: #9f486f;
+      --rose: #f5dce5;
+      --line: rgba(132, 82, 106, .16);
+      --white: #fffdfd;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: #fffafa;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.65;
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input, select, textarea { font-family: inherit; }
+    code {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(189, 100, 137, .12);
+      color: var(--pink-dark);
+      font-size: 0.9em;
+    }
+    .container { width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(255, 250, 250, .92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .nav {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 750; }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: linear-gradient(145deg, #a34776, #e4a4bd);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .nav-links { display: flex; gap: 22px; color: var(--muted); font-size: 14px; }
+    .nav-links a:hover { color: var(--pink-dark); }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+    /* Buttons */
+    .button {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      color: white;
+      background: var(--pink);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .button:hover { background: var(--pink-dark); transform: translateY(-1px); }
+    .button.light {
+      color: var(--pink-dark);
+      background: rgba(255,255,255,.82);
+      border-color: rgba(189,100,137,.28);
+    }
+    .button.light:hover { background: white; }
+    .button.sm { min-height: 35px; padding: 0 14px; font-size: 13px; }
+
+    /* Silk Hero */
+    .silk {
+      background-color: #f6dfe8;
+      background-image:
+        radial-gradient(ellipse at 15% 15%, rgba(255,255,255,.95), transparent 34%),
+        radial-gradient(ellipse at 82% 20%, rgba(224,166,191,.42), transparent 32%),
+        radial-gradient(ellipse at 70% 82%, rgba(255,255,255,.72), transparent 31%),
+        linear-gradient(132deg, #fff8fa 2%, #f3d6e1 29%, #fff9fb 48%, #e9bfd0 68%, #fff8fa 86%);
+      background-size: 150% 150%;
+      animation: silk-shift 18s ease-in-out infinite alternate;
+    }
+    @keyframes silk-shift {
+      from { background-position: 0% 40%; }
+      to { background-position: 100% 60%; }
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 74px 0;
+    }
+    .hero::before, .hero::after {
+      position: absolute;
+      width: 65%;
+      height: 130px;
+      left: 18%;
+      border-radius: 50%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), rgba(183,107,143,.14), transparent);
+      filter: blur(15px);
+      transform: rotate(-13deg);
+      content: "";
+      pointer-events: none;
+    }
+    .hero::before { top: 10%; }
+    .hero::after { bottom: 8%; transform: rotate(11deg); }
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+      gap: 42px;
+    }
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 12px;
+      color: var(--pink-dark);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      max-width: 680px;
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(40px, 5.2vw, 64px);
+      line-height: 1.07;
+      letter-spacing: -.04em;
+    }
+    .hero-copy > p { max-width: 620px; margin: 18px 0 24px; color: #685568; font-size: 17px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+    /* Decorative Bottle Stage */
+    .stage {
+      position: relative;
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.76);
+      border-radius: 24px;
+      background:
+        radial-gradient(ellipse at 50% 77%, rgba(167,96,128,.16), transparent 46%),
+        linear-gradient(145deg, rgba(255,255,255,.67), rgba(255,239,245,.52));
+      box-shadow: 0 22px 60px rgba(107,54,79,.12);
+    }
+    .stage::before {
+      position: absolute;
+      width: 270px;
+      height: 270px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.64);
+      filter: blur(14px);
+      content: "";
+    }
+    .bottle {
+      position: relative;
+      z-index: 1;
+      width: 195px;
+      height: 255px;
+      border: 2px solid rgba(255,255,255,.88);
+      border-radius: 38px 38px 27px 27px;
+      background:
+        linear-gradient(100deg, rgba(255,255,255,.35), rgba(255,255,255,.82) 43%, rgba(235,191,207,.45)),
+        linear-gradient(180deg, rgba(255,255,255,.45), rgba(230,179,198,.35));
+      box-shadow:
+        inset 12px 0 18px rgba(255,255,255,.82),
+        inset -12px 0 22px rgba(185,115,148,.12),
+        0 30px 50px rgba(104,57,78,.22);
+      animation: bottle-float 5s ease-in-out infinite;
+    }
+    .bottle::before {
+      position: absolute;
+      top: -46px;
+      left: 58px;
+      width: 75px;
+      height: 46px;
+      border: 2px solid rgba(255,255,255,.8);
+      border-radius: 10px 10px 3px 3px;
+      background: linear-gradient(90deg, #b98c57, #f3dfb7 45%, #ba915e);
+      box-shadow: 0 7px 12px rgba(107,62,74,.15);
+      content: "";
+    }
+    .bottle::after {
+      position: absolute;
+      right: 14px;
+      bottom: 0;
+      left: 14px;
+      height: 35%;
+      border-radius: 0 0 18px 18px;
+      background: linear-gradient(180deg, rgba(238,199,165,.12), rgba(223,175,138,.4));
+      content: "";
+    }
+    .label {
+      position: absolute;
+      z-index: 2;
+      top: 95px;
+      left: 24px;
+      width: 143px;
+      min-height: 77px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      border: 2px solid #e4c27d;
+      border-radius: 5px;
+      color: #f9e8c2;
+      background: linear-gradient(140deg, #4a2b3c, #7a405a 60%, #392335);
+      box-shadow: 0 8px 16px rgba(67,39,52,.22), inset 0 0 0 3px rgba(241,213,159,.13);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 14px;
+      letter-spacing: .16em;
+      text-align: center;
+      animation: label-apply 5s ease-in-out infinite;
+    }
+    .label small { display: block; margin-top: 4px; font-family: Arial, sans-serif; font-size: 8px; letter-spacing: .2em; }
+    .sparkle { position: absolute; z-index: 2; color: #fff; text-shadow: 0 1px 12px #fff; animation: twinkle 2.6s ease-in-out infinite; }
+    .s1 { top: 18%; left: 18%; font-size: 25px; }
+    .s2 { top: 25%; right: 19%; font-size: 20px; animation-delay: .8s; }
+    .s3 { bottom: 20%; left: 25%; font-size: 19px; animation-delay: 1.5s; }
+    .stage-caption {
+      position: absolute;
+      right: 18px;
+      bottom: 15px;
+      left: 18px;
+      z-index: 3;
+      color: #785a6b;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-align: center;
+    }
+    @keyframes bottle-float {
+      0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+      50% { transform: translateY(-10px) rotate(1.5deg); }
+    }
+    @keyframes label-apply {
+      0%, 12% { opacity: .55; transform: translateY(-18px) rotate(-7deg) scale(.96); }
+      32%, 75%, 100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+      82% { transform: translateY(1px) scale(1.02); }
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: .45; transform: scale(.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+
+    /* Sections */
+    section { padding: 74px 0; }
+    .section-heading { max-width: 760px; margin: 0 auto 32px; text-align: center; }
+    .section-heading h2 {
+      margin: 0 0 10px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(30px, 4vw, 42px);
+      line-height: 1.2;
+    }
+    .section-heading p { margin: 0; color: var(--muted); }
+    .about-copy { max-width: 940px; margin: auto; color: #5c4b5e; }
+    .about-copy p { margin: 0 0 15px; }
+
+    .soft-bg {
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(255,255,255,.8), transparent 38%),
+        linear-gradient(145deg, #fff9fb, #f8e8ef 55%, #fff9fb);
+    }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 10px 28px rgba(117,71,92,.05);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 14px; }
+    .number { margin-bottom: 10px; color: var(--pink-dark); font-size: 12px; font-weight: 800; letter-spacing: .12em; }
+
+    /* Materials */
+    .materials { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 22px; }
+    .mat-btn {
+      padding: 9px 18px;
+      border: 1px solid rgba(189,100,137,.28);
+      border-radius: 999px;
+      color: var(--pink-dark);
+      background: rgba(255,255,255,.82);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .mat-btn:hover, .mat-btn.active {
+      background: var(--pink);
+      color: #fff;
+      border-color: var(--pink);
+    }
+    .mat-note {
+      max-width: 680px;
+      margin: 16px auto 0;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid var(--line);
+      color: #5c4b5e;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    /* Products */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 1060px;
+      margin: 0 auto 24px;
+    }
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; }
+    .filter-btn {
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--rose);
+      color: var(--pink-dark);
+      border-color: var(--pink);
+    }
+    .search-input {
+      min-width: 220px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      max-width: 1060px;
+      margin: 0 auto;
+    }
+    .product-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.9);
+      overflow: hidden;
+      box-shadow: 0 10px 26px rgba(117,71,92,.06);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 34px rgba(117,71,92,.11);
+    }
+    .product-thumb {
+      position: relative;
+      height: 185px;
+      background: linear-gradient(135deg, #f8e6ee, #edd3df);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      cursor: zoom-in;
+    }
+    .product-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform .3s ease;
+    }
+    .product-card:hover .product-thumb img { transform: scale(1.04); }
+    .zoom-badge {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(57, 37, 59, .75);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .placeholder-plaque {
+      padding: 13px 20px;
+      border: 1.5px solid #d7b26d;
+      border-radius: 6px;
+      background: linear-gradient(140deg, #4a2b3c, #7a405a);
+      color: #f9e8c2;
+      font-family: Georgia, serif;
+      font-size: 13px;
+      letter-spacing: .12em;
+      text-align: center;
+    }
+    .product-body { padding: 18px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .product-meta {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--pink-dark);
+      margin-bottom: 6px;
+    }
+    .product-title { margin: 0 0 6px; font-size: 17px; }
+    .product-desc { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+    .product-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+      color: #685568;
+    }
+
+    /* Contact */
+    .contact {
+      color: #fff9fc;
+      background:
+        radial-gradient(ellipse at 80% 15%, rgba(255,255,255,.22), transparent 34%),
+        linear-gradient(130deg, #6d405f, #a8587b 58%, #c87d9b);
+    }
+    .contact .section-heading p { color: #f6e5ed; }
+    .contact .eyebrow { color: #ffe7f0; }
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .contact-card { padding: 21px; border: 1px solid rgba(255,255,255,.23); border-radius: 12px; background: rgba(255,255,255,.1); }
+    .contact-card h3 { margin: 0 0 6px; color: #ffe7f0; font-size: 14px; }
+    .contact-card p { margin: 0; overflow-wrap: anywhere; }
+    .contact-card a { text-decoration: underline; text-underline-offset: 3px; }
+    .copy-wechat {
+      margin-left: 8px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.45);
+      background: rgba(255,255,255,.16);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .copy-wechat:hover { background: rgba(255,255,255,.3); }
+
+    footer { padding: 22px 0; color: var(--muted); background: #fffafa; font-size: 13px; }
+    .footer-row { display: flex; justify-content: space-between; gap: 16px; }
+
+    /* Modals (Add Product + Image Lightbox) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(45, 24, 43, .62);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: min(540px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #fffdfd;
+      color: var(--ink);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 24px 60px rgba(35, 15, 32, .3);
+    }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; }
+    .modal-head h3 { margin: 0; font-size: 20px; }
+    .close-btn {
+      border: none;
+      background: var(--rose);
+      color: var(--pink-dark);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      background: #fff;
+    }
+    pre.code-out {
+      background: #281726;
+      color: #ffe8f2;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+    .lightbox-img {
+      width: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      border-radius: 12px;
+      background: #f8e8ef;
+      margin-bottom: 14px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+    @media (max-width: 900px) {
+      .product-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 800px) {
+      .nav-links { display: none; }
+      .hero-grid { grid-template-columns: 1fr; }
+      .stage { min-height: 380px; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+      .container { width: min(100% - 28px, 1160px); }
+      .hero { padding: 58px 0; }
+      .stage { min-height: 340px; }
+      .grid-3, .product-grid, .contact-grid { grid-template-columns: 1fr; }
+      .footer-row { flex-direction: column; }
+      section { padding: 60px 0; }
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
-
-  <!-- LOGIN SCREEN -->
-  <div id="login-screen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-800">
-      <div class="bg-slate-900 p-6 text-white border-b border-slate-800">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-xl">K</div>
-          <div>
-            <h1 class="text-xl font-bold tracking-tight">Kate Inventory Software</h1>
-            <p class="text-xs text-slate-400">Auto Repair Shop Maintenance & Stock Control</p>
-          </div>
-        </div>
+<body>
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#home"><span class="brand-mark">MT</span><span>MingTu Nameplate</span></a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#about">About</a>
+        <a href="#materials">Materials</a>
+        <a href="#products">Products</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="button light sm" type="button" id="openAddProductBtn">+ Add Product</button>
+        <a class="button sm" href="#contact">Contact Us</a>
       </div>
-      <form id="login-form" class="p-6 space-y-4">
-        <div id="login-error" class="hidden bg-red-50 border border-red-200 text-red-700 text-xs font-medium px-3 py-2.5 rounded-lg"></div>
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Username</label>
-          <input type="text" id="login-username" required placeholder="Enter username"
-            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">Password</label>
-          <input type="password" id="login-password" required placeholder="••••••••"
-            class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
-        </div>
-        <button type="submit"
-          class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg text-sm transition shadow-sm">
-          Sign In to Kate Inventory
-        </button>
-        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-          <span id="db-connection-badge" class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Connecting to Firebase...
-          </span>
-          <span>v2.0 Live</span>
-        </div>
-      </form>
     </div>
-  </div>
+  </header>
 
-  <!-- MAIN APPLICATION SHELL -->
-  <div id="app-shell" class="hidden flex-1 flex flex-col lg:flex-row">
-    <!-- SIDEBAR -->
-    <aside class="w-full lg:w-64 bg-slate-900 text-slate-200 flex flex-col justify-between shrink-0">
-      <div>
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-          <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-lg">K</div>
-            <div>
-              <h2 class="font-bold text-white text-sm leading-tight">Kate Inventory</h2>
-              <span class="text-[11px] text-amber-400 font-medium">Maintenance & Parts</span>
-            </div>
+  <main>
+    <section class="hero silk" id="home">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">Custom Metal Nameplate Solutions</div>
+          <h1>Beautiful Details. Made Just for Your Brand.</h1>
+          <p>
+            MingTu Nameplate creates custom metal nameplates, perfume labels,
+            tags, badges, and accessories. Choose your material, share your
+            design, and let us help bring your idea to life.
+          </p>
+          <div class="actions">
+            <a class="button" href="#contact">Request a Quote</a>
+            <a class="button light" href="#products">Explore Products</a>
           </div>
         </div>
-
-        <!-- CURRENT USER CARD -->
-        <div class="p-4 mx-3 mt-4 rounded-xl bg-slate-800/80 border border-slate-700/70">
-          <div class="text-[11px] uppercase tracking-wider text-slate-400">Logged in as</div>
-          <div id="sidebar-user-name" class="font-bold text-white text-sm mt-0.5 truncate">—</div>
-          <div class="flex items-center justify-between mt-1.5">
-            <span id="sidebar-user-role" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 uppercase">ADMIN</span>
-            <span id="sidebar-username-tag" class="text-[11px] text-slate-400">@faraz</span>
+        <div class="stage" role="img" aria-label="Decorative animation of a metal perfume label settling onto a glass bottle">
+          <span class="sparkle s1">✦</span>
+          <span class="sparkle s2">✧</span>
+          <span class="sparkle s3">✦</span>
+          <div class="bottle">
+            <div class="label" id="heroLabel">MINGTU<small id="heroLabelSub">METAL NAMEPLATE</small></div>
           </div>
+          <div class="stage-caption">A custom metal label, made for your product</div>
         </div>
-
-        <!-- NAVIGATION -->
-        <nav class="p-3 space-y-1 mt-2" id="sidebar-nav">
-          <button data-tab="dashboard" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium bg-slate-800 text-white">
-            <span>Dashboard & Alerts</span>
-            <span id="nav-alert-count" class="hidden bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
-          </button>
-          <button data-tab="workorders" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800/60">
-            <span>Work Orders</span>
-            <span id="nav-wo-count" class="bg-slate-700 text-slate-200 text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
-          </button>
-          <button data-tab="inventory" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800/60">
-            <span>Parts Inventory</span>
-          </button>
-          <button data-tab="returns" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800/60">
-            <span>Surplus Returns</span>
-            <span id="nav-return-count" class="hidden bg-amber-500 text-slate-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full">0</span>
-          </button>
-          <button data-tab="dispatch" class="nav-btn admin-only w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800/60">
-            <span>Tech Dispatch</span>
-          </button>
-          <button data-tab="users" class="nav-btn admin-only w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800/60">
-            <span>Users & Roles</span>
-          </button>
-        </nav>
       </div>
+    </section>
 
-      <div class="p-4 border-t border-slate-800 space-y-2">
-        <div class="flex items-center justify-between text-xs text-slate-400">
-          <span>Firebase Sync</span>
-          <span id="sync-indicator" class="text-emerald-400 font-semibold">● Live</span>
+    <section id="about">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Company Profile</div>
+          <h2>Your Custom Metal Nameplate Partner</h2>
         </div>
-        <button id="logout-btn" class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-red-600/90 text-slate-200 hover:text-white text-xs font-semibold transition">
-          Sign Out
-        </button>
+        <div class="about-copy">
+          <p>
+            MingTu Nameplate (Foshan) Technology Co., Ltd. is a professional
+            manufacturer specializing in the research, production, and
+            customization of metal nameplates. With years of industry
+            experience, our company is located in Hegui Industrial Park,
+            Heshun, Lishui Town, Nanhai District, Foshan City, Guangdong, China.
+          </p>
+          <p>
+            We operate standardized production workshops and a complete
+            production line, with equipment including a 110-ton stamping press,
+            automatic punching machines, a tunnel oven, printing presses, a UV
+            curing machine, and precision screen-printing equipment. We provide
+            multi-process manufacturing using aluminum, zinc alloy, stainless
+            steel, nickel, and other metal materials.
+          </p>
+          <p>
+            Our products serve fragrance and cosmetics, electronic devices and
+            accessories, cultural and creative gifts, and other industries. We
+            work with customers to develop custom metal label solutions for
+            their products and brands.
+          </p>
+        </div>
       </div>
-    </aside>
+    </section>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 p-4 lg:p-8 overflow-y-auto max-w-7xl mx-auto w-full">
-
-      <!-- TOP HEADER -->
-      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
-        <div>
-          <h1 id="page-title" class="text-2xl font-extrabold text-slate-900">Dashboard & Inventory Alerts</h1>
-          <p id="page-subtitle" class="text-xs text-slate-500 mt-0.5">Real-time workshop operations, stock reservations, and replenishment suggestions</p>
+    <section class="soft-bg" id="materials">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Materials</div>
+          <h2>Choose the Metal for Your Design</h2>
+          <p>Click a material to preview how it pairs with custom labels.</p>
+          <div class="materials" id="materialButtons">
+            <button class="mat-btn active" type="button" data-mat="Aluminum" data-note="Aluminum: Lightweight, corrosion-resistant, great for stamped or printed labels.">Aluminum</button>
+            <button class="mat-btn" type="button" data-mat="Zinc Alloy" data-note="Zinc Alloy: Ideal for 3D relief perfume labels, hang tags, and sculptural emblems.">Zinc Alloy</button>
+            <button class="mat-btn" type="button" data-mat="Stainless Steel" data-note="Stainless Steel: High durability with crisp etching or laser detailing.">Stainless Steel</button>
+            <button class="mat-btn" type="button" data-mat="Nickel" data-note="Nickel: Ultra-thin metallic transfer stickers with sharp fine edges.">Nickel</button>
+            <button class="mat-btn" type="button" data-mat="Other Metals" data-note="Other Metals: Brass and custom alloys tailored to brand packaging.">Other Metals</button>
+          </div>
+          <div class="mat-note" id="materialNote">Aluminum: Lightweight, corrosion-resistant, great for stamped or printed labels.</div>
         </div>
-        <div class="flex flex-wrap items-center gap-2.5">
-          <button id="btn-open-wo-modal" class="frontdesk-or-admin bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-lg shadow-sm transition">
-            + New Work Order
-          </button>
-          <button id="btn-open-part-modal" class="admin-only bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition">
-            + Add Spare Part
-          </button>
-        </div>
-      </header>
-
-      <!-- TAB 1: DASHBOARD & ALERTS -->
-      <section id="tab-dashboard" class="tab-panel mt-6 space-y-6">
-        <!-- KPI CARDS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div class="text-xs font-semibold text-slate-500 uppercase">Active Work Orders</div>
-            <div id="kpi-active-wo" class="text-2xl font-extrabold text-slate-900 mt-1">0</div>
-            <div class="text-[11px] text-slate-400 mt-1">Reserved & In-Progress jobs</div>
-          </div>
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div class="text-xs font-semibold text-slate-500 uppercase">Reserved Stock Units</div>
-            <div id="kpi-reserved-units" class="text-2xl font-extrabold text-amber-600 mt-1">0</div>
-            <div class="text-[11px] text-slate-400 mt-1">Locked against duplicate orders</div>
-          </div>
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div class="text-xs font-semibold text-slate-500 uppercase">Low Stock & Shortage Alerts</div>
-            <div id="kpi-low-stock" class="text-2xl font-extrabold text-red-600 mt-1">0</div>
-            <div class="text-[11px] text-slate-400 mt-1">Below minimum threshold</div>
-          </div>
-          <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <div class="text-xs font-semibold text-slate-500 uppercase">Pending Surplus Returns</div>
-            <div id="kpi-pending-returns" class="text-2xl font-extrabold text-indigo-600 mt-1">0</div>
-            <div class="text-[11px] text-slate-400 mt-1">Awaiting admin approval</div>
-          </div>
-        </div>
-
-        <!-- PROCESS 6: AUTOMATED PURCHASING SUGGESTIONS & LOW STOCK ALERTS -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-            <div>
-              <h3 class="font-bold text-slate-900 text-sm">Inventory Threshold Alerts & Smart Purchasing Suggestions</h3>
-              <p class="text-xs text-slate-500">Auto-calculated from historical consumption velocity (7-day stock-out rate)</p>
-            </div>
-            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-700">Process #6 Live</span>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-600 uppercase border-b border-slate-200">
-                <tr>
-                  <th class="py-3 px-4">Part SKU & Name</th>
-                  <th class="py-3 px-4">Available / Threshold</th>
-                  <th class="py-3 px-4">7-Day Consumption</th>
-                  <th class="py-3 px-4">Suggested PO Qty</th>
-                  <th class="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody id="alerts-table-body" class="divide-y divide-slate-100">
-                <tr><td colspan="5" class="py-6 text-center text-slate-400">All inventory levels are above minimum thresholds.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- RECENT SHORTAGE & SYSTEM LOGS -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-5 border-b border-slate-200 flex items-center justify-between">
-            <h3 class="font-bold text-slate-900 text-sm">Stock Shortage Reminders & Audit Trail</h3>
-            <span class="text-xs text-slate-400">Latest stock movements & blocked requests</span>
-          </div>
-          <div id="audit-log-list" class="divide-y divide-slate-100 max-h-64 overflow-y-auto text-xs">
-            <div class="p-4 text-slate-400 text-center">No recent activity logged yet.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 2: WORK ORDERS (PROCESSES 1, 2, 3, 4) -->
-      <section id="tab-workorders" class="tab-panel hidden mt-6 space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200">
-          <div class="flex items-center gap-2">
-            <button data-wo-filter="ALL" class="wo-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white">All Orders</button>
-            <button data-wo-filter="Reserved" class="wo-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600">Reserved (Pending Issue)</button>
-            <button data-wo-filter="In Progress" class="wo-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600">In Progress (Issued)</button>
-            <button data-wo-filter="Completed" class="wo-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600">Completed</button>
-          </div>
-        </div>
-
-        <div id="workorders-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="col-span-full bg-white p-8 rounded-xl border border-slate-200 text-center text-sm text-slate-400">
-            No work orders found. Click "+ New Work Order" to create one.
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 3: PARTS INVENTORY -->
-      <section id="tab-inventory" class="tab-panel hidden mt-6">
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <input type="text" id="inventory-search" placeholder="Search SKU, part name, or category..."
-              class="w-full sm:w-72 px-3.5 py-2 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900" />
-            <div class="text-xs text-slate-500">
-              Formula: <span class="font-semibold text-slate-800">Available = Physical Stock − Reserved Qty</span>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-600 uppercase border-b border-slate-200">
-                <tr>
-                  <th class="py-3 px-4">SKU</th>
-                  <th class="py-3 px-4">Part Name</th>
-                  <th class="py-3 px-4">Category</th>
-                  <th class="py-3 px-4">Unit Price (PKR)</th>
-                  <th class="py-3 px-4">Physical</th>
-                  <th class="py-3 px-4">Reserved</th>
-                  <th class="py-3 px-4">Available</th>
-                  <th class="py-3 px-4">Threshold</th>
-                  <th class="py-3 px-4 text-right admin-only">Quick Restock</th>
-                </tr>
-              </thead>
-              <tbody id="inventory-table-body" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 4: SURPLUS RETURNS (PROCESS 4) -->
-      <section id="tab-returns" class="tab-panel hidden mt-6">
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-5 border-b border-slate-200 flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-slate-900 text-sm">Technician Surplus Parts Return Requests</h3>
-              <p class="text-xs text-slate-500">Admin approval automatically restores inventory and deducts returned value from the Work Order invoice</p>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-600 uppercase border-b border-slate-200">
-                <tr>
-                  <th class="py-3 px-4">Return ID</th>
-                  <th class="py-3 px-4">Work Order</th>
-                  <th class="py-3 px-4">Part Returned</th>
-                  <th class="py-3 px-4">Qty</th>
-                  <th class="py-3 px-4">Credit Value</th>
-                  <th class="py-3 px-4">Requested By</th>
-                  <th class="py-3 px-4">Status</th>
-                  <th class="py-3 px-4 text-right">Approval</th>
-                </tr>
-              </thead>
-              <tbody id="returns-table-body" class="divide-y divide-slate-100">
-                <tr><td colspan="8" class="py-8 text-center text-slate-400">No surplus return requests submitted yet.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 5: TECHNICIAN DISPATCHING (PROCESS 5) -->
-      <section id="tab-dispatch" class="tab-panel hidden mt-6 space-y-6">
-        <div id="dispatch-recommendation-banner" class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded">Smart Dispatch Recommendation</span>
-            <p id="dispatch-rec-text" class="text-sm font-semibold text-slate-900 mt-1">Add technician accounts in "Users & Roles" to enable automated workload balancing.</p>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- TECH WORKLOAD CARDS -->
-          <div class="lg:col-span-1 space-y-3" id="tech-workload-list">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 text-xs text-slate-400 text-center">No technicians registered yet.</div>
-          </div>
-
-          <!-- UNASSIGNED / REASSIGNABLE WORK ORDERS -->
-          <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-200 font-bold text-sm text-slate-900">Work Order Assignment Queue</div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-600 uppercase border-b border-slate-200">
-                  <tr>
-                    <th class="py-3 px-4">WO #</th>
-                    <th class="py-3 px-4">Vehicle & Service</th>
-                    <th class="py-3 px-4">Status</th>
-                    <th class="py-3 px-4">Assigned Tech</th>
-                    <th class="py-3 px-4 text-right">Assign / Reassign</th>
-                  </tr>
-                </thead>
-                <tbody id="dispatch-wo-table" class="divide-y divide-slate-100"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TAB 6: USERS & ROLES MANAGEMENT (ADMIN ONLY) -->
-      <section id="tab-users" class="tab-panel hidden mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- CREATE USER FORM -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm h-fit">
-          <h3 class="font-bold text-slate-900 text-sm mb-1">Create Staff User & Set Password</h3>
-          <p class="text-xs text-slate-500 mb-4">Assign Front Desk, Technician, or Admin credentials</p>
-          <form id="create-user-form" class="space-y-3 text-xs">
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Full Name</label>
-              <input type="text" id="new-user-fullname" required placeholder="e.g. Usman Khan"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Login Username</label>
-              <input type="text" id="new-user-username" required placeholder="e.g. usman"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Set Password</label>
-              <input type="text" id="new-user-password" required placeholder="e.g. pass123"
-                class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-            </div>
-            <div>
-              <label class="block font-semibold text-slate-700 mb-1">Role</label>
-              <select id="new-user-role" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
-                <option value="front_desk">Front Desk (Create Orders & Reserve Parts)</option>
-                <option value="technician">Technician (Collect Parts & Submit Returns)</option>
-                <option value="admin">Administrator (Full Access & Approvals)</option>
-              </select>
-            </div>
-            <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-lg transition">
-              Create User Account
-            </button>
-          </form>
-        </div>
-
-        <!-- STAFF LIST -->
-        <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div class="p-5 border-b border-slate-200">
-            <h3 class="font-bold text-slate-900 text-sm">Registered System Users</h3>
-            <p class="text-xs text-slate-500">Manage passwords, roles, and account access</p>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-50 text-slate-600 uppercase border-b border-slate-200">
-                <tr>
-                  <th class="py-3 px-4">Full Name</th>
-                  <th class="py-3 px-4">Username</th>
-                  <th class="py-3 px-4">Password</th>
-                  <th class="py-3 px-4">Role</th>
-                  <th class="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="users-table-body" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- MODAL 1: CREATE WORK ORDER (PROCESS 1 & 2) -->
-  <div id="wo-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-      <div class="p-5 bg-slate-900 text-white flex items-center justify-between">
-        <div>
-          <h3 class="font-bold text-base">Create Maintenance Work Order</h3>
-          <p class="text-xs text-slate-400">Auto-checks available stock and locks parts reservation</p>
-        </div>
-        <button type="button" onclick="closeModal('wo-modal')" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
       </div>
-      <form id="create-wo-form" class="p-5 space-y-4 overflow-y-auto text-xs">
-        <!-- SHORTAGE BLOCKING BANNER -->
-        <div id="wo-shortage-alert" class="hidden bg-red-50 border-l-4 border-red-600 p-3.5 rounded-r-lg text-red-800">
-          <div class="font-bold text-sm">⛔ Stock Shortage Blocking Triggered</div>
-          <p id="wo-shortage-msg" class="mt-1"></p>
+    </section>
+
+    <section id="products">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Core Products</div>
+          <h2>Custom Labels, Nameplates &amp; Accessories</h2>
+          <p>Custom-made for your product, packaging, or brand.</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Customer Name</label>
-            <input type="text" id="wo-customer" required placeholder="e.g. Bilal Ahmed" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Vehicle Plate & Model</label>
-            <input type="text" id="wo-vehicle" required placeholder="e.g. LEA-24-8812 (Honda Civic)" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Service Description</label>
-            <input type="text" id="wo-service" required placeholder="e.g. Full Brake & Oil Service" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Labor Charges (PKR)</label>
-            <input type="number" id="wo-labor" required value="2500" min="0" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
+        <div class="toolbar">
+          <div class="filters" id="categoryFilters"></div>
+          <input class="search-input" type="search" id="productSearch" placeholder="Search products..." aria-label="Search products" />
         </div>
 
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Assign Technician (Optional — Recommended Lowest Workload First)</label>
-          <select id="wo-tech-select" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
-            <option value="">-- Unassigned (Queue for Admin Dispatch) --</option>
+        <div class="product-grid" id="productGrid"></div>
+      </div>
+    </section>
+
+    <section class="soft-bg" id="advantages">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Our Advantages</div>
+          <h2>Thoughtful Customization, Careful Production</h2>
+          <p>
+            Product testing options described in the company profile include
+            fragrance compatibility, alcohol resistance, temperature cycling,
+            cross-hatch adhesion, peel strength, and abrasion resistance tests.
+          </p>
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <div class="number">01</div>
+            <h3>Made to Your Requirements</h3>
+            <p>Choose a metal material and share your design and product requirements.</p>
+          </article>
+          <article class="card">
+            <div class="number">02</div>
+            <h3>Multiple Production Processes</h3>
+            <p>Production equipment and processes support custom nameplate manufacturing.</p>
+          </article>
+          <article class="card">
+            <div class="number">03</div>
+            <h3>Product Testing Options</h3>
+            <p>Testing options include adhesion, peel strength, and abrasion resistance.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact" id="contact">
+      <div class="container">
+        <div class="section-heading">
+          <div class="eyebrow">Contact Us</div>
+          <h2>Let’s Create Something Made for You</h2>
+          <p>Contact Kate to discuss your materials, design, and customization requirements.</p>
+        </div>
+        <div class="contact-grid">
+          <div class="contact-card"><h3>Contact Person</h3><p>Kate</p></div>
+          <div class="contact-card"><h3>WhatsApp</h3><p><a href="https://wa.me/8619022443132" target="_blank" rel="noopener">+86 19022443132</a></p></div>
+          <div class="contact-card">
+            <h3>WeChat</h3>
+            <p>
+              <span id="wechatId">19022443132</span>
+              <button class="copy-wechat" type="button" id="copyWechatBtn">Copy ID</button>
+            </p>
+          </div>
+          <div class="contact-card">
+            <h3>Address</h3>
+            <p>Building 3, No. 8 Hegui Middle Road, Hegui Industrial Park, Heshun, Lishui Town, Nanhai District, Foshan City, Guangdong, China</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-row">
+      <span>© <span id="year"></span> MingTu Nameplate (Foshan) Technology Co., Ltd.</span>
+      <span>Custom Metal Nameplates &amp; Labels</span>
+    </div>
+  </footer>
+
+  <!-- Modal 1: Add Product & Generate GitHub Snippet -->
+  <div class="modal-backdrop" id="addModal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Add Product / Upload Picture</h3>
+        <button class="close-btn" type="button" id="closeAddModalBtn">✕</button>
+      </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:0;">
+        Upload a photo to preview it on this page, then upload the same file to your GitHub <code>images/</code> folder and paste the generated code into <code>PRODUCTS_DATA</code>.
+      </p>
+      <form id="addProductForm">
+        <div class="field">
+          <label for="pName">Product Name *</label>
+          <input id="pName" type="text" required placeholder="e.g., Gold Perfume Bottle Label" />
+        </div>
+        <div class="field">
+          <label for="pCategory">Category *</label>
+          <select id="pCategory">
+            <option value="Perfume">Perfume</option>
+            <option value="Tags & Badges">Tags &amp; Badges</option>
+            <option value="Etched & Laser">Etched &amp; Laser</option>
+            <option value="Gifts & Electronics">Gifts &amp; Electronics</option>
           </select>
         </div>
-
-        <!-- PARTS SELECTION -->
-        <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-slate-800">Select Spare Parts to Reserve</span>
-            <button type="button" id="btn-add-part-row" class="text-xs font-semibold text-amber-700 hover:underline">+ Add Part Line</button>
-          </div>
-          <div id="wo-parts-rows" class="space-y-2"></div>
+        <div class="field">
+          <label for="pMaterial">Material</label>
+          <input id="pMaterial" type="text" value="Zinc Alloy / Aluminum" />
         </div>
-
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <button type="button" onclick="closeModal('wo-modal')" class="px-4 py-2 rounded-lg border border-slate-300 font-semibold text-slate-600">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold">Validate Stock & Reserve Order</button>
+        <div class="field">
+          <label for="pFile">Select Image File (Browser Preview)</label>
+          <input id="pFile" type="file" accept="image/*" />
         </div>
+        <div class="field">
+          <label for="pPath">GitHub Image Path (inside <code>images/</code>)</label>
+          <input id="pPath" type="text" placeholder="images/perfume-gold.jpg" />
+        </div>
+        <div class="field">
+          <label for="pDesc">Description</label>
+          <textarea id="pDesc" rows="2" placeholder="Custom finish, size, or packaging details..."></textarea>
+        </div>
+        <button class="button" type="submit">Preview on Page &amp; Generate Code</button>
       </form>
-    </div>
-  </div>
-
-  <!-- MODAL 2: ADD SPARE PART -->
-  <div id="part-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-      <div class="p-5 bg-slate-900 text-white flex items-center justify-between">
-        <h3 class="font-bold text-base">Add Spare Part to Inventory</h3>
-        <button type="button" onclick="closeModal('part-modal')" class="text-slate-400 hover:text-white font-bold">✕</button>
+      <div id="snippetBox" style="display:none; margin-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="font-size:13px;">Copy into <code>PRODUCTS_DATA</code>（中文：复制到代码中保存）：</strong>
+          <button class="button light sm" type="button" id="copySnippetBtn">Copy Code</button>
+        </div>
+        <pre class="code-out" id="snippetCode"></pre>
       </div>
-      <form id="add-part-form" class="p-5 space-y-3 text-xs">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">SKU Code</label>
-            <input type="text" id="part-sku" required placeholder="e.g. BRK-104" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Category</label>
-            <select id="part-cat" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white">
-              <option>Brakes</option>
-              <option>Engine & Filters</option>
-              <option>Lubricants</option>
-              <option>Suspension</option>
-              <option>Electrical</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Part Name</label>
-          <input type="text" id="part-name" required placeholder="e.g. Ceramic Front Brake Pads" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-        </div>
-        <div class="grid grid-cols-3 gap-3">
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Unit Price (PKR)</label>
-            <input type="number" id="part-price" required min="1" value="3500" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Initial Stock</label>
-            <input type="number" id="part-stock" required min="0" value="15" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
-          <div>
-            <label class="block font-semibold text-slate-700 mb-1">Min Threshold</label>
-            <input type="number" id="part-threshold" required min="1" value="5" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-          </div>
-        </div>
-        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closeModal('part-modal')" class="px-4 py-2 rounded-lg border border-slate-300 font-semibold">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold">Save Part</button>
-        </div>
-      </form>
     </div>
   </div>
 
-  <!-- MODAL 3: SURPLUS RETURN REQUEST (PROCESS 4) -->
-  <div id="return-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-      <div class="p-5 bg-slate-900 text-white flex items-center justify-between">
-        <h3 class="font-bold text-base">Submit Surplus Part Return</h3>
-        <button type="button" onclick="closeModal('return-modal')" class="text-slate-400 hover:text-white font-bold">✕</button>
+  <!-- Modal 2: Product Detail & Image Zoom Lightbox -->
+  <div class="modal-backdrop" id="viewModal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="viewTitle">Product Details</h3>
+        <button class="close-btn" type="button" id="closeViewModalBtn">✕</button>
       </div>
-      <form id="submit-return-form" class="p-5 space-y-3 text-xs">
-        <input type="hidden" id="ret-wo-id" />
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Select Issued Part to Return</label>
-          <select id="ret-part-select" required class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white"></select>
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Surplus Quantity</label>
-          <input type="number" id="ret-qty" required min="1" value="1" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-        </div>
-        <div>
-          <label class="block font-semibold text-slate-700 mb-1">Reason / Condition</label>
-          <input type="text" id="ret-reason" required placeholder="e.g. Unopened box, not needed after inspection" class="w-full px-3 py-2 rounded-lg border border-slate-300" />
-        </div>
-        <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
-          <button type="button" onclick="closeModal('return-modal')" class="px-4 py-2 rounded-lg border border-slate-300 font-semibold">Cancel</button>
-          <button type="submit" class="px-5 py-2 rounded-lg bg-slate-900 text-white font-semibold">Submit for Admin Approval</button>
-        </div>
-      </form>
+      <div id="viewMedia"></div>
+      <p style="font-size:12px; font-weight:800; color:var(--pink-dark); text-transform:uppercase; margin:0 0 6px;" id="viewMeta"></p>
+      <p style="font-size:14px; color:var(--muted); margin:0 0 16px;" id="viewDesc"></p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="button" id="viewWaBtn" href="#" target="_blank" rel="noopener">Inquire on WhatsApp</a>
+        <button class="button light" type="button" id="closeViewModalBtn2">Close</button>
+      </div>
     </div>
   </div>
 
-  <!-- PRINTABLE INVOICE CONTAINER -->
-  <div id="printable-invoice" class="hidden"></div>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
 
-  <!-- FIREBASE SDK & APPLICATION LOGIC -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import {
-      getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc,
-      onSnapshot, getDocs, query, orderBy, serverTimestamp, increment
-    } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    // =========================================================================
+    // 中文产品管理说明（在 GitHub 上添加新产品和图片）
+    // 1. 将产品图片放入 GitHub 仓库的 "images" 文件夹中（例如：images/perfume-label.jpg）。
+    // 2. 在下方 PRODUCTS_DATA 数组中修改对应产品的 "image" 字段路径。
+    // 3. 如需添加新产品，复制下面任意一个 { ... } 对象粘贴到数组中，修改内容后提交 (Commit) 即可。
+    // =========================================================================
+    const PRODUCTS_DATA = [
+      {
+        name: "Metal labels and nameplates",
+        category: "Etched & Laser",
+        material: "Aluminum / Stainless Steel",
+        image: "images/metal-nameplate.jpg",
+        desc: "Custom branded metal nameplates tailored for packaging and equipment."
+      },
+      {
+        name: "Perfume bottle labels",
+        category: "Perfume",
+        material: "Zinc Alloy / Nickel",
+        image: "images/perfume-bottle-label.jpg",
+        desc: "Precision metallic labels crafted to adhere cleanly to glass perfume bottles."
+      },
+      {
+        name: "Perfume box emblems",
+        category: "Perfume",
+        material: "Zinc Alloy / Aluminum",
+        image: "images/perfume-box-emblem.jpg",
+        desc: "Decorative emblems that elevate luxury fragrance outer boxes."
+      },
+      {
+        name: "Printed embossed and debossed labels",
+        category: "Etched & Laser",
+        material: "Aluminum / Brass",
+        image: "images/embossed-label.jpg",
+        desc: "Tactile raised and recessed designs with crisp printing finishes."
+      },
+      {
+        name: "Zinc alloy hang tags",
+        category: "Tags & Badges",
+        material: "Zinc Alloy",
+        image: "images/zinc-hang-tag.jpg",
+        desc: "Durable custom hang tags for apparel, bags, and specialty goods."
+      },
+      {
+        name: "Metal badges and fridge magnets",
+        category: "Tags & Badges",
+        material: "Zinc Alloy / Iron",
+        image: "images/badge-magnet.jpg",
+        desc: "Custom badges and promotional fridge magnets in bespoke shapes."
+      },
+      {
+        name: "Stainless steel and brass etched labels",
+        category: "Etched & Laser",
+        material: "Stainless Steel / Brass",
+        image: "images/etched-label.jpg",
+        desc: "Fine chemical etching for sharp logos, markings, and serial details."
+      },
+      {
+        name: "Nickel labels and laser labels",
+        category: "Etched & Laser",
+        material: "Nickel",
+        image: "images/nickel-laser-label.jpg",
+        desc: "Sleek nickel and laser-finished labels with clean metallic luster."
+      },
+      {
+        name: "Metal labels for electronics",
+        category: "Gifts & Electronics",
+        material: "Aluminum / Nickel",
+        image: "images/electronics-label.jpg",
+        desc: "Compact metal branding plates for audio, tech, and electronic devices."
+      },
+      {
+        name: "Custom metal gifts and accessories",
+        category: "Gifts & Electronics",
+        material: "Multi-Metal",
+        image: "images/custom-metal-gift.jpg",
+        desc: "Cultural and creative metal gifts and accessories made to order."
+      }
+    ];
 
-    // YOUR INTEGRATED FIREBASE CONFIGURATION (mnp-29c95)
-    const firebaseConfig = {
-      apiKey: "AIzaSyCy6ytqB1uQD8mlJjrmH9gHCuZh9hHDDaQ",
-      authDomain: "mnp-29c95.firebaseapp.com",
-      projectId: "mnp-29c95",
-      storageBucket: "mnp-29c95.firebasestorage.app",
-      messagingSenderId: "314074925404",
-      appId: "1:314074925404:web:96437e04401b4b7c905999",
-      measurementId: "G-KKHKY68B3Q"
-    };
+    let activeCategory = "All";
+    let uploadedDataUrl = "";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const productGrid = document.getElementById("productGrid");
+    const categoryFilters = document.getElementById("categoryFilters");
+    const productSearch = document.getElementById("productSearch");
 
-    // GLOBAL STATE
-    let currentUser = null;
-    let state = {
-      users: [],
-      inventory: [],
-      workOrders: [],
-      returns: [],
-      logs: [],
-      woFilter: "ALL"
-    };
+    function getCategories() {
+      return ["All", ...new Set(PRODUCTS_DATA.map((p) => p.category))];
+    }
 
-    // INITIALIZE DEFAULT SINGLE ADMIN ("faraz" / "12345") & INITIAL SAMPLE INVENTORY IF EMPTY
-    async function bootstrapDatabase() {
-      const badge = document.getElementById("db-connection-badge");
+    function renderFilters() {
+      categoryFilters.innerHTML = getCategories()
+        .map(
+          (cat) =>
+            `<button class="filter-btn ${cat === activeCategory ? "active" : ""}" type="button" data-cat="${cat}">${cat}</button>`
+        )
+        .join("");
+    }
+
+    function renderProducts() {
+      const q = productSearch.value.trim().toLowerCase();
+      const filtered = PRODUCTS_DATA.filter((item) => {
+        const matchesCat = activeCategory === "All" || item.category === activeCategory;
+        const matchesQuery =
+          !q ||
+          item.name.toLowerCase().includes(q) ||
+          item.material.toLowerCase().includes(q) ||
+          item.desc.toLowerCase().includes(q);
+        return matchesCat && matchesQuery;
+      });
+
+      if (!filtered.length) {
+        productGrid.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:var(--muted);">No matching products found.</p>`;
+        return;
+      }
+
+      productGrid.innerHTML = filtered
+        .map((item) => {
+          const idx = PRODUCTS_DATA.indexOf(item);
+          const waText = encodeURIComponent(
+            `Hello Kate, I'm interested in: ${item.name} (${item.material}).`
+          );
+          const hasImg = Boolean(item.image && item.image.trim());
+          return `
+            <article class="product-card">
+              <div class="product-thumb" data-index="${idx}" title="Click to preview">
+                ${
+                  hasImg
+                    ? `<img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                       <div class="placeholder-plaque" style="display:none;">MINGTU<br><small style="font-size:9px;letter-spacing:.12em;">${item.image}</small></div>`
+                    : `<div class="placeholder-plaque">MINGTU<br><small style="font-size:9px;letter-spacing:.12em;">ADD IMAGE PATH</small></div>`
+                }
+                <span class="zoom-badge">Preview</span>
+              </div>
+              <div class="product-body">
+                <div>
+                  <div class="product-meta">${item.category}</div>
+                  <h3 class="product-title">${item.name}</h3>
+                  <p class="product-desc">${item.desc}</p>
+                </div>
+                <div class="product-foot">
+                  <span>${item.material}</span>
+                  <a class="button sm" href="https://wa.me/8619022443132?text=${waText}" target="_blank" rel="noopener">Inquire</a>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    categoryFilters.addEventListener("click", (e) => {
+      const btn = e.target.closest(".filter-btn");
+      if (!btn) return;
+      activeCategory = btn.dataset.cat;
+      renderFilters();
+      renderProducts();
+    });
+
+    productSearch.addEventListener("input", renderProducts);
+
+    // Interactive Material Selector
+    const heroLabelSub = document.getElementById("heroLabelSub");
+    const materialNote = document.getElementById("materialNote");
+    document.getElementById("materialButtons").addEventListener("click", (e) => {
+      const btn = e.target.closest(".mat-btn");
+      if (!btn) return;
+      document.querySelectorAll(".mat-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      heroLabelSub.textContent = btn.dataset.mat.toUpperCase();
+      materialNote.textContent = btn.dataset.note;
+    });
+
+    // Copy WeChat ID
+    const copyWechatBtn = document.getElementById("copyWechatBtn");
+    copyWechatBtn.addEventListener("click", async () => {
+      const id = document.getElementById("wechatId").textContent.trim();
       try {
-        const usersSnap = await getDocs(collection(db, "kate_users"));
-        if (usersSnap.empty) {
-          await setDoc(doc(db, "kate_users", "faraz"), {
-            username: "faraz",
-            password: "12345",
-            fullName: "Faraz (Administrator)",
-            role: "admin",
-            createdAt: Date.now()
-          });
-        }
-
-        const invSnap = await getDocs(collection(db, "kate_inventory"));
-        if (invSnap.empty) {
-          const starterParts = [
-            { sku: "OIL-5W30", name: "Synthetic Engine Oil 5W-30 (4L)", category: "Lubricants", price: 6800, physicalStock: 18, reservedQty: 0, threshold: 6 },
-            { sku: "FLT-102", name: "OEM Spin-On Oil Filter", category: "Engine & Filters", price: 1450, physicalStock: 24, reservedQty: 0, threshold: 8 },
-            { sku: "BRK-209", name: "Ceramic Front Brake Pad Set", category: "Brakes", price: 5400, physicalStock: 4, reservedQty: 0, threshold: 5 },
-            { sku: "SPK-404", name: "Iridium Spark Plug (Set of 4)", category: "Electrical", price: 4800, physicalStock: 10, reservedQty: 0, threshold: 4 },
-            { sku: "AIR-310", name: "High-Flow Cabin & Engine Air Filter", category: "Engine & Filters", price: 2200, physicalStock: 3, reservedQty: 0, threshold: 5 }
-          ];
-          for (const p of starterParts) {
-            await setDoc(doc(db, "kate_inventory", p.sku), p);
-          }
-        }
-
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Connected to Firebase (mnp-29c95)`;
-      } catch (err) {
-        console.error("Firebase init error:", err);
-        badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500"></span> Check Firestore Rules (mnp-29c95)`;
+        await navigator.clipboard.writeText(id);
+        copyWechatBtn.textContent = "Copied!";
+        setTimeout(() => (copyWechatBtn.textContent = "Copy ID"), 1800);
+      } catch {
+        copyWechatBtn.textContent = id;
       }
-    }
-
-    // REAL-TIME FIRESTORE LISTENERS
-    function startListeners() {
-      onSnapshot(collection(db, "kate_users"), (snap) => {
-        state.users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderUsers();
-        renderDispatch();
-      });
-
-      onSnapshot(collection(db, "kate_inventory"), (snap) => {
-        state.inventory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderInventory();
-        renderDashboard();
-      });
-
-      onSnapshot(collection(db, "kate_workorders"), (snap) => {
-        state.workOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        renderWorkOrders();
-        renderDashboard();
-        renderDispatch();
-      });
-
-      onSnapshot(collection(db, "kate_returns"), (snap) => {
-        state.returns = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        renderReturns();
-        renderDashboard();
-      });
-
-      onSnapshot(collection(db, "kate_logs"), (snap) => {
-        state.logs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        renderDashboard();
-      });
-    }
-
-    // HELPER: LOG SYSTEM EVENT
-    async function logEvent(type, message, sku = null, qty = 0) {
-      await addDoc(collection(db, "kate_logs"), {
-        type,
-        message,
-        sku,
-        qty,
-        actor: currentUser ? currentUser.username : "system",
-        timestamp: Date.now()
-      });
-    }
-
-    // LOGIN HANDLER
-    document.getElementById("login-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const uname = document.getElementById("login-username").value.trim().toLowerCase();
-      const pass = document.getElementById("login-password").value;
-      const errBox = document.getElementById("login-error");
-
-      // Match against loaded Firestore users or built-in fallback for faraz/12345
-      let matched = state.users.find(u => u.username.toLowerCase() === uname && u.password === pass);
-      if (!matched && uname === "faraz" && pass === "12345") {
-        matched = { id: "faraz", username: "faraz", fullName: "Faraz (Administrator)", role: "admin" };
-      }
-
-      if (!matched) {
-        errBox.textContent = "Invalid username or password. Default admin is faraz / 12345.";
-        errBox.classList.remove("hidden");
-        return;
-      }
-
-      errBox.classList.add("hidden");
-      currentUser = matched;
-      applyRoleUI();
-      document.getElementById("login-screen").classList.add("hidden");
-      document.getElementById("app-shell").classList.remove("hidden");
     });
 
-    document.getElementById("logout-btn").addEventListener("click", () => {
-      currentUser = null;
-      document.getElementById("app-shell").classList.add("hidden");
-      document.getElementById("login-screen").classList.remove("hidden");
-      document.getElementById("login-password").value = "";
-    });
+    // Lightbox Preview Modal
+    const viewModal = document.getElementById("viewModal");
+    productGrid.addEventListener("click", (e) => {
+      const thumb = e.target.closest(".product-thumb");
+      if (!thumb) return;
+      const item = PRODUCTS_DATA[Number(thumb.dataset.index)];
+      if (!item) return;
 
-    // ROLE-BASED ACCESS UI ENFORCEMENT
-    function applyRoleUI() {
-      document.getElementById("sidebar-user-name").textContent = currentUser.fullName;
-      document.getElementById("sidebar-user-role").textContent = currentUser.role.replace("_", " ").toUpperCase();
-      document.getElementById("sidebar-username-tag").textContent = "@" + currentUser.username;
+      document.getElementById("viewTitle").textContent = item.name;
+      document.getElementById("viewMeta").textContent = `${item.category} • ${item.material}`;
+      document.getElementById("viewDesc").textContent = item.desc;
+      const waText = encodeURIComponent(`Hello Kate, I'd like a quote for: ${item.name} (${item.material}).`);
+      document.getElementById("viewWaBtn").href = `https://wa.me/8619022443132?text=${waText}`;
 
-      document.querySelectorAll(".admin-only").forEach(el => {
-        el.style.display = currentUser.role === "admin" ? "" : "none";
-      });
-      document.querySelectorAll(".frontdesk-or-admin").forEach(el => {
-        el.style.display = (currentUser.role === "admin" || currentUser.role === "front_desk") ? "" : "none";
-      });
-    }
-
-    // NAVIGATION TABS
-    document.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const target = btn.dataset.tab;
-        document.querySelectorAll(".nav-btn").forEach(b => {
-          b.classList.remove("bg-slate-800", "text-white");
-          b.classList.add("text-slate-300");
-        });
-        btn.classList.add("bg-slate-800", "text-white");
-        btn.classList.remove("text-slate-300");
-
-        document.querySelectorAll(".tab-panel").forEach(p => p.classList.add("hidden"));
-        document.getElementById("tab-" + target).classList.remove("hidden");
-      });
-    });
-
-    // MODAL HELPERS
-    window.closeModal = (id) => document.getElementById(id).classList.add("hidden");
-
-    document.getElementById("btn-open-part-modal").addEventListener("click", () => {
-      document.getElementById("part-modal").classList.remove("hidden");
-    });
-
-    document.getElementById("btn-open-wo-modal").addEventListener("click", () => {
-      document.getElementById("wo-shortage-alert").classList.add("hidden");
-      document.getElementById("wo-parts-rows").innerHTML = "";
-      populateTechDropdown();
-      addWorkOrderPartRow();
-      document.getElementById("wo-modal").classList.remove("hidden");
-    });
-
-    // POPULATE TECH DROPDOWN SORTED BY LOWEST WORKLOAD (PROCESS 5)
-    function populateTechDropdown() {
-      const select = document.getElementById("wo-tech-select");
-      const techs = state.users.filter(u => u.role === "technician").map(t => {
-        const activeCount = state.workOrders.filter(w => w.assignedTech === t.username && w.status !== "Completed").length;
-        return { ...t, activeCount };
-      }).sort((a, b) => a.activeCount - b.activeCount);
-
-      select.innerHTML = `<option value="">-- Unassigned (Queue for Admin Dispatch) --</option>` +
-        techs.map((t, i) => `<option value="${t.username}">${t.fullName} (@${t.username}) — ${t.activeCount} active jobs ${i === 0 ? "★ Recommended" : ""}</option>`).join("");
-    }
-
-    // ADD PART LINE IN WORK ORDER MODAL
-    function addWorkOrderPartRow() {
-      const container = document.getElementById("wo-parts-rows");
-      const row = document.createElement("div");
-      row.className = "grid grid-cols-12 gap-2 items-center wo-part-line";
-      const options = state.inventory.map(p => {
-        const avail = (p.physicalStock || 0) - (p.reservedQty || 0);
-        return `<option value="${p.sku}">${p.sku} — ${p.name} (Avail: ${avail} | PKR ${p.price})</option>`;
-      }).join("");
-
-      row.innerHTML = `
-        <select class="col-span-8 px-2.5 py-2 rounded-lg border border-slate-300 bg-white part-sku-select">${options}</select>
-        <input type="number" min="1" value="1" class="col-span-3 px-2.5 py-2 rounded-lg border border-slate-300 part-qty-input" />
-        <button type="button" class="col-span-1 text-red-500 font-bold hover:text-red-700 remove-line">✕</button>
-      `;
-      row.querySelector(".remove-line").addEventListener("click", () => row.remove());
-      container.appendChild(row);
-    }
-    document.getElementById("btn-add-part-row").addEventListener("click", addWorkOrderPartRow);
-
-    // PROCESS 1 & 2: CREATE WORK ORDER WITH RESERVATION & SHORTAGE BLOCKING
-    document.getElementById("create-wo-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const alertBox = document.getElementById("wo-shortage-alert");
-      const alertMsg = document.getElementById("wo-shortage-msg");
-      alertBox.classList.add("hidden");
-
-      const lines = [...document.querySelectorAll(".wo-part-line")];
-      const requestedMap = {};
-      for (const line of lines) {
-        const sku = line.querySelector(".part-sku-select").value;
-        const qty = parseInt(line.querySelector(".part-qty-input").value, 10) || 0;
-        if (qty > 0) requestedMap[sku] = (requestedMap[sku] || 0) + qty;
-      }
-
-      // VALIDATE STOCK AVAILABILITY (PROCESS 2: STOCK SHORTAGE BLOCKING)
-      const selectedParts = [];
-      for (const [sku, qty] of Object.entries(requestedMap)) {
-        const item = state.inventory.find(p => p.sku === sku);
-        if (!item) continue;
-        const available = (item.physicalStock || 0) - (item.reservedQty || 0);
-        if (qty > available) {
-          alertMsg.textContent = `Insufficient stock for "${item.name}" (${sku}). Requested: ${qty}, Available: ${available} (Physical: ${item.physicalStock}, Reserved: ${item.reservedQty}). Administrator has been notified to restock.`;
-          alertBox.classList.remove("hidden");
-          await logEvent("SHORTAGE_BLOCKED", `Blocked WO creation: ${item.name} (${sku}) requested ${qty}, only ${available} available. Admin restock reminder sent.`, sku, qty);
-          return;
-        }
-        selectedParts.push({
-          sku: item.sku,
-          name: item.name,
-          unitPrice: item.price,
-          qty: qty
-        });
-      }
-
-      // RESERVE STOCK IN FIRESTORE (PROCESS 1)
-      for (const sp of selectedParts) {
-        await updateDoc(doc(db, "kate_inventory", sp.sku), {
-          reservedQty: increment(sp.qty)
-        });
-      }
-
-      const labor = parseFloat(document.getElementById("wo-labor").value) || 0;
-      const partsTotal = selectedParts.reduce((sum, p) => sum + p.unitPrice * p.qty, 0);
-      const woNumber = "WO-" + Math.floor(1000 + Math.random() * 9000);
-
-      await addDoc(collection(db, "kate_workorders"), {
-        woNumber,
-        customer: document.getElementById("wo-customer").value.trim(),
-        vehicle: document.getElementById("wo-vehicle").value.trim(),
-        service: document.getElementById("wo-service").value.trim(),
-        assignedTech: document.getElementById("wo-tech-select").value || "",
-        status: "Reserved",
-        parts: selectedParts,
-        laborCost: labor,
-        totalCost: labor + partsTotal,
-        createdBy: currentUser.username,
-        createdAt: Date.now()
-      });
-
-      await logEvent("RESERVATION", `Work Order ${woNumber} created and ${selectedParts.length} part line(s) reserved.`);
-      closeModal("wo-modal");
-      e.target.reset();
-    });
-
-    // PROCESS 3: ISSUE PARTS & DEDUCT PHYSICAL STOCK
-    window.confirmPartsIssue = async (woId) => {
-      const wo = state.workOrders.find(w => w.id === woId);
-      if (!wo || wo.status !== "Reserved") return;
-
-      for (const p of (wo.parts || [])) {
-        await updateDoc(doc(db, "kate_inventory", p.sku), {
-          physicalStock: increment(-p.qty),
-          reservedQty: increment(-p.qty)
-        });
-        await logEvent("STOCK_OUT", `Issued ${p.qty}x ${p.name} (${p.sku}) to ${wo.woNumber}`, p.sku, p.qty);
-      }
-
-      await updateDoc(doc(db, "kate_workorders", woId), {
-        status: "In Progress",
-        issuedAt: Date.now(),
-        issuedBy: currentUser.username
-      });
-    };
-
-    window.completeWorkOrder = async (woId) => {
-      await updateDoc(doc(db, "kate_workorders", woId), {
-        status: "Completed",
-        completedAt: Date.now()
-      });
-    };
-
-    // PROCESS 4: OPEN SURPLUS RETURN MODAL & SUBMIT REQUEST
-    window.openReturnModal = (woId) => {
-      const wo = state.workOrders.find(w => w.id === woId);
-      if (!wo) return;
-      document.getElementById("ret-wo-id").value = woId;
-      const sel = document.getElementById("ret-part-select");
-      sel.innerHTML = (wo.parts || []).filter(p => p.qty > 0).map(p =>
-        `<option value="${p.sku}">${p.name} (${p.sku}) — Issued Qty: ${p.qty}</option>`
-      ).join("");
-      document.getElementById("return-modal").classList.remove("hidden");
-    };
-
-    document.getElementById("submit-return-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const woId = document.getElementById("ret-wo-id").value;
-      const sku = document.getElementById("ret-part-select").value;
-      const qty = parseInt(document.getElementById("ret-qty").value, 10) || 1;
-      const reason = document.getElementById("ret-reason").value.trim();
-
-      const wo = state.workOrders.find(w => w.id === woId);
-      const partLine = (wo.parts || []).find(p => p.sku === sku);
-      if (!partLine || qty > partLine.qty) {
-        alert("Return quantity cannot exceed issued quantity (" + (partLine ? partLine.qty : 0) + ").");
-        return;
-      }
-
-      await addDoc(collection(db, "kate_returns"), {
-        returnCode: "RET-" + Math.floor(100 + Math.random() * 900),
-        woId: wo.id,
-        woNumber: wo.woNumber,
-        sku: partLine.sku,
-        partName: partLine.name,
-        unitPrice: partLine.unitPrice,
-        qty,
-        creditAmount: partLine.unitPrice * qty,
-        reason,
-        requestedBy: currentUser.username,
-        status: "Pending",
-        createdAt: Date.now()
-      });
-
-      await logEvent("RETURN_REQUEST", `Surplus return requested for ${qty}x ${partLine.sku} on ${wo.woNumber}`, sku, qty);
-      closeModal("return-modal");
-      e.target.reset();
-    });
-
-    // PROCESS 4B: ADMIN APPROVES SURPLUS RETURN -> RESTORES STOCK & RECALCULATES WO COST
-    window.approveSurplusReturn = async (retId) => {
-      if (currentUser.role !== "admin") return;
-      const ret = state.returns.find(r => r.id === retId);
-      if (!ret || ret.status !== "Pending") return;
-
-      // 1. Restore physical inventory
-      await updateDoc(doc(db, "kate_inventory", ret.sku), {
-        physicalStock: increment(ret.qty)
-      });
-
-      // 2. Update Work Order part qty & total cost
-      const wo = state.workOrders.find(w => w.id === ret.woId);
-      if (wo) {
-        const updatedParts = (wo.parts || []).map(p => {
-          if (p.sku === ret.sku) {
-            return { ...p, qty: Math.max(0, p.qty - ret.qty) };
-          }
-          return p;
-        });
-        const newPartsTotal = updatedParts.reduce((s, p) => s + p.unitPrice * p.qty, 0);
-        await updateDoc(doc(db, "kate_workorders", wo.id), {
-          parts: updatedParts,
-          totalCost: (wo.laborCost || 0) + newPartsTotal
-        });
-      }
-
-      // 3. Mark return approved
-      await updateDoc(doc(db, "kate_returns", retId), {
-        status: "Approved",
-        approvedBy: currentUser.username,
-        approvedAt: Date.now()
-      });
-
-      await logEvent("RETURN_APPROVED", `Approved surplus return ${ret.returnCode}: +${ret.qty} ${ret.sku} restored & ${ret.woNumber} invoice reduced by PKR ${ret.creditAmount.toLocaleString()}.`, ret.sku, ret.qty);
-    };
-
-    // ADD / RESTOCK SPARE PART
-    document.getElementById("add-part-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const sku = document.getElementById("part-sku").value.trim().toUpperCase();
-      await setDoc(doc(db, "kate_inventory", sku), {
-        sku,
-        name: document.getElementById("part-name").value.trim(),
-        category: document.getElementById("part-cat").value,
-        price: parseFloat(document.getElementById("part-price").value) || 0,
-        physicalStock: parseInt(document.getElementById("part-stock").value, 10) || 0,
-        reservedQty: 0,
-        threshold: parseInt(document.getElementById("part-threshold").value, 10) || 5
-      });
-      await logEvent("PART_ADDED", `Added spare part ${sku} to inventory.`);
-      closeModal("part-modal");
-      e.target.reset();
-    });
-
-    window.restockPart = async (sku, addQty) => {
-      const qty = parseInt(addQty, 10) || 10;
-      await updateDoc(doc(db, "kate_inventory", sku), {
-        physicalStock: increment(qty)
-      });
-      await logEvent("PO_RESTOCK", `Replenished +${qty} units for SKU ${sku}.`, sku, qty);
-    };
-
-    // PROCESS 5: ASSIGN TECHNICIAN
-    window.assignTechnician = async (woId, techUsername) => {
-      await updateDoc(doc(db, "kate_workorders", woId), {
-        assignedTech: techUsername
-      });
-      await logEvent("DISPATCH", `Assigned Work Order to technician @${techUsername || "unassigned"}.`);
-    };
-
-    // USER MANAGEMENT (ADMIN CREATES STAFF & PASSWORDS)
-    document.getElementById("create-user-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (currentUser.role !== "admin") return;
-      const username = document.getElementById("new-user-username").value.trim().toLowerCase().replace(/\s+/g, "");
-      const fullName = document.getElementById("new-user-fullname").value.trim();
-      const password = document.getElementById("new-user-password").value.trim();
-      const role = document.getElementById("new-user-role").value;
-
-      await setDoc(doc(db, "kate_users", username), {
-        username,
-        fullName,
-        password,
-        role,
-        createdAt: Date.now()
-      });
-      await logEvent("USER_CREATED", `Created ${role} account for ${fullName} (@${username}).`);
-      e.target.reset();
-    });
-
-    window.deleteUserAccount = async (username) => {
-      if (username === "faraz") {
-        alert("Primary administrator account (faraz) cannot be deleted.");
-        return;
-      }
-      await deleteDoc(doc(db, "kate_users", username));
-    };
-
-    // PRINT CUSTOMER INVOICE
-    window.printInvoice = (woId) => {
-      const wo = state.workOrders.find(w => w.id === woId);
-      if (!wo) return;
-      const el = document.getElementById("printable-invoice");
-      el.classList.remove("hidden");
-      el.innerHTML = `
-        <div style="max-width:700px;margin:auto;font-family:sans-serif;color:#111;">
-          <div style="display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:12px;">
-            <div>
-              <h1 style="margin:0;font-size:22px;">KATE INVENTORY SOFTWARE</h1>
-              <p style="margin:2px 0;font-size:12px;color:#555;">Auto Repair & Maintenance Service Invoice</p>
-            </div>
-            <div style="text-align:right;font-size:12px;">
-              <strong>${wo.woNumber}</strong><br/>
-              Status: ${wo.status}<br/>
-              Date: ${new Date(wo.createdAt).toLocaleDateString()}
-            </div>
-          </div>
-          <div style="margin:16px 0;font-size:13px;">
-            <strong>Customer:</strong> ${wo.customer} &nbsp;|&nbsp; <strong>Vehicle:</strong> ${wo.vehicle}<br/>
-            <strong>Service:</strong> ${wo.service} &nbsp;|&nbsp; <strong>Technician:</strong> ${wo.assignedTech || "Assigned Bay"}
-          </div>
-          <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:12px;">
-            <thead>
-              <tr style="background:#f1f5f9;border-bottom:1px solid #cbd5e1;">
-                <th style="padding:8px;text-align:left;">Item / Spare Part</th>
-                <th style="padding:8px;text-align:center;">Qty</th>
-                <th style="padding:8px;text-align:right;">Unit Price</th>
-                <th style="padding:8px;text-align:right;">Amount (PKR)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(wo.parts || []).map(p => `
-                <tr style="border-bottom:1px solid #e2e8f0;">
-                  <td style="padding:8px;">${p.name} (${p.sku})</td>
-                  <td style="padding:8px;text-align:center;">${p.qty}</td>
-                  <td style="padding:8px;text-align:right;">${p.unitPrice.toLocaleString()}</td>
-                  <td style="padding:8px;text-align:right;">${(p.unitPrice * p.qty).toLocaleString()}</td>
-                </tr>
-              `).join("")}
-              <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:8px;">Workshop Labor & Diagnostics</td>
-                <td style="padding:8px;text-align:center;">1</td>
-                <td style="padding:8px;text-align:right;">${(wo.laborCost || 0).toLocaleString()}</td>
-                <td style="padding:8px;text-align:right;">${(wo.laborCost || 0).toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div style="text-align:right;margin-top:16px;font-size:16px;">
-            <strong>Total Payable: PKR ${(wo.totalCost || 0).toLocaleString()}</strong>
-          </div>
-        </div>
-      `;
-      window.print();
-      el.classList.add("hidden");
-    };
-
-    // RENDER FUNCTIONS
-    function renderDashboard() {
-      const activeWOs = state.workOrders.filter(w => w.status !== "Completed").length;
-      const reservedUnits = state.inventory.reduce((s, p) => s + (p.reservedQty || 0), 0);
-      const pendingReturns = state.returns.filter(r => r.status === "Pending").length;
-
-      // Low stock items & 7-day consumption calculation (Process #6)
-      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-      const lowStockItems = state.inventory.filter(p => ((p.physicalStock || 0) - (p.reservedQty || 0)) <= (p.threshold || 5));
-
-      document.getElementById("kpi-active-wo").textContent = activeWOs;
-      document.getElementById("kpi-reserved-units").textContent = reservedUnits;
-      document.getElementById("kpi-low-stock").textContent = lowStockItems.length;
-      document.getElementById("kpi-pending-returns").textContent = pendingReturns;
-
-      const alertBadge = document.getElementById("nav-alert-count");
-      alertBadge.textContent = lowStockItems.length;
-      alertBadge.classList.toggle("hidden", lowStockItems.length === 0);
-
-      const retBadge = document.getElementById("nav-return-count");
-      retBadge.textContent = pendingReturns;
-      retBadge.classList.toggle("hidden", pendingReturns === 0);
-
-      document.getElementById("nav-wo-count").textContent = state.workOrders.length;
-
-      const tbody = document.getElementById("alerts-table-body");
-      if (lowStockItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">All spare parts are above minimum stock thresholds.</td></tr>`;
+      const mediaBox = document.getElementById("viewMedia");
+      if (item.image && item.image.trim()) {
+        mediaBox.innerHTML = `<img class="lightbox-img" src="${item.image}" alt="${item.name}" onerror="this.outerHTML='<div class=\\'placeholder-plaque\\' style=\\'margin-bottom:14px;\\'>MINGTU<br><small>${item.image}</small></div>';" />`;
       } else {
-        tbody.innerHTML = lowStockItems.map(p => {
-          const avail = (p.physicalStock || 0) - (p.reservedQty || 0);
-          const consumed7d = state.logs
-            .filter(l => l.type === "STOCK_OUT" && l.sku === p.sku && (l.timestamp || 0) >= sevenDaysAgo)
-            .reduce((s, l) => s + (l.qty || 0), 0);
-          const suggestedOrder = Math.max((p.threshold * 2) - avail, consumed7d + p.threshold);
-
-          return `
-            <tr class="hover:bg-red-50/40">
-              <td class="py-3 px-4 font-semibold text-slate-900">${p.sku} — ${p.name}</td>
-              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">${avail} avail</span> / min ${p.threshold}</td>
-              <td class="py-3 px-4 text-slate-600">${consumed7d} units issued (7d)</td>
-              <td class="py-3 px-4 font-bold text-amber-700">+${suggestedOrder} units</td>
-              <td class="py-3 px-4 text-right">
-                ${currentUser && currentUser.role === "admin"
-                  ? `<button onclick="restockPart('${p.sku}', ${suggestedOrder})" class="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg font-semibold">1-Click Restock (+${suggestedOrder})</button>`
-                  : `<span class="text-slate-400">Admin Restock Pending</span>`}
-              </td>
-            </tr>
-          `;
-        }).join("");
+        mediaBox.innerHTML = `<div class="placeholder-plaque" style="margin-bottom:14px;">MINGTU METAL NAMEPLATE</div>`;
       }
 
-      const logBox = document.getElementById("audit-log-list");
-      if (state.logs.length === 0) {
-        logBox.innerHTML = `<div class="p-4 text-slate-400 text-center">No recent activity logged yet.</div>`;
-      } else {
-        logBox.innerHTML = state.logs.slice(0, 20).map(l => {
-          const badgeColor = l.type === "SHORTAGE_BLOCKED" ? "bg-red-100 text-red-700"
-            : l.type === "STOCK_OUT" ? "bg-amber-100 text-amber-800"
-            : l.type === "RETURN_APPROVED" ? "bg-emerald-100 text-emerald-700"
-            : "bg-slate-100 text-slate-700";
-          return `
-            <div class="p-3.5 flex items-center justify-between gap-3">
-              <div class="flex items-center gap-2.5">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${l.type}</span>
-                <span class="text-slate-700">${l.message}</span>
-              </div>
-              <span class="text-[11px] text-slate-400 shrink-0">${new Date(l.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-          `;
-        }).join("");
-      }
-    }
-
-    function renderWorkOrders() {
-      const grid = document.getElementById("workorders-grid");
-      let list = state.workOrders;
-      if (state.woFilter !== "ALL") list = list.filter(w => w.status === state.woFilter);
-
-      if (list.length === 0) {
-        grid.innerHTML = `<div class="col-span-full bg-white p-8 rounded-xl border border-slate-200 text-center text-sm text-slate-400">No work orders in this view.</div>`;
-        return;
-      }
-
-      grid.innerHTML = list.map(wo => {
-        const statusBadge = wo.status === "Reserved" ? "bg-amber-100 text-amber-800"
-          : wo.status === "In Progress" ? "bg-blue-100 text-blue-800"
-          : "bg-emerald-100 text-emerald-800";
-
-        return `
-          <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between space-y-4">
-            <div>
-              <div class="flex items-center justify-between">
-                <span class="font-extrabold text-sm text-slate-900">${wo.woNumber} • ${wo.vehicle}</span>
-                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full ${statusBadge}">${wo.status}</span>
-              </div>
-              <div class="text-xs text-slate-500 mt-1">Customer: <strong class="text-slate-700">${wo.customer}</strong> • Tech: <strong class="text-slate-700">${wo.assignedTech || "Unassigned"}</strong></div>
-              <div class="text-xs text-slate-600 mt-1">Service: ${wo.service}</div>
-
-              <div class="mt-3 bg-slate-50 rounded-lg p-3 border border-slate-100 space-y-1 text-xs">
-                <div class="font-semibold text-slate-700">Allocated Parts:</div>
-                ${(wo.parts || []).map(p => `
-                  <div class="flex justify-between text-slate-600">
-                    <span>${p.qty}x ${p.name} (${p.sku})</span>
-                    <span>PKR ${(p.unitPrice * p.qty).toLocaleString()}</span>
-                  </div>
-                `).join("")}
-                <div class="flex justify-between text-slate-500 pt-1 border-t border-slate-200">
-                  <span>Labor Charges</span>
-                  <span>PKR ${(wo.laborCost || 0).toLocaleString()}</span>
-                </div>
-                <div class="flex justify-between font-bold text-slate-900 pt-1">
-                  <span>Total Invoice</span>
-                  <span>PKR ${(wo.totalCost || 0).toLocaleString()}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
-              <button onclick="printInvoice('${wo.id}')" class="px-3 py-1.5 rounded-lg border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50">Print Invoice</button>
-              <div class="flex items-center gap-2">
-                ${wo.status === "Reserved" ? `
-                  <button onclick="confirmPartsIssue('${wo.id}')" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold">
-                    Confirm Parts Collection (Stock-Out)
-                  </button>
-                ` : ""}
-                ${wo.status === "In Progress" ? `
-                  <button onclick="openReturnModal('${wo.id}')" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold">
-                    Return Surplus
-                  </button>
-                  <button onclick="completeWorkOrder('${wo.id}')" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">
-                    Mark Completed
-                  </button>
-                ` : ""}
-              </div>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    document.querySelectorAll(".wo-filter-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".wo-filter-btn").forEach(b => {
-          b.classList.remove("bg-slate-900", "text-white");
-          b.classList.add("bg-slate-100", "text-slate-600");
-        });
-        btn.classList.add("bg-slate-900", "text-white");
-        btn.classList.remove("bg-slate-100", "text-slate-600");
-        state.woFilter = btn.dataset.woFilter;
-        renderWorkOrders();
-      });
+      viewModal.classList.add("open");
     });
 
-    function renderInventory() {
-      const term = (document.getElementById("inventory-search").value || "").toLowerCase();
-      const filtered = state.inventory.filter(p =>
-        p.sku.toLowerCase().includes(term) || p.name.toLowerCase().includes(term) || (p.category || "").toLowerCase().includes(term)
-      );
+    ["closeViewModalBtn", "closeViewModalBtn2"].forEach((id) => {
+      document.getElementById(id).addEventListener("click", () => viewModal.classList.remove("open"));
+    });
+    viewModal.addEventListener("click", (e) => {
+      if (e.target === viewModal) viewModal.classList.remove("open");
+    });
 
-      document.getElementById("inventory-table-body").innerHTML = filtered.map(p => {
-        const avail = (p.physicalStock || 0) - (p.reservedQty || 0);
-        const isLow = avail <= (p.threshold || 5);
-        return `
-          <tr class="hover:bg-slate-50">
-            <td class="py-3 px-4 font-bold text-slate-900">${p.sku}</td>
-            <td class="py-3 px-4 font-medium text-slate-800">${p.name}</td>
-            <td class="py-3 px-4 text-slate-500">${p.category || "General"}</td>
-            <td class="py-3 px-4">PKR ${(p.price || 0).toLocaleString()}</td>
-            <td class="py-3 px-4 font-semibold">${p.physicalStock || 0}</td>
-            <td class="py-3 px-4 text-amber-700 font-semibold">${p.reservedQty || 0}</td>
-            <td class="py-3 px-4">
-              <span class="px-2 py-0.5 rounded font-bold ${isLow ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"}">${avail}</span>
-            </td>
-            <td class="py-3 px-4 text-slate-500">${p.threshold || 5}</td>
-            <td class="py-3 px-4 text-right admin-only">
-              ${currentUser && currentUser.role === "admin"
-                ? `<button onclick="restockPart('${p.sku}', 10)" class="px-2.5 py-1 rounded bg-slate-900 text-white font-semibold hover:bg-slate-700">+10 Stock</button>`
-                : ""}
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
-    document.getElementById("inventory-search").addEventListener("input", renderInventory);
+    // Add Product & Code Generator Modal
+    const addModal = document.getElementById("addModal");
+    const pFile = document.getElementById("pFile");
+    const pPath = document.getElementById("pPath");
+    const snippetBox = document.getElementById("snippetBox");
+    const snippetCode = document.getElementById("snippetCode");
+    const copySnippetBtn = document.getElementById("copySnippetBtn");
 
-    function renderReturns() {
-      const tbody = document.getElementById("returns-table-body");
-      if (state.returns.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-slate-400">No surplus return requests submitted yet.</td></tr>`;
-        return;
+    document.getElementById("openAddProductBtn").addEventListener("click", () => addModal.classList.add("open"));
+    document.getElementById("closeAddModalBtn").addEventListener("click", () => addModal.classList.remove("open"));
+    addModal.addEventListener("click", (e) => {
+      if (e.target === addModal) addModal.classList.remove("open");
+    });
+
+    pFile.addEventListener("change", () => {
+      const file = pFile.files && pFile.files[0];
+      if (!file) return;
+      const cleanName = file.name.toLowerCase().replace(/\s+/g, "-");
+      if (!pPath.value.trim()) {
+        pPath.value = `images/${cleanName}`;
       }
+      const reader = new FileReader();
+      reader.onload = () => {
+        uploadedDataUrl = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
 
-      tbody.innerHTML = state.returns.map(r => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-3 px-4 font-bold text-slate-900">${r.returnCode}</td>
-          <td class="py-3 px-4 font-semibold">${r.woNumber}</td>
-          <td class="py-3 px-4">${r.partName} (${r.sku})</td>
-          <td class="py-3 px-4 font-bold">${r.qty}</td>
-          <td class="py-3 px-4 text-emerald-700 font-semibold">PKR ${(r.creditAmount || 0).toLocaleString()}</td>
-          <td class="py-3 px-4 text-slate-500">@${r.requestedBy}</td>
-          <td class="py-3 px-4">
-            <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${r.status === "Approved" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-800"}">${r.status}</span>
-          </td>
-          <td class="py-3 px-4 text-right">
-            ${r.status === "Pending" && currentUser && currentUser.role === "admin"
-              ? `<button onclick="approveSurplusReturn('${r.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-semibold">Approve & Restore Stock</button>`
-              : `<span class="text-slate-400">${r.status === "Approved" ? "Restored" : "Admin Only"}</span>`}
-          </td>
-        </tr>
-      `).join("");
-    }
+    document.getElementById("addProductForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("pName").value.trim();
+      const category = document.getElementById("pCategory").value;
+      const material = document.getElementById("pMaterial").value.trim() || "Custom Metal";
+      const pathVal = pPath.value.trim() || "images/custom-product.jpg";
+      const desc = document.getElementById("pDesc").value.trim() || "Custom metal nameplate product.";
 
-    function renderDispatch() {
-      const techs = state.users.filter(u => u.role === "technician").map(t => {
-        const pending = state.workOrders.filter(w => w.assignedTech === t.username && w.status !== "Completed").length;
-        return { ...t, pending };
-      }).sort((a, b) => a.pending - b.pending);
+      PRODUCTS_DATA.push({
+        name,
+        category,
+        material,
+        image: uploadedDataUrl || pathVal,
+        desc
+      });
 
-      const recText = document.getElementById("dispatch-rec-text");
-      const techList = document.getElementById("tech-workload-list");
+      activeCategory = "All";
+      renderFilters();
+      renderProducts();
 
-      if (techs.length === 0) {
-        recText.textContent = 'No technician users created yet. Go to "Users & Roles" to add technicians.';
-        techList.innerHTML = `<div class="bg-white p-5 rounded-xl border border-slate-200 text-xs text-slate-400 text-center">No technicians registered.</div>`;
-      } else {
-        const best = techs[0];
-        recText.innerHTML = `Recommended Next Assignee: <span class="text-amber-700 underline">${best.fullName} (@${best.username})</span> — Lowest active workload (${best.pending} pending work orders).`;
-        techList.innerHTML = techs.map((t, idx) => `
-          <div class="bg-white p-4 rounded-xl border ${idx === 0 ? "border-amber-400 ring-1 ring-amber-300" : "border-slate-200"} shadow-sm flex items-center justify-between">
-            <div>
-              <div class="font-bold text-sm text-slate-900">${t.fullName} ${idx === 0 ? '<span class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded ml-1">Best Pick</span>' : ""}</div>
-              <div class="text-xs text-slate-500">@${t.username}</div>
-            </div>
-            <div class="text-right">
-              <div class="text-lg font-extrabold text-slate-900">${t.pending}</div>
-              <div class="text-[10px] uppercase text-slate-400">Active Jobs</div>
-            </div>
-          </div>
-        `).join("");
+      snippetCode.textContent =
+        JSON.stringify({ name, category, material, image: pathVal, desc }, null, 2) + ",";
+      snippetBox.style.display = "block";
+      uploadedDataUrl = "";
+    });
+
+    copySnippetBtn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(snippetCode.textContent);
+        copySnippetBtn.textContent = "Copied!";
+        setTimeout(() => (copySnippetBtn.textContent = "Copy Code"), 1800);
+      } catch {
+        copySnippetBtn.textContent = "Select & Copy";
       }
+    });
 
-      const activeWOs = state.workOrders.filter(w => w.status !== "Completed");
-      document.getElementById("dispatch-wo-table").innerHTML = activeWOs.map(wo => `
-        <tr>
-          <td class="py-3 px-4 font-bold">${wo.woNumber}</td>
-          <td class="py-3 px-4">${wo.vehicle} — ${wo.service}</td>
-          <td class="py-3 px-4">${wo.status}</td>
-          <td class="py-3 px-4 font-semibold text-slate-700">${wo.assignedTech ? "@" + wo.assignedTech : "Unassigned"}</td>
-          <td class="py-3 px-4 text-right">
-            <select onchange="assignTechnician('${wo.id}', this.value)" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white">
-              <option value="">-- Unassigned --</option>
-              ${techs.map(t => `<option value="${t.username}" ${wo.assignedTech === t.username ? "selected" : ""}>${t.fullName} (${t.pending} jobs)</option>`).join("")}
-            </select>
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    function renderUsers() {
-      const tbody = document.getElementById("users-table-body");
-      tbody.innerHTML = state.users.map(u => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-3 px-4 font-bold text-slate-900">${u.fullName}</td>
-          <td class="py-3 px-4 text-slate-600">@${u.username}</td>
-          <td class="py-3 px-4 font-mono text-slate-500">${u.password}</td>
-          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-semibold uppercase text-[11px]">${u.role}</span></td>
-          <td class="py-3 px-4 text-right">
-            ${u.username !== "faraz"
-              ? `<button onclick="deleteUserAccount('${u.username}')" class="text-red-600 hover:underline font-semibold">Delete</button>`
-              : `<span class="text-slate-400">Primary Admin</span>`}
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    // START APP
-    bootstrapDatabase();
-    startListeners();
+    renderFilters();
+    renderProducts();
   </script>
 </body>
 </html>
