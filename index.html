@@ -8,7 +8,7 @@
   <!--
   ================================================================================
   中文操作指南（GitHub 托管 + 添加新产品与图片说明 - MingTu Nameplate）
-  1. GitHub 文件夹结构（必须与下方路径完全一致，注意大小写和空格）：
+  1. GitHub 仓库结构（请确保 images 文件夹与 index.html 在同一目录）：
        - index.html
        - images/image (1).png
        - images/image (2).png
@@ -18,13 +18,10 @@
        - images/image (6).png
        - images/image (7).png
        - images/image (8).png
-       - images/image (9).jpg
-  2. 如何继续添加新产品：
-       第一步：将新的产品照片上传到 GitHub 仓库的 "images" 文件夹中（例如：images/image (10).jpg）。
-       第二步：打开 index.html，向下滚动到 <script> 标签中的 PRODUCTS_DATA 数组。
-       第三步：复制下面任意一个 { ... } 产品对象粘贴到数组末尾，修改 name、category、material、image 和 desc，保存并 Commit 即可自动显示在网页上。
-  3. 网页端快捷预览与代码生成：
-       点击页面右上角 "+ Add Product" 按钮，可上传本地图片即时预览并一键生成 JSON 代码块。
+       - images/image (9).png
+  2. 添加新产品：
+       将新图片上传至 "images" 文件夹，然后在下方 <script> 的 PRODUCTS_DATA 数组中
+       复制一个 { ... } 产品对象，修改 name、category、material、image 和 desc 后保存提交。
   ================================================================================
   -->
   <style>
@@ -565,14 +562,6 @@
       margin-bottom: 14px;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        scroll-behavior: auto !important;
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .01ms !important;
-      }
-    }
     @media (max-width: 900px) {
       .product-grid { grid-template-columns: repeat(2, 1fr); }
     }
@@ -844,9 +833,9 @@
 
     // =========================================================================
     // 中文产品管理说明（在 GitHub 上添加新产品和图片）
-    // 1. 将图片放入 GitHub 仓库的 "images" 文件夹中（当前已配置 image (1).png 至 image (9).jpg）。
+    // 1. 将图片放入 GitHub 仓库的 "images" 文件夹中（image (1).png 至 image (9).png）。
     // 2. 如需添加新产品，复制下方任意一个 { ... } 对象粘贴到数组末尾，
-    //    将 "image" 改为对应路径（例如："images/image (10).png"），保存并 Commit 即可。
+    //    修改 name、category、material、image 和 desc 后保存并 Commit 即可。
     // =========================================================================
     const PRODUCTS_DATA = [
       {
@@ -909,7 +898,7 @@
         name: "Luxury Fragrance & Spirit Metal Labels",
         category: "Perfume Labels",
         material: "Aluminum / Zinc Alloy",
-        image: "images/image (9).jpg",
+        image: "images/image (9).png",
         desc: "Custom embossed, printed, and diamond-cut metal labels for perfume bottles and premium packaging."
       }
     ];
@@ -957,11 +946,12 @@
           const waText = encodeURIComponent(
             `Hello Kate, I'm interested in: ${item.name} (${item.material}).`
           );
-          const imgSrc = encodeURI(item.image.trim());
+          const rawSrc = item.image.trim();
+          const imgSrc = rawSrc.startsWith("data:") ? rawSrc : encodeURI(rawSrc);
           return `
             <article class="product-card">
               <div class="product-thumb" data-index="${idx}" title="Click to zoom">
-                <img src="${imgSrc}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <img src="${imgSrc}" alt="${item.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
                 <div class="placeholder-plaque" style="display:none;">MINGTU<br><small style="font-size:9px;letter-spacing:.12em;">${item.image}</small></div>
                 <span class="zoom-badge">Zoom</span>
               </div>
@@ -1032,7 +1022,8 @@
       document.getElementById("viewWaBtn").href = `https://wa.me/8619022443132?text=${waText}`;
 
       const mediaBox = document.getElementById("viewMedia");
-      const imgSrc = encodeURI(item.image.trim());
+      const rawSrc = item.image.trim();
+      const imgSrc = rawSrc.startsWith("data:") ? rawSrc : encodeURI(rawSrc);
       mediaBox.innerHTML = `<img class="lightbox-img" src="${imgSrc}" alt="${item.name}" onerror="this.outerHTML='<div class=\\'placeholder-plaque\\' style=\\'margin-bottom:14px;\\'>MINGTU<br><small>${item.image}</small></div>';" />`;
 
       viewModal.classList.add("open");
