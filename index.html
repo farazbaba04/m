@@ -7,19 +7,24 @@
   <title>MingTu Nameplate Kate | Custom Metal Nameplates</title>
   <!--
   ================================================================================
-  中文操作指南（GitHub 托管 + 添加产品与图片说明 - MingTu Nameplate）
-  1. 文件夹结构（注意大小写，GitHub 区分大小写）：
+  中文操作指南（GitHub 托管 + 添加新产品与图片说明 - MingTu Nameplate）
+  1. GitHub 文件夹结构（必须与下方路径完全一致，注意大小写和空格）：
        - index.html
-       - images/perfume-bottle-label.jpg
-       - images/zinc-hang-tag.jpg
-     （建议使用全小写字母、数字和短横线命名图片，避免空格和中文文件名。）
-  2. 如何上传新产品图片：
-       第一步：将产品照片上传到 GitHub 仓库的 "images" 文件夹中。
-       第二步：打开 index.html，找到 <script> 中的 PRODUCTS_DATA 数组。
-       第三步：复制一个 {...} 产品块，修改 name、category、material、image 路径和 desc，保存并 Commit。
-  3. 网页端快捷生成代码：
-       点击页面右上角 "+ Add Product" 按钮，选择本地图片可实时预览并自动生成 JSON 代码，
-       复制生成的代码粘贴到 PRODUCTS_DATA 中即可永久保存。
+       - images/image (1).png
+       - images/image (2).png
+       - images/image (3).png
+       - images/image (4).png
+       - images/image (5).png
+       - images/image (6).png
+       - images/image (7).png
+       - images/image (8).png
+       - images/image (9).jpg
+  2. 如何继续添加新产品：
+       第一步：将新的产品照片上传到 GitHub 仓库的 "images" 文件夹中（例如：images/image (10).jpg）。
+       第二步：打开 index.html，向下滚动到 <script> 标签中的 PRODUCTS_DATA 数组。
+       第三步：复制下面任意一个 { ... } 产品对象粘贴到数组末尾，修改 name、category、material、image 和 desc，保存并 Commit 即可自动显示在网页上。
+  3. 网页端快捷预览与代码生成：
+       点击页面右上角 "+ Add Product" 按钮，可上传本地图片即时预览并一键生成 JSON 代码块。
   ================================================================================
   -->
   <style>
@@ -394,7 +399,7 @@
       justify-content: space-between;
       border: 1px solid var(--line);
       border-radius: 16px;
-      background: rgba(255,255,255,.9);
+      background: rgba(255,255,255,.94);
       overflow: hidden;
       box-shadow: 0 10px 26px rgba(117,71,92,.06);
       transition: transform .2s ease, box-shadow .2s ease;
@@ -405,17 +410,19 @@
     }
     .product-thumb {
       position: relative;
-      height: 185px;
-      background: linear-gradient(135deg, #f8e6ee, #edd3df);
+      height: 210px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
       display: grid;
       place-items: center;
+      padding: 12px;
       overflow: hidden;
       cursor: zoom-in;
     }
     .product-thumb img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
       transition: transform .3s ease;
     }
@@ -426,7 +433,7 @@
       bottom: 10px;
       padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(57, 37, 59, .75);
+      background: rgba(57, 37, 59, .78);
       color: #fff;
       font-size: 11px;
       font-weight: 700;
@@ -493,12 +500,12 @@
     footer { padding: 22px 0; color: var(--muted); background: #fffafa; font-size: 13px; }
     .footer-row { display: flex; justify-content: space-between; gap: 16px; }
 
-    /* Modals (Add Product + Image Lightbox) */
+    /* Modals */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       z-index: 50;
-      background: rgba(45, 24, 43, .62);
+      background: rgba(45, 24, 43, .65);
       display: none;
       align-items: center;
       justify-content: center;
@@ -506,7 +513,7 @@
     }
     .modal-backdrop.open { display: flex; }
     .modal {
-      width: min(540px, 100%);
+      width: min(620px, 100%);
       max-height: 90vh;
       overflow-y: auto;
       background: #fffdfd;
@@ -549,10 +556,12 @@
     }
     .lightbox-img {
       width: 100%;
-      max-height: 360px;
+      max-height: 400px;
       object-fit: contain;
       border-radius: 12px;
-      background: #f8e8ef;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      padding: 10px;
       margin-bottom: 14px;
     }
 
@@ -683,7 +692,7 @@
         <div class="section-heading">
           <div class="eyebrow">Core Products</div>
           <h2>Custom Labels, Nameplates &amp; Accessories</h2>
-          <p>Custom-made for your product, packaging, or brand.</p>
+          <p>Click any product image to view full details or request a custom quote.</p>
         </div>
 
         <div class="toolbar">
@@ -763,24 +772,26 @@
   <div class="modal-backdrop" id="addModal" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <h3>Add Product / Upload Picture</h3>
+        <h3>Add New Product (添加新产品)</h3>
         <button class="close-btn" type="button" id="closeAddModalBtn">✕</button>
       </div>
       <p style="font-size:13px; color:var(--muted); margin-top:0;">
-        Upload a photo to preview it on this page, then upload the same file to your GitHub <code>images/</code> folder and paste the generated code into <code>PRODUCTS_DATA</code>.
+        Upload an image to preview it live, then upload the image file into your GitHub <code>images/</code> folder and copy the generated object into <code>PRODUCTS_DATA</code>.
       </p>
       <form id="addProductForm">
         <div class="field">
           <label for="pName">Product Name *</label>
-          <input id="pName" type="text" required placeholder="e.g., Gold Perfume Bottle Label" />
+          <input id="pName" type="text" required placeholder="e.g., Luxury Perfume Bottle Label" />
         </div>
         <div class="field">
           <label for="pCategory">Category *</label>
           <select id="pCategory">
-            <option value="Perfume">Perfume</option>
-            <option value="Tags & Badges">Tags &amp; Badges</option>
-            <option value="Etched & Laser">Etched &amp; Laser</option>
-            <option value="Gifts & Electronics">Gifts &amp; Electronics</option>
+            <option value="Perfume Labels">Perfume Labels</option>
+            <option value="Metal Nameplates">Metal Nameplates</option>
+            <option value="Tags & Charms">Tags &amp; Charms</option>
+            <option value="Badges & Pins">Badges &amp; Pins</option>
+            <option value="Nickel & Transfer">Nickel &amp; Transfer</option>
+            <option value="Cultural Gifts">Cultural Gifts</option>
           </select>
         </div>
         <div class="field">
@@ -793,11 +804,11 @@
         </div>
         <div class="field">
           <label for="pPath">GitHub Image Path (inside <code>images/</code>)</label>
-          <input id="pPath" type="text" placeholder="images/perfume-gold.jpg" />
+          <input id="pPath" type="text" placeholder="images/image (10).png" />
         </div>
         <div class="field">
           <label for="pDesc">Description</label>
-          <textarea id="pDesc" rows="2" placeholder="Custom finish, size, or packaging details..."></textarea>
+          <textarea id="pDesc" rows="2" placeholder="Custom finish, plating color, or packaging details..."></textarea>
         </div>
         <button class="button" type="submit">Preview on Page &amp; Generate Code</button>
       </form>
@@ -833,80 +844,73 @@
 
     // =========================================================================
     // 中文产品管理说明（在 GitHub 上添加新产品和图片）
-    // 1. 将产品图片放入 GitHub 仓库的 "images" 文件夹中（例如：images/perfume-label.jpg）。
-    // 2. 在下方 PRODUCTS_DATA 数组中修改对应产品的 "image" 字段路径。
-    // 3. 如需添加新产品，复制下面任意一个 { ... } 对象粘贴到数组中，修改内容后提交 (Commit) 即可。
+    // 1. 将图片放入 GitHub 仓库的 "images" 文件夹中（当前已配置 image (1).png 至 image (9).jpg）。
+    // 2. 如需添加新产品，复制下方任意一个 { ... } 对象粘贴到数组末尾，
+    //    将 "image" 改为对应路径（例如："images/image (10).png"），保存并 Commit 即可。
     // =========================================================================
     const PRODUCTS_DATA = [
       {
-        name: "Metal labels and nameplates",
-        category: "Etched & Laser",
-        material: "Aluminum / Stainless Steel",
-        image: "images/metal-nameplate.jpg",
-        desc: "Custom branded metal nameplates tailored for packaging and equipment."
+        name: "Chinese Cultural Bookmarks & Vanity Mirrors",
+        category: "Cultural Gifts",
+        material: "Brass / Zinc Alloy / Enamel",
+        image: "images/image (1).png",
+        desc: "Intricate hollow-carved metal bookmarks with tassels and enamel pocket vanity mirrors."
       },
       {
-        name: "Perfume bottle labels",
-        category: "Perfume",
-        material: "Zinc Alloy / Nickel",
-        image: "images/perfume-bottle-label.jpg",
-        desc: "Precision metallic labels crafted to adhere cleanly to glass perfume bottles."
+        name: "Brushed Metal Brand Nameplates",
+        category: "Metal Nameplates",
+        material: "Stainless Steel / Brass / Aluminum",
+        image: "images/image (2).png",
+        desc: "Custom geometric, shield, and crest-shaped metal brand plaques in gold, silver, rose gold, and black."
       },
       {
-        name: "Perfume box emblems",
-        category: "Perfume",
+        name: "Electroformed Nickel & Metallic Transfer Stickers",
+        category: "Nickel & Transfer",
+        material: "Nickel / Electroformed Metal",
+        image: "images/image (3).png",
+        desc: "Ultra-thin self-adhesive metallic letterings, emblems, and fine-line logo transfer decals."
+      },
+      {
+        name: "Custom Enamel Pins & Lapel Badges",
+        category: "Badges & Pins",
+        material: "Zinc Alloy / Hard & Soft Enamel",
+        image: "images/image (4).png",
+        desc: "Vibrant colored enamel badges, antique brass pins, and custom commemorative emblems."
+      },
+      {
+        name: "Hollow-Etched Brass Keychains & Bookmarks",
+        category: "Cultural Gifts",
+        material: "Etched Brass",
+        image: "images/image (5).png",
+        desc: "Precision photo-etched floral filigree keychains and luxury hollow-cut metal bookmarks."
+      },
+      {
+        name: "Custom Metal Hang Tags & Fragrance Charms",
+        category: "Tags & Charms",
+        material: "Zinc Alloy / Rose Gold / Antique Brass",
+        image: "images/image (6).png",
+        desc: "Bespoke bottle neck charms, hammered copper tags, and luxury brand pendants."
+      },
+      {
+        name: "3D Embossed Floral & Crest Metal Plaques",
+        category: "Metal Nameplates",
+        material: "Zinc Alloy / Die-Cast Metal",
+        image: "images/image (7).png",
+        desc: "High-relief 3D sculpted floral and royal crest labels with textured backgrounds."
+      },
+      {
+        name: "Curved & Die-Cast Perfume Bottle Plates",
+        category: "Perfume Labels",
         material: "Zinc Alloy / Aluminum",
-        image: "images/perfume-box-emblem.jpg",
-        desc: "Decorative emblems that elevate luxury fragrance outer boxes."
+        image: "images/image (8).png",
+        desc: "Curved and flat luxury perfume bottle labels with enamel fill and mirror-polished plating."
       },
       {
-        name: "Printed embossed and debossed labels",
-        category: "Etched & Laser",
-        material: "Aluminum / Brass",
-        image: "images/embossed-label.jpg",
-        desc: "Tactile raised and recessed designs with crisp printing finishes."
-      },
-      {
-        name: "Zinc alloy hang tags",
-        category: "Tags & Badges",
-        material: "Zinc Alloy",
-        image: "images/zinc-hang-tag.jpg",
-        desc: "Durable custom hang tags for apparel, bags, and specialty goods."
-      },
-      {
-        name: "Metal badges and fridge magnets",
-        category: "Tags & Badges",
-        material: "Zinc Alloy / Iron",
-        image: "images/badge-magnet.jpg",
-        desc: "Custom badges and promotional fridge magnets in bespoke shapes."
-      },
-      {
-        name: "Stainless steel and brass etched labels",
-        category: "Etched & Laser",
-        material: "Stainless Steel / Brass",
-        image: "images/etched-label.jpg",
-        desc: "Fine chemical etching for sharp logos, markings, and serial details."
-      },
-      {
-        name: "Nickel labels and laser labels",
-        category: "Etched & Laser",
-        material: "Nickel",
-        image: "images/nickel-laser-label.jpg",
-        desc: "Sleek nickel and laser-finished labels with clean metallic luster."
-      },
-      {
-        name: "Metal labels for electronics",
-        category: "Gifts & Electronics",
-        material: "Aluminum / Nickel",
-        image: "images/electronics-label.jpg",
-        desc: "Compact metal branding plates for audio, tech, and electronic devices."
-      },
-      {
-        name: "Custom metal gifts and accessories",
-        category: "Gifts & Electronics",
-        material: "Multi-Metal",
-        image: "images/custom-metal-gift.jpg",
-        desc: "Cultural and creative metal gifts and accessories made to order."
+        name: "Luxury Fragrance & Spirit Metal Labels",
+        category: "Perfume Labels",
+        material: "Aluminum / Zinc Alloy",
+        image: "images/image (9).jpg",
+        desc: "Custom embossed, printed, and diamond-cut metal labels for perfume bottles and premium packaging."
       }
     ];
 
@@ -953,17 +957,13 @@
           const waText = encodeURIComponent(
             `Hello Kate, I'm interested in: ${item.name} (${item.material}).`
           );
-          const hasImg = Boolean(item.image && item.image.trim());
+          const imgSrc = encodeURI(item.image.trim());
           return `
             <article class="product-card">
-              <div class="product-thumb" data-index="${idx}" title="Click to preview">
-                ${
-                  hasImg
-                    ? `<img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                       <div class="placeholder-plaque" style="display:none;">MINGTU<br><small style="font-size:9px;letter-spacing:.12em;">${item.image}</small></div>`
-                    : `<div class="placeholder-plaque">MINGTU<br><small style="font-size:9px;letter-spacing:.12em;">ADD IMAGE PATH</small></div>`
-                }
-                <span class="zoom-badge">Preview</span>
+              <div class="product-thumb" data-index="${idx}" title="Click to zoom">
+                <img src="${imgSrc}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <div class="placeholder-plaque" style="display:none;">MINGTU<br><small style="font-size:9px;letter-spacing:.12em;">${item.image}</small></div>
+                <span class="zoom-badge">Zoom</span>
               </div>
               <div class="product-body">
                 <div>
@@ -1032,11 +1032,8 @@
       document.getElementById("viewWaBtn").href = `https://wa.me/8619022443132?text=${waText}`;
 
       const mediaBox = document.getElementById("viewMedia");
-      if (item.image && item.image.trim()) {
-        mediaBox.innerHTML = `<img class="lightbox-img" src="${item.image}" alt="${item.name}" onerror="this.outerHTML='<div class=\\'placeholder-plaque\\' style=\\'margin-bottom:14px;\\'>MINGTU<br><small>${item.image}</small></div>';" />`;
-      } else {
-        mediaBox.innerHTML = `<div class="placeholder-plaque" style="margin-bottom:14px;">MINGTU METAL NAMEPLATE</div>`;
-      }
+      const imgSrc = encodeURI(item.image.trim());
+      mediaBox.innerHTML = `<img class="lightbox-img" src="${imgSrc}" alt="${item.name}" onerror="this.outerHTML='<div class=\\'placeholder-plaque\\' style=\\'margin-bottom:14px;\\'>MINGTU<br><small>${item.image}</small></div>';" />`;
 
       viewModal.classList.add("open");
     });
@@ -1065,9 +1062,8 @@
     pFile.addEventListener("change", () => {
       const file = pFile.files && pFile.files[0];
       if (!file) return;
-      const cleanName = file.name.toLowerCase().replace(/\s+/g, "-");
       if (!pPath.value.trim()) {
-        pPath.value = `images/${cleanName}`;
+        pPath.value = `images/${file.name}`;
       }
       const reader = new FileReader();
       reader.onload = () => {
@@ -1081,7 +1077,7 @@
       const name = document.getElementById("pName").value.trim();
       const category = document.getElementById("pCategory").value;
       const material = document.getElementById("pMaterial").value.trim() || "Custom Metal";
-      const pathVal = pPath.value.trim() || "images/custom-product.jpg";
+      const pathVal = pPath.value.trim() || "images/image (10).png";
       const desc = document.getElementById("pDesc").value.trim() || "Custom metal nameplate product.";
 
       PRODUCTS_DATA.push({
