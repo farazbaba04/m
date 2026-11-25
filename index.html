@@ -19,7 +19,9 @@
        - images/image (7).png
        - images/image (8).png
        - images/image (9).png
-  2. 添加新产品：
+  2. 替换首屏（Hero）主图：
+       在 <section class="hero"> 的 .stage 中修改 heroPhoto 的 src 路径即可。
+  3. 添加新产品：
        将新图片上传至 "images" 文件夹，然后在下方 <script> 的 PRODUCTS_DATA 数组中
        复制一个 { ... } 产品对象，修改 name、category、material、image 和 desc 后保存提交。
   ================================================================================
@@ -174,19 +176,32 @@
     .hero-copy > p { max-width: 620px; margin: 18px 0 24px; color: #685568; font-size: 17px; }
     .actions { display: flex; flex-wrap: wrap; gap: 12px; }
 
-    /* Decorative Bottle Stage */
+    /* Hero Banner Image Stage */
     .stage {
       position: relative;
       min-height: 420px;
       display: grid;
       place-items: center;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,.76);
+      padding: 20px 20px 44px;
+      border: 1px solid rgba(255,255,255,.85);
       border-radius: 24px;
       background:
         radial-gradient(ellipse at 50% 77%, rgba(167,96,128,.16), transparent 46%),
-        linear-gradient(145deg, rgba(255,255,255,.67), rgba(255,239,245,.52));
+        linear-gradient(145deg, rgba(255,255,255,.85), rgba(255,239,245,.68));
       box-shadow: 0 22px 60px rgba(107,54,79,.12);
+    }
+    .hero-banner-img {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-height: 330px;
+      object-fit: contain;
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 10px;
+      box-shadow: 0 14px 30px rgba(104,57,78,.14);
+      animation: bottle-float 5s ease-in-out infinite;
     }
     .stage::before {
       position: absolute;
@@ -258,13 +273,13 @@
     }
     .label small { display: block; margin-top: 4px; font-family: Arial, sans-serif; font-size: 8px; letter-spacing: .2em; }
     .sparkle { position: absolute; z-index: 2; color: #fff; text-shadow: 0 1px 12px #fff; animation: twinkle 2.6s ease-in-out infinite; }
-    .s1 { top: 18%; left: 18%; font-size: 25px; }
-    .s2 { top: 25%; right: 19%; font-size: 20px; animation-delay: .8s; }
-    .s3 { bottom: 20%; left: 25%; font-size: 19px; animation-delay: 1.5s; }
+    .s1 { top: 12%; left: 8%; font-size: 25px; }
+    .s2 { top: 18%; right: 8%; font-size: 20px; animation-delay: .8s; }
+    .s3 { bottom: 16%; left: 10%; font-size: 19px; animation-delay: 1.5s; }
     .stage-caption {
       position: absolute;
       right: 18px;
-      bottom: 15px;
+      bottom: 14px;
       left: 18px;
       z-index: 3;
       color: #785a6b;
@@ -274,8 +289,8 @@
       text-align: center;
     }
     @keyframes bottle-float {
-      0%, 100% { transform: translateY(0) rotate(-1.5deg); }
-      50% { transform: translateY(-10px) rotate(1.5deg); }
+      0%, 100% { transform: translateY(0) rotate(-1deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
     }
     @keyframes label-apply {
       0%, 12% { opacity: .55; transform: translateY(-18px) rotate(-7deg) scale(.96); }
@@ -614,11 +629,18 @@
             <a class="button light" href="#products">Explore Products</a>
           </div>
         </div>
-        <div class="stage" role="img" aria-label="Decorative animation of a metal perfume label settling onto a glass bottle">
+        <div class="stage" role="img" aria-label="Showcase image of custom metal perfume labels by MingTu Nameplate">
           <span class="sparkle s1">✦</span>
           <span class="sparkle s2">✧</span>
           <span class="sparkle s3">✦</span>
-          <div class="bottle">
+          <img
+            id="heroBannerImg"
+            class="hero-banner-img"
+            src="images/image%20(8).png"
+            alt="MingTu custom metal perfume bottle labels and plates"
+            onerror="this.style.display='none'; document.getElementById('heroBottleFallback').style.display='block';"
+          />
+          <div class="bottle" id="heroBottleFallback" style="display:none;">
             <div class="label" id="heroLabel">MINGTU<small id="heroLabelSub">METAL NAMEPLATE</small></div>
           </div>
           <div class="stage-caption">A custom metal label, made for your product</div>
@@ -990,7 +1012,7 @@
       if (!btn) return;
       document.querySelectorAll(".mat-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      heroLabelSub.textContent = btn.dataset.mat.toUpperCase();
+      if (heroLabelSub) heroLabelSub.textContent = btn.dataset.mat.toUpperCase();
       materialNote.textContent = btn.dataset.note;
     });
 
